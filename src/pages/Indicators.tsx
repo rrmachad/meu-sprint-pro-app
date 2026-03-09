@@ -425,7 +425,7 @@ export default function Indicators() {
 
           {/* ── Evolução ── */}
           <TabsContent value="evolucao" className="space-y-4">
-            <Card className="glass">
+            <Card className="glass" data-pdf-chart="Horas de Estudo — Últimos 30 dias">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-primary" />
