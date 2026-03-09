@@ -521,12 +521,15 @@ export default function Syllabus() {
   // Check if a discipline has visible topics after status filter
   const hasVisibleTopics = (disciplineId: string) => {
     const discTopics = topics.filter((t) => t.disciplineId === disciplineId);
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'pending') return discTopics.some((t) => !t.completed);
-    return discTopics.some((t) => t.completed);
+    return discTopics.some((t) => {
+      if (statusFilter === 'pending' && t.completed) return false;
+      if (statusFilter === 'completed' && !t.completed) return false;
+      if (searchQuery.trim() && !t.text.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    });
   };
 
-  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0);
+  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
