@@ -16,6 +16,7 @@ const MockExams = lazy(() => import('./pages/MockExams'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const Revisions = lazy(() => import('./pages/Revisions'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Register = lazy(() => import('./pages/Register'));
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ function AppContent() {
         <Route path="/revisoes" element={<Revisions />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
       </Route>
+      <Route path="/cadastro" element={<Register />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
