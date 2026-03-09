@@ -308,7 +308,7 @@ function TopicRow({
             }`}
             onDoubleClick={startEdit}
           >
-            {topic.text}
+            <HighlightText text={topic.text} query={searchQuery} />
           </span>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startEdit}>
