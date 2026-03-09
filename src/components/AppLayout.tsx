@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
+import { StudyTimer } from '@/components/StudyTimer';
 import { useAppStore } from '@/store/useAppStore';
 import { Outlet } from 'react-router-dom';
 
@@ -23,6 +24,7 @@ export function AppLayout() {
             <Outlet />
           </main>
         </div>
+        <StudyTimer />
       </div>
     </SidebarProvider>
   );
