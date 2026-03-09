@@ -499,7 +499,7 @@ export default function Indicators() {
 
           {/* ── Disciplinas ── */}
           <TabsContent value="disciplinas" className="space-y-4">
-            <Card className="glass">
+            <Card className="glass" data-pdf-chart="Horas por Disciplina">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Horas por Disciplina</CardTitle>
               </CardHeader>
