@@ -117,6 +117,8 @@ export function SetupWizard() {
         organ,
         examDate,
         vacancies,
+        phases,
+        totalMinPercent: totalMin,
       },
       weeklyHours,
       studyDays,
