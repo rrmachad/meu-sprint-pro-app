@@ -271,6 +271,7 @@ export default function MockExams() {
           </CardContent>
         </Card>
       ) : (
+        <div ref={chartsRef}>
         <Tabs defaultValue="evolucao" className="space-y-4">
           <TabsList>
             <TabsTrigger value="evolucao"><TrendingUp className="h-4 w-4 mr-1" /> Evolução</TabsTrigger>
