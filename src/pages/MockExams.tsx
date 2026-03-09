@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { FileText, Plus, Trash2, TrendingUp, BarChart3, Download, ChevronDown } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
