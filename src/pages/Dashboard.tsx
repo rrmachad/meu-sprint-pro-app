@@ -114,6 +114,54 @@ export default function Dashboard() {
     ];
   }, [topics]);
 
+  // Weekly goals cumulative data
+  const weeklyGoalsData = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+    const mondayStr = monday.toISOString().split('T')[0];
+
+    const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    let cumHours = 0, cumQuestions = 0, cumPages = 0;
+
+    return weekDays.map((label, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayRecords = studyRecords.filter((r) => r.date === dateStr);
+      cumHours += dayRecords.reduce((a, r) => a + r.durationSeconds, 0) / 3600;
+      cumQuestions += dayRecords.reduce((a, r) => a + r.correctAnswers + r.wrongAnswers + r.blankAnswers, 0);
+      cumPages += dayRecords.reduce((a, r) => a + r.pagesRead, 0);
+      return { name: label, horas: Math.round(cumHours * 10) / 10, questoes: cumQuestions, paginas: cumPages };
+    });
+  }, [studyRecords]);
+
+  const weeklyTotals = weeklyGoalsData[weeklyGoalsData.length - 1] || { horas: 0, questoes: 0, paginas: 0 };
+  const weeklyHoursPercent = goals.weeklyHours > 0 ? Math.min(100, Math.round((weeklyTotals.horas / goals.weeklyHours) * 100)) : 0;
+  const weeklyQuestionsGoal = goals.dailyQuestions * 7;
+  const weeklyQuestionsPercent = weeklyQuestionsGoal > 0 ? Math.min(100, Math.round((weeklyTotals.questoes / weeklyQuestionsGoal) * 100)) : 0;
+  const weeklyPagesGoal = goals.dailyPages * 7;
+  const weeklyPagesPercent = weeklyPagesGoal > 0 ? Math.min(100, Math.round((weeklyTotals.paginas / weeklyPagesGoal) * 100)) : 0;
+
+  // Completion notifications
+  const notifiedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const checks = [
+      { key: 'hours', pct: weeklyHoursPercent, label: 'Horas semanais' },
+      { key: 'questions', pct: weeklyQuestionsPercent, label: 'Questões semanais' },
+      { key: 'pages', pct: weeklyPagesPercent, label: 'Páginas semanais' },
+    ];
+    checks.forEach(({ key, pct, label }) => {
+      if (pct >= 100 && !notifiedRef.current.has(key)) {
+        notifiedRef.current.add(key);
+        toast.success(`🎉 Meta concluída: ${label}!`, { description: 'Parabéns pelo seu esforço!' });
+      }
+    });
+  }, [weeklyHoursPercent, weeklyQuestionsPercent, weeklyPagesPercent]);
+
   const totalTopics = topics.length;
   const completedTopics = topics.filter((t) => t.completed).length;
   const globalPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
