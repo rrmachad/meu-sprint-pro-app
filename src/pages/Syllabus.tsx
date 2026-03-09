@@ -333,8 +333,9 @@ function TopicRow({
 function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' }: { discipline: Discipline; statusFilter?: 'all' | 'pending' | 'completed'; searchQuery?: string }) {
   const allDisciplineTopics = useAppStore((s) => s.topics.filter((t) => t.disciplineId === discipline.id));
   const topics = allDisciplineTopics.filter((t) => {
-    if (statusFilter === 'pending') return !t.completed;
-    if (statusFilter === 'completed') return t.completed;
+    if (statusFilter === 'pending' && t.completed) return false;
+    if (statusFilter === 'completed' && !t.completed) return false;
+    if (searchQuery.trim() && !t.text.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
   const allTopics = useAppStore((s) => s.topics);
