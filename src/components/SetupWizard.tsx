@@ -135,6 +135,7 @@ export function SetupWizard() {
           prova: d.prova,
           defaultQuestions: d.questions,
           order: i,
+          cannotZero: cannotZeroIndices.includes(disciplines.indexOf(d)),
         };
         addDiscipline(disc);
       });
