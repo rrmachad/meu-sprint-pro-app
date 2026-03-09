@@ -16,8 +16,16 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   AreaChart, Area,
 } from 'recharts';
-import { format, subDays, parseISO, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, subDays, subMonths, parseISO, startOfWeek, endOfWeek, isWithinInterval, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+type PeriodFilter = '7d' | '30d' | '90d' | 'all';
+const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
+  { value: '7d', label: '7 dias' },
+  { value: '30d', label: '30 dias' },
+  { value: '90d', label: '3 meses' },
+  { value: 'all', label: 'Tudo' },
+];
 
 const COLORS = [
   'hsl(217, 91%, 60%)',  // primary
