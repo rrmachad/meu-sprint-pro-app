@@ -773,7 +773,21 @@ function ImportDialog({
             </div>
           )}
 
-          {/* Preview: Single mode */}
+          {/* Add discipline manually when no preview yet */}
+          {mode === 'bulk' && bulkPreview.length === 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+              onClick={() => {
+                setBulkPreview([{ name: 'Nova Disciplina', topics: [] }]);
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Adicionar Disciplina Manualmente
+            </Button>
+          )}
+
           {mode === 'single' && singlePreview.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
