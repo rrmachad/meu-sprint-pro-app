@@ -295,7 +295,7 @@ function GenerateDialog({
       return;
     }
 
-    const blocks = generateBlocks(scores, dailyMinutes, studyDays.length);
+    const blocks = generateBlocks(scores, weeklyHours * 60, studyDays.length);
 
     const cycle: StudyCycle = {
       id: crypto.randomUUID(),
