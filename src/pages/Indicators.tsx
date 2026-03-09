@@ -1,13 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3, TrendingUp, Clock, CheckCircle2, BookOpen,
-  Target, Brain, CalendarDays,
+  Target, Brain, CalendarDays, Download,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
+import { toast } from 'sonner';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell,
@@ -154,6 +156,146 @@ export default function Indicators() {
     }));
   }, [studyRecords]);
 
+  const exportPdf = useCallback(async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pw = doc.internal.pageSize.getWidth();
+      const margin = 15;
+      let y = 20;
+
+      const addLine = (text: string, size: number, bold = false, color: [number, number, number] = [30, 30, 30]) => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFontSize(size);
+        doc.setFont('helvetica', bold ? 'bold' : 'normal');
+        doc.setTextColor(...color);
+        doc.text(text, margin, y);
+        y += size * 0.5 + 2;
+      };
+
+      const addSeparator = () => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, y, pw - margin, y);
+        y += 4;
+      };
+
+      // Header
+      doc.setFillColor(26, 42, 108);
+      doc.rect(0, 0, pw, 35, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Relatório de Desempenho', pw / 2, 15, { align: 'center' });
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, pw / 2, 23, { align: 'center' });
+      doc.text(`${stats.uniqueDays} dias de estudo registrados`, pw / 2, 29, { align: 'center' });
+      y = 45;
+
+      // Summary
+      addLine('Resumo Geral', 14, true, [26, 42, 108]);
+      y += 2;
+      const summaryItems = [
+        [`Total de Horas: ${stats.totalHours.toFixed(1)}h`, `Média: ${stats.avgHoursPerDay.toFixed(1)}h/dia`],
+        [`Questões: ${stats.totalQuestions}`, `Acertos: ${stats.totalCorrect} (${stats.hitRate.toFixed(1)}%)`],
+        [`Páginas Lidas: ${stats.totalPages}`, `Semana Atual: ${weeklyComparison.thisWeek}h`],
+      ];
+      summaryItems.forEach(([left, right]) => {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(50, 50, 50);
+        doc.text(left, margin, y);
+        doc.text(right, pw / 2, y);
+        y += 6;
+      });
+      y += 2;
+      addSeparator();
+
+      // Per discipline
+      addLine('Desempenho por Disciplina', 14, true, [26, 42, 108]);
+      y += 2;
+
+      // Table header
+      doc.setFillColor(240, 240, 245);
+      doc.rect(margin, y - 4, pw - margin * 2, 7, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80, 80, 80);
+      const cols = [margin, margin + 55, margin + 80, margin + 105, margin + 130, margin + 155];
+      ['Disciplina', 'Horas', 'Questões', 'Acerto %', 'Edital %'].forEach((h, i) => {
+        doc.text(h, cols[i], y);
+      });
+      y += 5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50, 50, 50);
+      disciplineStats.forEach((d) => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.setFontSize(8);
+        const name = d.fullName.length > 30 ? d.fullName.slice(0, 28) + '…' : d.fullName;
+        doc.text(name, cols[0], y);
+        doc.text(`${d.hours}h`, cols[1], y);
+        doc.text(String(d.questions), cols[2], y);
+        doc.text(`${d.hitRate}%`, cols[3], y);
+        doc.text(`${d.topicProgress}%`, cols[4], y);
+        y += 5;
+      });
+
+      y += 4;
+      addSeparator();
+
+      // Last 7 days history
+      addLine('Histórico — Últimos 7 dias', 14, true, [26, 42, 108]);
+      y += 2;
+      const recent7 = last30Days.slice(-7);
+      doc.setFillColor(240, 240, 245);
+      doc.rect(margin, y - 4, pw - margin * 2, 7, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(80, 80, 80);
+      ['Data', 'Horas', 'Questões', 'Acerto %'].forEach((h, i) => {
+        doc.text(h, cols[i], y);
+      });
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50, 50, 50);
+      recent7.forEach((d) => {
+        doc.setFontSize(8);
+        doc.text(d.label, cols[0], y);
+        doc.text(`${d.hours}h`, cols[1], y);
+        doc.text(String(d.questions), cols[2], y);
+        doc.text(`${d.hitRate}%`, cols[3], y);
+        y += 5;
+      });
+
+      y += 4;
+      addSeparator();
+
+      // Goals
+      addLine('Metas Semanais', 14, true, [26, 42, 108]);
+      y += 2;
+      const goalPct = goals.weeklyHours > 0 ? Math.min(100, Math.round((weeklyComparison.thisWeek / goals.weeklyHours) * 100)) : 0;
+      addLine(`Horas: ${weeklyComparison.thisWeek}h / ${goals.weeklyHours}h (${goalPct}%)`, 10);
+
+      // Footer
+      const totalPages = doc.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7);
+        doc.setTextColor(150, 150, 150);
+        doc.text('ConcurseiroElite — Relatório de Desempenho', margin, 290);
+        doc.text(`Página ${i}/${totalPages}`, pw - margin, 290, { align: 'right' });
+      }
+
+      doc.save(`relatorio-desempenho-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      toast.success('PDF exportado com sucesso!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao gerar PDF.');
+    }
+  }, [stats, disciplineStats, last30Days, weeklyComparison, goals]);
+
   if (!hasData) {
     return (
       <motion.div variants={itemVariants} initial="initial" animate="animate" className="space-y-6">
@@ -190,7 +332,13 @@ export default function Indicators() {
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6">
       <motion.div variants={itemVariants} className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Indicadores</h1>
-        <span className="text-xs text-muted-foreground">{stats.uniqueDays} dias de estudo registrados</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">{stats.uniqueDays} dias de estudo registrados</span>
+          <Button size="sm" variant="outline" className="gap-1.5 rounded-xl text-xs" onClick={exportPdf}>
+            <Download className="h-3.5 w-3.5" />
+            Exportar PDF
+          </Button>
+        </div>
       </motion.div>
 
       {/* ─── Stat Cards ─── */}
