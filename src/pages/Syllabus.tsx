@@ -711,11 +711,42 @@ function ImportDialog({
                     </div>
                     <div className="pl-4 space-y-0.5">
                       {disc.topics.map((topic, ti) => (
-                        <div key={ti} className="flex items-start gap-2 text-xs">
+                        <div key={ti} className="flex items-center gap-2 text-xs group">
                           <span className="text-muted-foreground shrink-0 w-4 text-right">{ti + 1}.</span>
-                          <span className="text-foreground/80">{topic}</span>
+                          <span className="text-foreground/80 flex-1">{topic}</span>
+                          <button
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                            onClick={() => {
+                              const updated = [...bulkPreview];
+                              updated[di] = { ...updated[di], topics: updated[di].topics.filter((_, i) => i !== ti) };
+                              setBulkPreview(updated);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
                       ))}
+                      <form
+                        className="flex items-center gap-1 mt-1"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const form = e.target as HTMLFormElement;
+                          const input = form.elements.namedItem('newTopic') as HTMLInputElement;
+                          const val = input.value.trim();
+                          if (!val) return;
+                          const updated = [...bulkPreview];
+                          updated[di] = { ...updated[di], topics: [...updated[di].topics, val] };
+                          setBulkPreview(updated);
+                          input.value = '';
+                        }}
+                      >
+                        <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <input
+                          name="newTopic"
+                          placeholder="Adicionar tópico..."
+                          className="flex-1 text-xs bg-transparent border-none outline-none placeholder:text-muted-foreground/50 text-foreground"
+                        />
+                      </form>
                     </div>
                     {di < bulkPreview.length - 1 && <Separator className="mt-2" />}
                   </div>
