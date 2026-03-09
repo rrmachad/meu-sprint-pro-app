@@ -192,17 +192,37 @@ function ImportDialog({
   );
 }
 
+// Helper to highlight search matches
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <>
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <mark key={i} className="bg-warning/30 text-foreground rounded-sm px-0.5">{part}</mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 // ========== TOPIC ROW (Sortable) ==========
 function TopicRow({
   topic,
   onToggle,
   onUpdate,
   onDelete,
+  searchQuery = '',
 }: {
   topic: Topic;
   onToggle: () => void;
   onUpdate: (text: string) => void;
   onDelete: () => void;
+  searchQuery?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(topic.text);
