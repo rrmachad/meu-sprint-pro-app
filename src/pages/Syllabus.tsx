@@ -317,6 +317,7 @@ function DisciplineSection({ discipline, statusFilter = 'all' }: { discipline: D
     if (statusFilter === 'completed') return t.completed;
     return true;
   });
+  const allTopics = useAppStore((s) => s.topics);
   const { addTopic, updateTopic, removeTopic, setTopics } = useAppStore();
   const [newTopicText, setNewTopicText] = useState('');
   const [addingTopic, setAddingTopic] = useState(false);
