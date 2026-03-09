@@ -393,10 +393,9 @@ function DisciplineSection({ discipline }: { discipline: Discipline }) {
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4 pt-0">
         <div className="space-y-1">
-          <AnimatePresence mode="popLayout">
-            {topics
-              .sort((a, b) => a.order - b.order)
-              .map((topic) => (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={sortedTopics.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+              {sortedTopics.map((topic) => (
                 <TopicRow
                   key={topic.id}
                   topic={topic}
@@ -405,7 +404,8 @@ function DisciplineSection({ discipline }: { discipline: Discipline }) {
                   onDelete={() => handleDeleteTopic(topic.id)}
                 />
               ))}
-          </AnimatePresence>
+            </SortableContext>
+          </DndContext>
 
           {topics.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
