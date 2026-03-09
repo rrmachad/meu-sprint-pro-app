@@ -1,6 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Plus, Trash2, TrendingUp, BarChart3 } from 'lucide-react';
+import { FileText, Plus, Trash2, TrendingUp, BarChart3, Download } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -142,11 +144,60 @@ export default function MockExams() {
   }, [sorted, disciplines]);
 
   const hasData = simulados.length > 0;
+  const chartsRef = useRef<HTMLDivElement>(null);
+
+  const exportPdf = async () => {
+    if (!chartsRef.current) return;
+    toast.info('Gerando PDF...');
+    try {
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
+      const margin = 10;
+      let y = margin;
+
+      // Title
+      doc.setFontSize(16);
+      doc.text('Relatório de Simulados', margin, y + 6);
+      y += 14;
+      doc.setFontSize(10);
+      doc.text(`Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`, margin, y);
+      y += 10;
+
+      // Capture each chart
+      const charts = chartsRef.current.querySelectorAll<HTMLElement>('[data-pdf-chart]');
+      for (const el of Array.from(charts)) {
+        const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#0f1729', useCORS: true, logging: false });
+        const imgData = canvas.toDataURL('image/png');
+        const imgW = pw - margin * 2;
+        const imgH = (canvas.height * imgW) / canvas.width;
+
+        if (y + imgH > ph - margin) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.addImage(imgData, 'PNG', margin, y, imgW, Math.min(imgH, 130));
+        y += Math.min(imgH, 130) + 8;
+      }
+
+      doc.save('simulados-comparativo.pdf');
+      toast.success('PDF exportado!');
+    } catch (e) {
+      console.error(e);
+      toast.error('Erro ao gerar PDF');
+    }
+  };
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold">Simulados</h1>
+        <div className="flex gap-2">
+          {hasData && (
+            <Button size="sm" variant="outline" onClick={exportPdf}>
+              <Download className="h-4 w-4 mr-1" /> Exportar PDF
+            </Button>
+          )}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Novo Simulado</Button>
@@ -208,6 +259,7 @@ export default function MockExams() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {!hasData ? (
@@ -219,6 +271,7 @@ export default function MockExams() {
           </CardContent>
         </Card>
       ) : (
+        <div ref={chartsRef}>
         <Tabs defaultValue="evolucao" className="space-y-4">
           <TabsList>
             <TabsTrigger value="evolucao"><TrendingUp className="h-4 w-4 mr-1" /> Evolução</TabsTrigger>
@@ -228,7 +281,7 @@ export default function MockExams() {
 
           {/* Evolution chart */}
           <TabsContent value="evolucao" className="space-y-4">
-            <Card>
+            <Card data-pdf-chart>
               <CardHeader><CardTitle className="text-base">Aproveitamento Geral (%)</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -243,7 +296,7 @@ export default function MockExams() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-pdf-chart>
               <CardHeader><CardTitle className="text-base">Volume de Questões e Acertos</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
@@ -261,7 +314,7 @@ export default function MockExams() {
             </Card>
 
             {radarData.length > 2 && (
-              <Card>
+              <Card data-pdf-chart>
                 <CardHeader><CardTitle className="text-base">Radar – Último Simulado</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -279,7 +332,7 @@ export default function MockExams() {
 
           {/* Per discipline evolution */}
           <TabsContent value="disciplinas">
-            <Card>
+            <Card data-pdf-chart>
               <CardHeader><CardTitle className="text-base">Evolução por Disciplina (%)</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
@@ -334,6 +387,7 @@ export default function MockExams() {
             })}
           </TabsContent>
         </Tabs>
+        </div>
       )}
     </motion.div>
   );
