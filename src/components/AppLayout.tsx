@@ -2,12 +2,14 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { StudyTimer } from '@/components/StudyTimer';
 import { useAppStore } from '@/store/useAppStore';
+import { useStudyReminders } from '@/hooks/useStudyReminders';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export function AppLayout() {
   const contestName = useAppStore((s) => s.settings.contest.name);
   const location = useLocation();
+  useStudyReminders();
 
   return (
     <SidebarProvider>

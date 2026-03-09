@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Settings, Building2, BookOpen, RotateCcw, Target,
   Download, Upload, Plus, Trash2, Edit2, Check, X,
-  HelpCircle, AlertTriangle,
+  HelpCircle, AlertTriangle, Bell,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -591,8 +591,77 @@ function GoalsTab() {
     toast.success('Carga horária atualizada!');
   };
 
+  const handleToggleNotifications = async (enabled: boolean) => {
+    if (enabled && 'Notification' in window) {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        toast.error('Permissão de notificações negada pelo navegador.');
+        return;
+      }
+    }
+    updateSettings({ notificationsEnabled: enabled });
+    toast.success(enabled ? 'Notificações ativadas!' : 'Notificações desativadas!');
+  };
+
+  const REMINDER_OPTIONS = [
+    { label: '1 min', value: 1 },
+    { label: '5 min', value: 5 },
+    { label: '10 min', value: 10 },
+    { label: '15 min', value: 15 },
+    { label: '30 min', value: 30 },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Notifications Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Bell className="h-5 w-5 text-primary" />
+                Notificações e Lembretes
+              </CardTitle>
+              <CardDescription>
+                Receba lembretes antes dos horários de estudo programados no ciclo.
+              </CardDescription>
+            </div>
+            <Switch
+              checked={settings.notificationsEnabled ?? false}
+              onCheckedChange={handleToggleNotifications}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className={`space-y-4 ${!settings.notificationsEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className="space-y-2">
+              <Label>Avisar com antecedência de</Label>
+              <div className="flex flex-wrap gap-2">
+                {REMINDER_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      updateSettings({ reminderMinutesBefore: opt.value });
+                      toast.success(`Lembrete ajustado para ${opt.label} antes!`);
+                    }}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all ${
+                      (settings.reminderMinutesBefore ?? 5) === opt.value
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Os lembretes serão enviados como notificações do navegador e toasts na aplicação, com base nos blocos de estudo do ciclo ativo.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">

@@ -154,6 +154,8 @@ export interface AppSettings {
   onboardingCompleted: boolean;
   setupCompleted: boolean;
   moduleHints: Record<string, boolean>;
+  notificationsEnabled: boolean;
+  reminderMinutesBefore: number; // minutes before block to notify
 }
 
 // ============ DAILY NOTE ============
