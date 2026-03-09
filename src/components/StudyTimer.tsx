@@ -177,7 +177,7 @@ export function StudyTimer() {
         animate={{ y: 0, opacity: 1 }}
         className="fixed bottom-4 right-4 z-50"
       >
-        <div className="rounded-xl border border-border bg-card shadow-lg overflow-hidden">
+        <div className="rounded-2xl border border-border/50 glass-strong shadow-elevated overflow-hidden">
           {/* Header - always visible */}
           <div
             className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
