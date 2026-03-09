@@ -60,11 +60,37 @@ function ContestTab() {
   const settings = useAppStore((s) => s.settings);
   const updateSettings = useAppStore((s) => s.updateSettings);
 
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60 }];
+  const totalMinPercent = settings.contest.totalMinPercent ?? 70;
+
   const update = (field: string, value: string | number) => {
     updateSettings({
       contest: { ...settings.contest, [field]: value },
     });
     toast.success('Salvo com sucesso!');
+  };
+
+  const updatePhases = (newPhases: ProvaPhase[]) => {
+    updateSettings({
+      contest: { ...settings.contest, phases: newPhases },
+    });
+  };
+
+  const addPhase = () => {
+    const newPhases = [...phases, { name: `P${phases.length + 1}`, minPercent: 60 }];
+    updatePhases(newPhases);
+    toast.success('Fase adicionada!');
+  };
+
+  const removePhase = (index: number) => {
+    updatePhases(phases.filter((_, i) => i !== index));
+    toast.success('Fase removida!');
+  };
+
+  const updatePhase = (index: number, field: keyof ProvaPhase, value: string | number) => {
+    const updated = [...phases];
+    updated[index] = { ...updated[index], [field]: value };
+    updatePhases(updated);
   };
 
   return (
@@ -136,6 +162,72 @@ function ContestTab() {
                 >+</Button>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Fases da Prova */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-primary" />
+                Fases da Prova
+              </CardTitle>
+              <CardDescription>Configure as fases (P1, P2, P3…) e seus percentuais mínimos.</CardDescription>
+            </div>
+            <Button onClick={addPhase} size="sm" className="gap-1">
+              <Plus className="h-4 w-4" /> Adicionar Fase
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {phases.map((phase, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border">
+              <div className="space-y-1 flex-1">
+                <Label className="text-xs text-muted-foreground">Nome da Fase</Label>
+                <Input
+                  value={phase.name}
+                  onChange={(e) => updatePhase(i, 'name', e.target.value)}
+                  className="h-8 text-sm"
+                  placeholder="Ex: P1"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Mínimo (%)</Label>
+                <Input
+                  type="number"
+                  value={phase.minPercent}
+                  onChange={(e) => updatePhase(i, 'minPercent', Number(e.target.value))}
+                  min={0} max={100}
+                  className="h-8 w-20 text-sm"
+                />
+              </div>
+              {phases.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 text-muted-foreground hover:text-destructive h-8 w-8 mt-5"
+                  onClick={() => removePhase(i)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          ))}
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label>Mínimo Geral (%)</Label>
+            <Input
+              type="number"
+              value={totalMinPercent}
+              onChange={(e) => update('totalMinPercent', Number(e.target.value))}
+              min={0} max={100}
+              className="w-24"
+            />
           </div>
         </CardContent>
       </Card>
