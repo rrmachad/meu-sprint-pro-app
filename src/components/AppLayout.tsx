@@ -12,15 +12,16 @@ export function AppLayout() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center gap-3 border-b border-border bg-card px-4 shrink-0">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+          <header className="h-14 flex items-center gap-3 border-b border-border/50 bg-card/60 backdrop-blur-xl px-4 shrink-0 sticky top-0 z-30">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
+            <div className="h-5 w-px bg-border/60" />
             {contestName && (
               <span className="text-sm font-medium text-muted-foreground truncate">
                 {contestName}
               </span>
             )}
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-6">
+          <main className="flex-1 overflow-auto p-4 md:p-6 gradient-mesh">
             <Outlet />
           </main>
         </div>
