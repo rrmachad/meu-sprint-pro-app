@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAppStore } from '@/store/useAppStore';
-import type { Discipline, DisciplineCategory, ProvaType } from '@/types';
+import type { Discipline, DisciplineCategory, ProvaPhase } from '@/types';
 
 const STEPS = [
   { title: 'Seu Nome', icon: User, description: 'Como devemos te chamar?' },
