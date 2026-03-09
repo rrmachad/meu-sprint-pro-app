@@ -78,7 +78,6 @@ function computeScores(
 
   const maxWeight = Math.max(...disciplines.map((d) => d.weight), 1);
 
-  // Calculate total study time per discipline for auto-situation inference
   const studyTimeByDisc: Record<string, number> = {};
   studyRecords.forEach((r) => {
     studyTimeByDisc[r.disciplineId] = (studyTimeByDisc[r.disciplineId] || 0) + r.durationSeconds;
@@ -91,36 +90,31 @@ function computeScores(
     const pending = total - completed;
     const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Invert progress: less progress = higher priority
-    const progressFactor = total > 0 ? 1 - (completed / total) : 0.5;
-
     const cd = cycleDisciplines.find((c) => c.disciplineId === d.id);
 
-    // If user hasn't configured, try to infer situation from study records
+    // Situação: configured or inferred from study records
     let situationFactor: number;
     if (cd) {
       situationFactor = situationMap[cd.situation] ?? 0.5;
     } else {
       const totalHours = (studyTimeByDisc[d.id] || 0) / 3600;
-      if (totalHours === 0) situationFactor = 1.0;       // nunca_estudei
-      else if (totalHours < 5) situationFactor = 0.5;    // razoavelmente
-      else situationFactor = 0.2;                          // ja_estudei
+      if (totalHours === 0) situationFactor = 1.0;
+      else if (totalHours < 5) situationFactor = 0.5;
+      else situationFactor = 0.2;
     }
 
     const importanceFactor = cd ? (importanceMap[cd.importance] ?? 0.6) : 0.6;
     const difficultyFactor = cd ? (difficultyMap[cd.difficulty] ?? 0.5) : 0.5;
     const weightFactor = maxWeight > 0 ? d.weight / maxWeight : 0.5;
 
-    // Combined score with documented weights
+    // 4 variables: Peso 35%, Importância 25%, Situação 25%, Dificuldade 15%
     const weightScore = weightFactor * 0.35;
     const importanceScore = importanceFactor * 0.25;
-    const situationScore = situationFactor * 0.15;
-    const progressScore = progressFactor * 0.15;
-    const difficultyScore = difficultyFactor * 0.10;
+    const situationScore = situationFactor * 0.25;
+    const difficultyScore = difficultyFactor * 0.15;
 
-    let score = weightScore + importanceScore + situationScore + progressScore + difficultyScore;
+    let score = weightScore + importanceScore + situationScore + difficultyScore;
 
-    // Boost for cannotZero disciplines
     if (d.cannotZero) {
       score *= 1.2;
     }
@@ -135,7 +129,7 @@ function computeScores(
       weight: d.weight,
       allocatedMinutes: 0,
       cannotZero: !!d.cannotZero,
-      breakdown: { weightScore, importanceScore, situationScore, progressScore, difficultyScore },
+      breakdown: { weightScore, importanceScore, situationScore, difficultyScore },
     };
   }).filter((d) => d.totalTopics > 0 || d.weight > 0);
 }
