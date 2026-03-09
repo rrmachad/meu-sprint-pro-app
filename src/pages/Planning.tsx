@@ -42,8 +42,7 @@ const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const DAY_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 // ========== SCORE ALGORITHM ==========
-// Weights: Peso no Edital (35%), Importância (25%), Situação/Conhecimento (15%),
-// Progresso no Edital Verticalizado (15%), Dificuldade (10%)
+// Weights: Peso no Edital (35%), Importância (25%), Situação (25%), Dificuldade (15%)
 // cannotZero disciplines get a 20% boost
 
 interface DisciplineScore {
@@ -60,7 +59,6 @@ interface DisciplineScore {
     weightScore: number;
     importanceScore: number;
     situationScore: number;
-    progressScore: number;
     difficultyScore: number;
   };
 }
@@ -80,7 +78,6 @@ function computeScores(
 
   const maxWeight = Math.max(...disciplines.map((d) => d.weight), 1);
 
-  // Calculate total study time per discipline for auto-situation inference
   const studyTimeByDisc: Record<string, number> = {};
   studyRecords.forEach((r) => {
     studyTimeByDisc[r.disciplineId] = (studyTimeByDisc[r.disciplineId] || 0) + r.durationSeconds;
@@ -93,36 +90,31 @@ function computeScores(
     const pending = total - completed;
     const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Invert progress: less progress = higher priority
-    const progressFactor = total > 0 ? 1 - (completed / total) : 0.5;
-
     const cd = cycleDisciplines.find((c) => c.disciplineId === d.id);
 
-    // If user hasn't configured, try to infer situation from study records
+    // Situação: configured or inferred from study records
     let situationFactor: number;
     if (cd) {
       situationFactor = situationMap[cd.situation] ?? 0.5;
     } else {
       const totalHours = (studyTimeByDisc[d.id] || 0) / 3600;
-      if (totalHours === 0) situationFactor = 1.0;       // nunca_estudei
-      else if (totalHours < 5) situationFactor = 0.5;    // razoavelmente
-      else situationFactor = 0.2;                          // ja_estudei
+      if (totalHours === 0) situationFactor = 1.0;
+      else if (totalHours < 5) situationFactor = 0.5;
+      else situationFactor = 0.2;
     }
 
     const importanceFactor = cd ? (importanceMap[cd.importance] ?? 0.6) : 0.6;
     const difficultyFactor = cd ? (difficultyMap[cd.difficulty] ?? 0.5) : 0.5;
     const weightFactor = maxWeight > 0 ? d.weight / maxWeight : 0.5;
 
-    // Combined score with documented weights
+    // 4 variables: Peso 35%, Importância 25%, Situação 25%, Dificuldade 15%
     const weightScore = weightFactor * 0.35;
     const importanceScore = importanceFactor * 0.25;
-    const situationScore = situationFactor * 0.15;
-    const progressScore = progressFactor * 0.15;
-    const difficultyScore = difficultyFactor * 0.10;
+    const situationScore = situationFactor * 0.25;
+    const difficultyScore = difficultyFactor * 0.15;
 
-    let score = weightScore + importanceScore + situationScore + progressScore + difficultyScore;
+    let score = weightScore + importanceScore + situationScore + difficultyScore;
 
-    // Boost for cannotZero disciplines
     if (d.cannotZero) {
       score *= 1.2;
     }
@@ -137,26 +129,55 @@ function computeScores(
       weight: d.weight,
       allocatedMinutes: 0,
       cannotZero: !!d.cannotZero,
-      breakdown: { weightScore, importanceScore, situationScore, progressScore, difficultyScore },
+      breakdown: { weightScore, importanceScore, situationScore, difficultyScore },
     };
   }).filter((d) => d.totalTopics > 0 || d.weight > 0);
 }
 
 function generateBlocks(
   scores: DisciplineScore[],
-  totalMinutesPerDay: number,
+  totalWeeklyMinutes: number,
   daysCount: number,
 ): CycleBlock[] {
-  if (scores.length === 0) return [];
+  if (scores.length === 0 || daysCount === 0) return [];
 
-  const totalMinutes = totalMinutesPerDay * daysCount;
   const totalScore = scores.reduce((a, s) => a + s.score, 0);
 
-  // Allocate minutes proportionally to score, minimum 30min
-  const allocated = scores.map((s) => ({
+  // Allocate minutes proportionally, ensuring total == totalWeeklyMinutes
+  const rawAllocations = scores.map((s) => ({
     ...s,
-    allocatedMinutes: Math.max(30, Math.round((s.score / totalScore) * totalMinutes)),
+    rawMinutes: (s.score / totalScore) * totalWeeklyMinutes,
   }));
+
+  // Round to nearest 5min, minimum 30min per discipline
+  let allocated = rawAllocations.map((s) => ({
+    ...s,
+    allocatedMinutes: Math.max(30, Math.round(s.rawMinutes / 5) * 5),
+  }));
+
+  // Adjust to exactly match totalWeeklyMinutes
+  let currentTotal = allocated.reduce((a, s) => a + s.allocatedMinutes, 0);
+  let diff = totalWeeklyMinutes - currentTotal;
+
+  // Sort by score descending to adjust highest-priority disciplines first
+  const sorted = [...allocated].sort((a, b) => b.score - a.score);
+  let idx = 0;
+  while (diff !== 0 && idx < sorted.length * 3) {
+    const target = sorted[idx % sorted.length];
+    const entry = allocated.find((a) => a.disciplineId === target.disciplineId)!;
+    if (diff > 0) {
+      const add = Math.min(diff, 5);
+      entry.allocatedMinutes += add;
+      diff -= add;
+    } else {
+      const sub = Math.min(-diff, 5);
+      if (entry.allocatedMinutes - sub >= 30) {
+        entry.allocatedMinutes -= sub;
+        diff += sub;
+      }
+    }
+    idx++;
+  }
 
   // Generate blocks (30-120min each)
   const blocks: CycleBlock[] = [];
@@ -165,10 +186,9 @@ function generateBlocks(
   for (const disc of allocated.sort((a, b) => b.score - a.score)) {
     let remaining = disc.allocatedMinutes;
     while (remaining >= 30) {
-      // Prefer blocks of 60-90min for optimal study sessions
       let duration: number;
       if (remaining >= 120) {
-        duration = 90; // Optimal block size
+        duration = 90;
       } else if (remaining >= 60) {
         duration = Math.min(remaining, 90);
       } else {
@@ -184,22 +204,19 @@ function generateBlocks(
     }
   }
 
-  // Smart reorder: alternate disciplines, distribute across days evenly
+  // Smart reorder: alternate disciplines
   const reordered: CycleBlock[] = [];
   const pool = [...blocks];
   let lastDiscipline = '';
   let secondLastDiscipline = '';
 
   while (pool.length > 0) {
-    // Try to find a block that's different from last 2 disciplines
     let nextIdx = pool.findIndex((b) =>
       b.disciplineId !== lastDiscipline && b.disciplineId !== secondLastDiscipline
     );
-    // Fallback: different from last
     if (nextIdx < 0) {
       nextIdx = pool.findIndex((b) => b.disciplineId !== lastDiscipline);
     }
-    // Final fallback: take first available
     if (nextIdx < 0) nextIdx = 0;
 
     const block = pool.splice(nextIdx, 1)[0];
@@ -278,7 +295,7 @@ function GenerateDialog({
       return;
     }
 
-    const blocks = generateBlocks(scores, dailyMinutes, studyDays.length);
+    const blocks = generateBlocks(scores, weeklyHours * 60, studyDays.length);
 
     const cycle: StudyCycle = {
       id: crypto.randomUUID(),
@@ -310,7 +327,7 @@ function GenerateDialog({
             Gerar Cronograma Automático
           </DialogTitle>
           <DialogDescription>
-            O algoritmo distribui o tempo com base em: Peso (35%), Importância (25%), Progresso (15%), Situação (15%) e Dificuldade (10%).
+            O algoritmo distribui o tempo com base em: Peso no Edital (35%), Importância (25%), Situação (25%) e Dificuldade (15%). O total de horas gerado será exatamente igual à carga semanal configurada.
           </DialogDescription>
         </DialogHeader>
 
@@ -469,11 +486,10 @@ function GenerateDialog({
                     </div>
                     {/* Score breakdown mini bar */}
                     <div className="flex gap-0.5 ml-7 h-1 rounded-full overflow-hidden">
-                      <div className="bg-primary" style={{ width: `${s.breakdown.weightScore * 100 / 0.35 * 35}%` }} title="Peso" />
-                      <div className="bg-blue-500" style={{ width: `${s.breakdown.importanceScore * 100 / 0.25 * 25}%` }} title="Importância" />
-                      <div className="bg-amber-500" style={{ width: `${s.breakdown.situationScore * 100 / 0.15 * 15}%` }} title="Situação" />
-                      <div className="bg-green-500" style={{ width: `${s.breakdown.progressScore * 100 / 0.15 * 15}%` }} title="Progresso" />
-                      <div className="bg-red-500" style={{ width: `${s.breakdown.difficultyScore * 100 / 0.10 * 10}%` }} title="Dificuldade" />
+                      <div className="bg-primary" style={{ width: `${s.breakdown.weightScore / 0.35 * 35}%` }} title="Peso" />
+                      <div className="bg-blue-500" style={{ width: `${s.breakdown.importanceScore / 0.25 * 25}%` }} title="Importância" />
+                      <div className="bg-amber-500" style={{ width: `${s.breakdown.situationScore / 0.25 * 25}%` }} title="Situação" />
+                      <div className="bg-red-500" style={{ width: `${s.breakdown.difficultyScore / 0.15 * 15}%` }} title="Dificuldade" />
                     </div>
                   </div>
                 ))}
@@ -481,9 +497,8 @@ function GenerateDialog({
               <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Peso 35%</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Importância 25%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Situação 15%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Progresso 15%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Dificuldade 10%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Situação 25%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Dificuldade 15%</span>
               </div>
             </div>
           )}
