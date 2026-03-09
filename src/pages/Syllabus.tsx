@@ -386,7 +386,8 @@ function ImportDialog({
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-  };
+
+  const handleImport = () => {
     if (mode === 'single') {
       if (!selectedDiscipline) {
         toast.error('Selecione uma disciplina.');
