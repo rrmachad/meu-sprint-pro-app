@@ -281,7 +281,7 @@ export default function MockExams() {
 
           {/* Evolution chart */}
           <TabsContent value="evolucao" className="space-y-4">
-            <Card>
+            <Card data-pdf-chart>
               <CardHeader><CardTitle className="text-base">Aproveitamento Geral (%)</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
