@@ -14,6 +14,7 @@ const Planning = lazy(() => import('./pages/Planning'));
 const Syllabus = lazy(() => import('./pages/Syllabus'));
 const MockExams = lazy(() => import('./pages/MockExams'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const Revisions = lazy(() => import('./pages/Revisions'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const queryClient = new QueryClient();
