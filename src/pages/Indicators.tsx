@@ -54,6 +54,7 @@ export default function Indicators() {
   const simulados = useAppStore((s) => s.simulados);
   const goals = useAppStore((s) => s.settings.goals);
   const [period, setPeriod] = useState<PeriodFilter>('all');
+  const chartsRef = useRef<HTMLDivElement>(null);
 
   const studyRecords = useMemo(() => {
     if (period === 'all') return allStudyRecords;
