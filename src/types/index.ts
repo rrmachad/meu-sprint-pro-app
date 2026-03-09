@@ -19,6 +19,7 @@ export interface Discipline {
   prova: ProvaType;
   defaultQuestions: number;
   order: number;
+  cannotZero?: boolean; // não pode zerar conforme edital
 }
 
 export interface Topic {

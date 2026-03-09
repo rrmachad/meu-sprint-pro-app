@@ -65,6 +65,7 @@ export function SetupWizard() {
   const [p1Min, setP1Min] = useState(60);
   const [p2Min, setP2Min] = useState(60);
   const [totalMin, setTotalMin] = useState(70);
+  const [cannotZeroIndices, setCannotZeroIndices] = useState<number[]>([]);
   const [weeklyHours, setWeeklyHours] = useState(40);
   const [studyDays, setStudyDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
@@ -134,6 +135,7 @@ export function SetupWizard() {
           prova: d.prova,
           defaultQuestions: d.questions,
           order: i,
+          cannotZero: cannotZeroIndices.includes(disciplines.indexOf(d)),
         };
         addDiscipline(disc);
       });
@@ -416,6 +418,43 @@ export function SetupWizard() {
                       className="mt-1 w-24"
                     />
                   </div>
+
+                  {/* Disciplinas que não podem zerar */}
+                  {disciplines.some(d => d.name.trim()) && (
+                    <div className="space-y-2 pt-2 border-t border-border">
+                      <Label className="text-sm font-semibold">Disciplinas que não podem zerar</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Selecione as disciplinas que, conforme o edital, não podem ter nota zero para aprovação/classificação.
+                      </p>
+                      <div className="max-h-[180px] overflow-y-auto space-y-1.5 pr-2">
+                        {disciplines.map((d, i) => {
+                          if (!d.name.trim()) return null;
+                          const isChecked = cannotZeroIndices.includes(i);
+                          return (
+                            <div key={i} className="flex items-center gap-2 py-1">
+                              <Checkbox
+                                id={`cannotZero-${i}`}
+                                checked={isChecked}
+                                onCheckedChange={(c) => {
+                                  setCannotZeroIndices(prev =>
+                                    c ? [...prev, i] : prev.filter(idx => idx !== i)
+                                  );
+                                }}
+                              />
+                              <Label htmlFor={`cannotZero-${i}`} className="text-sm cursor-pointer">
+                                {d.name}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {cannotZeroIndices.length > 0 && (
+                        <p className="text-xs text-primary">
+                          {cannotZeroIndices.length} disciplina(s) marcada(s) como "não pode zerar"
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
