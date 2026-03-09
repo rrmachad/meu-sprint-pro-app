@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3, TrendingUp, Clock, CheckCircle2, BookOpen,
@@ -16,8 +16,16 @@ import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   AreaChart, Area,
 } from 'recharts';
-import { format, subDays, parseISO, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, subDays, subMonths, parseISO, startOfWeek, endOfWeek, isWithinInterval, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+type PeriodFilter = '7d' | '30d' | '90d' | 'all';
+const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
+  { value: '7d', label: '7 dias' },
+  { value: '30d', label: '30 dias' },
+  { value: '90d', label: '3 meses' },
+  { value: 'all', label: 'Tudo' },
+];
 
 const COLORS = [
   'hsl(217, 91%, 60%)',  // primary
@@ -41,12 +49,20 @@ const itemVariants = {
 
 export default function Indicators() {
   const disciplines = useAppStore((s) => s.disciplines);
-  const studyRecords = useAppStore((s) => s.studyRecords);
+  const allStudyRecords = useAppStore((s) => s.studyRecords);
   const topics = useAppStore((s) => s.topics);
   const simulados = useAppStore((s) => s.simulados);
   const goals = useAppStore((s) => s.settings.goals);
+  const [period, setPeriod] = useState<PeriodFilter>('all');
 
-  const hasData = studyRecords.length > 0;
+  const studyRecords = useMemo(() => {
+    if (period === 'all') return allStudyRecords;
+    const now = new Date();
+    const cutoff = period === '7d' ? subDays(now, 7) : period === '30d' ? subDays(now, 30) : subMonths(now, 3);
+    return allStudyRecords.filter((r) => isAfter(parseISO(r.date), cutoff));
+  }, [allStudyRecords, period]);
+
+  const hasData = allStudyRecords.length > 0;
 
   // ─── Computed metrics ───
   const stats = useMemo(() => {
@@ -330,10 +346,25 @@ export default function Indicators() {
 
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6">
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Indicadores</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">{stats.uniqueDays} dias de estudo registrados</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center bg-muted/50 rounded-xl p-0.5 gap-0.5">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setPeriod(opt.value)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  period === opt.value
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground hidden sm:inline">{stats.uniqueDays} dias</span>
           <Button size="sm" variant="outline" className="gap-1.5 rounded-xl text-xs" onClick={exportPdf}>
             <Download className="h-3.5 w-3.5" />
             Exportar PDF
