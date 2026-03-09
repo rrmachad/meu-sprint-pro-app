@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
-import type { Discipline, DisciplineCategory, ProvaType, RevisionMark } from '@/types';
+import type { Discipline, DisciplineCategory, ProvaPhase, RevisionMark } from '@/types';
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
