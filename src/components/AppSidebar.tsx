@@ -100,7 +100,14 @@ export function AppSidebar() {
                       className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       activeClassName="bg-primary/10 text-primary font-semibold shadow-glow-sm"
                     >
-                      <item.icon className="h-4 w-4 shrink-0" />
+                      <div className="relative shrink-0">
+                        <item.icon className="h-4 w-4" />
+                        {item.url === '/' && pendingRevisionCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground px-0.5">
+                            {pendingRevisionCount > 9 ? '9+' : pendingRevisionCount}
+                          </span>
+                        )}
+                      </div>
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
