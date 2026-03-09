@@ -1,6 +1,15 @@
 import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates,
+  useSortable, verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   ClipboardList, Plus, Trash2, Edit2, Check, X, Upload,
   ChevronDown, ChevronRight, GripVertical, FileText, Sparkles,
   CheckCircle2, Circle, Percent,
