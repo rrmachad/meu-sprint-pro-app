@@ -486,11 +486,10 @@ function GenerateDialog({
                     </div>
                     {/* Score breakdown mini bar */}
                     <div className="flex gap-0.5 ml-7 h-1 rounded-full overflow-hidden">
-                      <div className="bg-primary" style={{ width: `${s.breakdown.weightScore * 100 / 0.35 * 35}%` }} title="Peso" />
-                      <div className="bg-blue-500" style={{ width: `${s.breakdown.importanceScore * 100 / 0.25 * 25}%` }} title="Importância" />
-                      <div className="bg-amber-500" style={{ width: `${s.breakdown.situationScore * 100 / 0.15 * 15}%` }} title="Situação" />
-                      <div className="bg-green-500" style={{ width: `${s.breakdown.progressScore * 100 / 0.15 * 15}%` }} title="Progresso" />
-                      <div className="bg-red-500" style={{ width: `${s.breakdown.difficultyScore * 100 / 0.10 * 10}%` }} title="Dificuldade" />
+                      <div className="bg-primary" style={{ width: `${s.breakdown.weightScore / 0.35 * 35}%` }} title="Peso" />
+                      <div className="bg-blue-500" style={{ width: `${s.breakdown.importanceScore / 0.25 * 25}%` }} title="Importância" />
+                      <div className="bg-amber-500" style={{ width: `${s.breakdown.situationScore / 0.25 * 25}%` }} title="Situação" />
+                      <div className="bg-red-500" style={{ width: `${s.breakdown.difficultyScore / 0.15 * 15}%` }} title="Dificuldade" />
                     </div>
                   </div>
                 ))}
@@ -498,9 +497,8 @@ function GenerateDialog({
               <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Peso 35%</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Importância 25%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Situação 15%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Progresso 15%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Dificuldade 10%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Situação 25%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Dificuldade 15%</span>
               </div>
             </div>
           )}
