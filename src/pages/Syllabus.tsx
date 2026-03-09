@@ -1367,6 +1367,14 @@ export default function Syllabus() {
         onImportSingle={handleImportSingle}
         onImportBulk={handleImportBulk}
       />
+
+      {/* Export PDF Dialog */}
+      <ExportPdfDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        disciplines={disciplines}
+        topics={topics}
+      />
     </motion.div>
   );
 }
