@@ -89,24 +89,33 @@ function splitTopics(rawText: string): string[] {
 
 // Common discipline keywords found in Brazilian public exam syllabi
 const DISCIPLINE_KEYWORDS = [
-  'língua portuguesa', 'português', 'matemática', 'raciocínio lógico',
+  'língua portuguesa', 'português', 'matemática', 'matemática financeira',
+  'raciocínio lógico', 'raciocínio lógico-matemático',
   'direito constitucional', 'direito administrativo', 'direito penal',
   'direito civil', 'direito processual', 'direito tributário', 'direito do trabalho',
   'direito empresarial', 'direito financeiro', 'direito eleitoral', 'direito ambiental',
   'direito previdenciário', 'direito internacional', 'direitos humanos',
+  'd. constitucional', 'd. administrativo', 'd. penal', 'd. civil',
+  'd. empresarial', 'd. tributário', 'd. processual',
   'informática', 'noções de informática', 'conhecimentos de informática',
+  'tecnologia da informação',
   'administração', 'administração pública', 'administração geral',
-  'contabilidade', 'contabilidade geral', 'contabilidade pública',
-  'economia', 'finanças públicas', 'auditoria', 'legislação',
+  'contabilidade', 'contabilidade geral', 'contabilidade pública', 'contabilidade de custos',
+  'custos', 'economia', 'finanças públicas', 'economia e finanças públicas',
+  'auditoria', 'legislação',
+  'legislação tributária', 'legislação tributária estadual', 'legislação específica',
   'atualidades', 'realidade brasileira', 'geografia', 'história',
-  'ética', 'ética no serviço público', 'redação', 'redação oficial',
+  'história e geografia', 'história e geografia de',
+  'ética', 'ética e filosofia', 'ética no serviço público',
+  'redação', 'redação oficial',
   'gestão de pessoas', 'gestão pública', 'políticas públicas',
   'estatística', 'arquivologia', 'biblioteconomia',
   'segurança da informação', 'redes de computadores', 'banco de dados',
   'sistemas operacionais', 'engenharia de software', 'programação',
-  'código tributário', 'legislação tributária', 'legislação específica',
+  'código tributário', 'tributário',
   'conhecimentos específicos', 'conhecimentos gerais', 'conhecimentos básicos',
   'conhecimentos complementares', 'noções de', 'fundamentos de',
+  'inglês', 'espanhol', 'penal', 'empresarial', 'civil',
 ];
 
 // Detect if a line is a discipline header
@@ -296,11 +305,14 @@ function ImportDialog({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    const isTxt = file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt');
+    const fileName = file.name.toLowerCase();
+    const isPdf = file.type === 'application/pdf' || fileName.endsWith('.pdf');
+    const isTxt = file.type === 'text/plain' || fileName.endsWith('.txt');
+    const isDocx = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileName.endsWith('.docx');
+    const isDoc = file.type === 'application/msword' || fileName.endsWith('.doc');
 
-    if (!isPdf && !isTxt) {
-      toast.error('Por favor, selecione um arquivo PDF ou TXT.');
+    if (!isPdf && !isTxt && !isDocx && !isDoc) {
+      toast.error('Por favor, selecione um arquivo PDF, TXT, DOC ou DOCX.');
       return;
     }
 
@@ -310,6 +322,22 @@ function ImportDialog({
       let text = '';
       if (isPdf) {
         text = await extractPdfText(file);
+      } else if (isDocx) {
+        const mammoth = await import('mammoth');
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        text = result.value;
+      } else if (isDoc) {
+        // .doc (legacy format) - try reading as text; mammoth may partially support it
+        try {
+          const mammoth = await import('mammoth');
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          text = result.value;
+        } catch {
+          // Fallback: read as text
+          text = await file.text();
+        }
       } else {
         text = await file.text();
       }
@@ -320,7 +348,8 @@ function ImportDialog({
       } else {
         setBulkPreview(parseFullSyllabus(text));
       }
-      toast.success(`${isPdf ? 'PDF' : 'TXT'} processado com sucesso!`);
+      const ext = fileName.split('.').pop()?.toUpperCase() || 'Arquivo';
+      toast.success(`${ext} processado com sucesso!`);
     } catch (err) {
       console.error('File extraction error:', err);
       toast.error('Erro ao processar o arquivo. Tente copiar e colar o texto manualmente.');
@@ -451,7 +480,7 @@ function ImportDialog({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.txt"
+                  accept=".pdf,.txt,.doc,.docx"
                   className="hidden"
                   onChange={handleFileUpload}
                 />
@@ -469,7 +498,7 @@ function ImportDialog({
                 ) : (
                   <div className="flex flex-col items-center gap-2">
                     <FileUp className="h-10 w-10 text-muted-foreground/50" />
-                    <p className="text-sm font-medium">Clique para selecionar um PDF ou TXT</p>
+                    <p className="text-sm font-medium">Clique para selecionar PDF, TXT, DOC ou DOCX</p>
                     <p className="text-xs text-muted-foreground">
                       O sistema extrairá o texto e detectará disciplinas e tópicos automaticamente
                     </p>
