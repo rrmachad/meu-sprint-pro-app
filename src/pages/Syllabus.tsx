@@ -702,7 +702,7 @@ export default function Syllabus() {
           {filteredDisciplines
             .filter((d) => hasVisibleTopics(d.id))
             .map((discipline) => (
-              <DisciplineSection key={discipline.id} discipline={discipline} statusFilter={statusFilter} />
+              <DisciplineSection key={discipline.id} discipline={discipline} statusFilter={statusFilter} searchQuery={searchQuery} />
             ))}
         </Accordion>
       )}
