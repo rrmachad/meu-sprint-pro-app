@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame } from 'lucide-react';
+import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store/useAppStore';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
