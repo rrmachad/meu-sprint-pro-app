@@ -33,6 +33,8 @@ export default function Dashboard() {
   const topics = useAppStore((s) => s.topics);
   const goals = useAppStore((s) => s.settings.goals);
   const streak = useAppStore((s) => s.streak);
+  const revisions = useAppStore((s) => s.revisions);
+  const completeRevision = useAppStore((s) => s.completeRevision);
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
