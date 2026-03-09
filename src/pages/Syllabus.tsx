@@ -12,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   ClipboardList, Plus, Trash2, Edit2, Check, X, Upload,
   ChevronDown, ChevronRight, GripVertical, FileText, Sparkles,
-  CheckCircle2, Circle, Percent, Filter,
+  CheckCircle2, Circle, Percent, Filter, Search,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
