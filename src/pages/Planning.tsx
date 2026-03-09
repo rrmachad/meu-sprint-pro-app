@@ -668,6 +668,9 @@ function CycleView({
                 <Check className="h-3 w-3" /> Ativar
               </Button>
             )}
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-primary" onClick={exportToPdf} title="Exportar PDF">
+              <Download className="h-3.5 w-3.5" />
+            </Button>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={onDelete}>
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
