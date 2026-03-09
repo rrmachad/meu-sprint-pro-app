@@ -43,9 +43,9 @@ const CATEGORIES: { label: string; value: DisciplineCategory }[] = [
 interface DisciplineForm {
   name: string;
   category: DisciplineCategory;
-  weight: number;
+  questions: number;
+  weightPerQuestion: number;
   prova: ProvaType;
-  defaultQuestions: number;
 }
 
 export function SetupWizard() {
@@ -59,7 +59,7 @@ export function SetupWizard() {
   const [vacancies, setVacancies] = useState(1);
   const [examDate, setExamDate] = useState('');
   const [disciplines, setDisciplines] = useState<DisciplineForm[]>([
-    { name: '', category: 'humanas', weight: 10, prova: 'P1', defaultQuestions: 10 },
+    { name: '', category: 'humanas', questions: 10, weightPerQuestion: 1, prova: 'P1' },
   ]);
   const [hasP2, setHasP2] = useState(false);
   const [p1Min, setP1Min] = useState(60);
@@ -69,7 +69,14 @@ export function SetupWizard() {
   const [studyDays, setStudyDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
   const addDisciplineRow = () => {
-    setDisciplines([...disciplines, { name: '', category: 'humanas', weight: 10, prova: 'P1', defaultQuestions: 10 }]);
+    setDisciplines([...disciplines, { name: '', category: 'humanas', questions: 10, weightPerQuestion: 1, prova: 'P1' }]);
+  };
+
+  const getTotalPoints = () => disciplines.reduce((sum, d) => sum + d.questions * d.weightPerQuestion, 0);
+  const getDisciplinePoints = (d: DisciplineForm) => d.questions * d.weightPerQuestion;
+  const getDisciplinePercent = (d: DisciplineForm) => {
+    const total = getTotalPoints();
+    return total === 0 ? 0 : (getDisciplinePoints(d) / total) * 100;
   };
 
   const updateDisciplineRow = (index: number, field: keyof DisciplineForm, value: string | number) => {
@@ -123,9 +130,9 @@ export function SetupWizard() {
           id: crypto.randomUUID(),
           name: d.name.trim(),
           category: d.category,
-          weight: d.weight,
+          weight: parseFloat(getDisciplinePercent(d).toFixed(2)),
           prova: d.prova,
-          defaultQuestions: d.defaultQuestions,
+          defaultQuestions: d.questions,
           order: i,
         };
         addDiscipline(disc);
@@ -279,21 +286,21 @@ export function SetupWizard() {
 
               {step === 3 && (
                 <div className="space-y-3">
-                  <div className="max-h-[300px] overflow-y-auto space-y-3 pr-2">
+                  <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
                     {disciplines.map((d, i) => (
-                      <div key={i} className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
-                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div key={i} className="p-3 rounded-lg bg-muted/50 space-y-2">
+                        <div className="flex items-center gap-2">
                           <Input
                             value={d.name}
                             onChange={(e) => updateDisciplineRow(i, 'name', e.target.value)}
                             placeholder="Nome da disciplina"
-                            className="text-sm"
+                            className="text-sm flex-1"
                           />
                           <Select
                             value={d.category}
                             onValueChange={(v) => updateDisciplineRow(i, 'category', v)}
                           >
-                            <SelectTrigger className="text-sm">
+                            <SelectTrigger className="text-sm w-28">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -302,21 +309,43 @@ export function SetupWizard() {
                               ))}
                             </SelectContent>
                           </Select>
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs whitespace-nowrap">Peso %</Label>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => removeDisciplineRow(i)}
+                            disabled={disciplines.length <= 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Questões</Label>
                             <Input
                               type="number"
-                              value={d.weight}
-                              onChange={(e) => updateDisciplineRow(i, 'weight', Number(e.target.value))}
-                              min={0} max={100}
-                              className="text-sm w-20"
+                              value={d.questions}
+                              onChange={(e) => updateDisciplineRow(i, 'questions', Math.max(1, Number(e.target.value)))}
+                              min={1}
+                              className="text-sm w-16"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Peso/questão</Label>
+                            <Input
+                              type="number"
+                              value={d.weightPerQuestion}
+                              onChange={(e) => updateDisciplineRow(i, 'weightPerQuestion', Math.max(0.1, Number(e.target.value)))}
+                              min={0.1}
+                              step={0.1}
+                              className="text-sm w-16"
                             />
                           </div>
                           <Select
                             value={d.prova}
                             onValueChange={(v) => updateDisciplineRow(i, 'prova', v)}
                           >
-                            <SelectTrigger className="text-sm">
+                            <SelectTrigger className="text-sm w-20">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -325,18 +354,17 @@ export function SetupWizard() {
                               <SelectItem value="ambas">Ambas</SelectItem>
                             </SelectContent>
                           </Select>
+                          <div className="ml-auto flex items-center gap-3 text-sm">
+                            <span className="text-muted-foreground">{getDisciplinePoints(d).toFixed(1)} pts</span>
+                            <span className="font-semibold text-primary">{getDisciplinePercent(d).toFixed(1)}%</span>
+                          </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => removeDisciplineRow(i)}
-                          disabled={disciplines.length <= 1}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     ))}
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/10 text-sm">
+                    <span className="font-medium text-foreground">Total: {getTotalPoints().toFixed(1)} pontos</span>
+                    <span className="text-muted-foreground">{disciplines.filter(d => d.name.trim()).length} disciplina(s)</span>
                   </div>
                   <Button variant="outline" size="sm" onClick={addDisciplineRow} className="w-full">
                     <Plus className="h-4 w-4 mr-1" /> Adicionar Disciplina
