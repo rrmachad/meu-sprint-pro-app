@@ -711,26 +711,83 @@ function ImportDialog({
                     </div>
                     <div className="pl-4 space-y-0.5">
                       {disc.topics.map((topic, ti) => (
-                        <div key={ti} className="flex items-start gap-2 text-xs">
+                        <div key={ti} className="flex items-center gap-2 text-xs group">
                           <span className="text-muted-foreground shrink-0 w-4 text-right">{ti + 1}.</span>
-                          <span className="text-foreground/80">{topic}</span>
+                          <span className="text-foreground/80 flex-1">{topic}</span>
+                          <button
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                            onClick={() => {
+                              const updated = [...bulkPreview];
+                              updated[di] = { ...updated[di], topics: updated[di].topics.filter((_, i) => i !== ti) };
+                              setBulkPreview(updated);
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
                       ))}
+                      <form
+                        className="flex items-center gap-1 mt-1"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const form = e.target as HTMLFormElement;
+                          const input = form.elements.namedItem('newTopic') as HTMLInputElement;
+                          const val = input.value.trim();
+                          if (!val) return;
+                          const updated = [...bulkPreview];
+                          updated[di] = { ...updated[di], topics: [...updated[di].topics, val] };
+                          setBulkPreview(updated);
+                          input.value = '';
+                        }}
+                      >
+                        <Plus className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <input
+                          name="newTopic"
+                          placeholder="Adicionar tópico..."
+                          className="flex-1 text-xs bg-transparent border-none outline-none placeholder:text-muted-foreground/50 text-foreground"
+                        />
+                      </form>
                     </div>
                     {di < bulkPreview.length - 1 && <Separator className="mt-2" />}
                   </div>
                 ))}
               </div>
+              {/* Add discipline manually */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => {
+                  setBulkPreview([...bulkPreview, { name: 'Nova Disciplina', topics: [] }]);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Adicionar Disciplina Manualmente
+              </Button>
               <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                 <span>
-                  Disciplinas que ainda não existem serão criadas automaticamente ao importar.
+                  Disciplinas que ainda não existem serão criadas automaticamente ao importar. Você pode adicionar disciplinas não detectadas manualmente.
                 </span>
               </div>
             </div>
           )}
 
-          {/* Preview: Single mode */}
+          {/* Add discipline manually when no preview yet */}
+          {mode === 'bulk' && bulkPreview.length === 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+              onClick={() => {
+                setBulkPreview([{ name: 'Nova Disciplina', topics: [] }]);
+              }}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Adicionar Disciplina Manualmente
+            </Button>
+          )}
+
           {mode === 'single' && singlePreview.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
