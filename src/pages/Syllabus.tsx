@@ -803,7 +803,7 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
 export default function Syllabus() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
-  const { addTopic, clearTopicsByDiscipline, clearAllTopics } = useAppStore();
+  const { addTopic, addDiscipline, clearTopicsByDiscipline, clearAllTopics } = useAppStore();
   const [importOpen, setImportOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<string>('all');
@@ -813,7 +813,7 @@ export default function Syllabus() {
   const completedTopics = topics.filter((t) => t.completed).length;
   const globalPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
-  const handleImport = (disciplineId: string, topicTexts: string[]) => {
+  const handleImportSingle = (disciplineId: string, topicTexts: string[]) => {
     topicTexts.forEach((text, i) => {
       const topic: Topic = {
         id: crypto.randomUUID(),
@@ -825,6 +825,48 @@ export default function Syllabus() {
       addTopic(topic);
     });
     toast.success(`${topicTexts.length} tópicos importados com sucesso!`);
+  };
+
+  const handleImportBulk = (parsed: ParsedDiscipline[]) => {
+    let totalImported = 0;
+    let disciplinesCreated = 0;
+
+    parsed.forEach((disc) => {
+      let discipline = disciplines.find(
+        (d) => d.name.toLowerCase().trim() === disc.name.toLowerCase().trim()
+      );
+      if (!discipline) {
+        const newDisc: Discipline = {
+          id: crypto.randomUUID(),
+          name: disc.name,
+          category: 'mista',
+          weight: 0,
+          prova: 'P1',
+          defaultQuestions: 0,
+          order: disciplines.length + disciplinesCreated,
+        };
+        addDiscipline(newDisc);
+        discipline = newDisc;
+        disciplinesCreated++;
+      }
+
+      const existingCount = topics.filter((t) => t.disciplineId === discipline!.id).length;
+      disc.topics.forEach((text, i) => {
+        addTopic({
+          id: crypto.randomUUID(),
+          disciplineId: discipline!.id,
+          text,
+          completed: false,
+          order: existingCount + i,
+        });
+      });
+      totalImported += disc.topics.length;
+    });
+
+    const msg = disciplinesCreated > 0
+      ? `${totalImported} tópicos importados em ${parsed.length} disciplinas (${disciplinesCreated} nova${disciplinesCreated > 1 ? 's' : ''})!`
+      : `${totalImported} tópicos importados em ${parsed.length} disciplinas!`;
+    toast.success(msg);
   };
 
   // Filter disciplines
