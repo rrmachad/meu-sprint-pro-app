@@ -499,24 +499,24 @@ function CycleView({
   topics,
   onDelete,
   onActivate,
+  onUpdateBlocks,
 }: {
   cycle: StudyCycle;
   disciplines: { id: string; name: string }[];
   topics: { disciplineId: string; completed: boolean }[];
   onDelete: () => void;
   onActivate: () => void;
+  onUpdateBlocks: (blocks: CycleBlock[]) => void;
 }) {
+  const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const getDisciplineName = (id: string) => disciplines.find((d) => d.id === id)?.name || 'Disciplina';
 
-  // Group blocks by "day slots" (distribute blocks across study days)
   const dailyBlocks = useMemo(() => {
     const days: CycleBlock[][] = [];
     if (cycle.studyDays.length === 0) return days;
-
     const dailyMinutes = Math.round((cycle.weeklyHours * 60) / cycle.studyDays.length);
     let currentDay: CycleBlock[] = [];
     let currentDayMinutes = 0;
-
     for (const block of cycle.blocks) {
       if (currentDayMinutes + block.durationMinutes > dailyMinutes + 30 && currentDay.length > 0) {
         days.push(currentDay);
@@ -527,13 +527,11 @@ function CycleView({
       currentDayMinutes += block.durationMinutes;
     }
     if (currentDay.length > 0) days.push(currentDay);
-
     return days;
   }, [cycle]);
 
   const totalMinutes = cycle.blocks.reduce((a, b) => a + b.durationMinutes, 0);
 
-  // Discipline time summary
   const discSummary = useMemo(() => {
     const map: Record<string, number> = {};
     cycle.blocks.forEach((b) => {
@@ -543,6 +541,33 @@ function CycleView({
       .map(([id, mins]) => ({ name: getDisciplineName(id), minutes: mins }))
       .sort((a, b) => b.minutes - a.minutes);
   }, [cycle.blocks, disciplines]);
+
+  const updateBlock = (blockId: string, updates: Partial<CycleBlock>) => {
+    const newBlocks = cycle.blocks.map((b) =>
+      b.id === blockId ? { ...b, ...updates } : b
+    );
+    onUpdateBlocks(newBlocks);
+  };
+
+  const removeBlock = (blockId: string) => {
+    const newBlocks = cycle.blocks
+      .filter((b) => b.id !== blockId)
+      .map((b, i) => ({ ...b, number: i + 1 }));
+    onUpdateBlocks(newBlocks);
+    setEditingBlockId(null);
+  };
+
+  const addBlock = () => {
+    const defaultDisc = disciplines[0]?.id || '';
+    const newBlock: CycleBlock = {
+      id: crypto.randomUUID(),
+      number: cycle.blocks.length + 1,
+      disciplineId: defaultDisc,
+      durationMinutes: 60,
+    };
+    onUpdateBlocks([...cycle.blocks, newBlock]);
+    setEditingBlockId(newBlock.id);
+  };
 
   return (
     <Card className={cycle.active ? 'border-primary/50' : ''}>
@@ -568,7 +593,6 @@ function CycleView({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Time distribution */}
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground font-medium">Distribuição de tempo</Label>
           {discSummary.map((d, i) => (
@@ -584,7 +608,6 @@ function CycleView({
 
         <Separator />
 
-        {/* Daily schedule */}
         <Accordion type="multiple" className="space-y-1">
           {dailyBlocks.map((dayBlocks, dayIdx) => {
             const dayName = cycle.studyDays[dayIdx] !== undefined
@@ -605,28 +628,90 @@ function CycleView({
                 </AccordionTrigger>
                 <AccordionContent className="pb-3">
                   <div className="space-y-1.5">
-                    {dayBlocks.map((block, bi) => (
-                      <div
-                        key={block.id}
-                        className="flex items-center gap-3 rounded-md bg-muted/40 px-3 py-2"
-                      >
-                        <span className="text-xs text-muted-foreground w-8 shrink-0">
-                          B{bi + 1}
-                        </span>
-                        <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
-                        <span className="text-sm flex-1 truncate">{getDisciplineName(block.disciplineId)}</span>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                          <Clock className="h-3 w-3" />
-                          {block.durationMinutes}min
+                    {dayBlocks.map((block, bi) => {
+                      const isEditing = editingBlockId === block.id;
+
+                      return (
+                        <div key={block.id} className="rounded-md bg-muted/40 px-3 py-2">
+                          {isEditing ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground w-8 shrink-0">B{bi + 1}</span>
+                                <Select
+                                  value={block.disciplineId}
+                                  onValueChange={(v) => updateBlock(block.id, { disciplineId: v })}
+                                >
+                                  <SelectTrigger className="h-7 text-xs flex-1">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {disciplines.map((d) => (
+                                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                                  onClick={() => removeBlock(block.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 shrink-0"
+                                  onClick={() => setEditingBlockId(null)}
+                                >
+                                  <Check className="h-3.5 w-3.5 text-primary" />
+                                </Button>
+                              </div>
+                              <div className="flex items-center gap-2 ml-8">
+                                <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                                <Slider
+                                  value={[block.durationMinutes]}
+                                  onValueChange={([v]) => updateBlock(block.id, { durationMinutes: v })}
+                                  min={15}
+                                  max={180}
+                                  step={15}
+                                  className="flex-1"
+                                />
+                                <span className="text-xs text-muted-foreground w-12 text-right shrink-0">
+                                  {block.durationMinutes}min
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => setEditingBlockId(block.id)}
+                              title="Clique para editar"
+                            >
+                              <span className="text-xs text-muted-foreground w-8 shrink-0">B{bi + 1}</span>
+                              <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <span className="text-sm flex-1 truncate">{getDisciplineName(block.disciplineId)}</span>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                                <Clock className="h-3 w-3" />
+                                {block.durationMinutes}min
+                              </div>
+                              <Edit2 className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </AccordionContent>
               </AccordionItem>
             );
           })}
         </Accordion>
+
+        <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs" onClick={addBlock}>
+          <Plus className="h-3.5 w-3.5" />
+          Adicionar Bloco
+        </Button>
       </CardContent>
     </Card>
   );
