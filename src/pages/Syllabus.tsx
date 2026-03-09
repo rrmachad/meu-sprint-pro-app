@@ -364,7 +364,7 @@ function ImportDialog({
             Importação Inteligente do Edital
           </DialogTitle>
           <DialogDescription>
-            Importe o conteúdo programático do edital via PDF ou colando o texto. O sistema detecta disciplinas e tópicos automaticamente.
+            Importe o conteúdo programático do edital via PDF, TXT ou colando o texto. O sistema detecta disciplinas e tópicos automaticamente.
           </DialogDescription>
         </DialogHeader>
 
