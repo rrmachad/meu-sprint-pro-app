@@ -89,33 +89,61 @@ function splitTopics(rawText: string): string[] {
 
 // Common discipline keywords found in Brazilian public exam syllabi
 const DISCIPLINE_KEYWORDS = [
-  'língua portuguesa', 'português', 'matemática', 'matemática financeira',
-  'raciocínio lógico', 'raciocínio lógico-matemático',
+  // Línguas
+  'língua portuguesa', 'português', 'redação', 'redação oficial', 'redação discursiva',
+  'inglês', 'língua inglesa', 'espanhol', 'língua espanhola',
+  // Matemática e Raciocínio
+  'matemática', 'matemática financeira', 'raciocínio lógico', 'raciocínio lógico-matemático',
+  'raciocínio lógico e matemático', 'raciocínio analítico',
+  // Direito
   'direito constitucional', 'direito administrativo', 'direito penal',
+  'direito processual penal', 'direito processual civil',
   'direito civil', 'direito processual', 'direito tributário', 'direito do trabalho',
-  'direito empresarial', 'direito financeiro', 'direito eleitoral', 'direito ambiental',
+  'direito empresarial', 'direito comercial', 'direito financeiro',
+  'direito eleitoral', 'direito ambiental',
   'direito previdenciário', 'direito internacional', 'direitos humanos',
-  'd. constitucional', 'd. administrativo', 'd. penal', 'd. civil',
-  'd. empresarial', 'd. tributário', 'd. processual',
-  'informática', 'noções de informática', 'conhecimentos de informática',
-  'tecnologia da informação',
-  'administração', 'administração pública', 'administração geral',
-  'contabilidade', 'contabilidade geral', 'contabilidade pública', 'contabilidade de custos',
+  'direito econômico', 'direito digital',
+  // Contabilidade e Finanças
+  'contabilidade', 'contabilidade geral', 'contabilidade pública',
+  'contabilidade de custos', 'contabilidade avançada', 'contabilidade aplicada ao setor público',
   'custos', 'economia', 'finanças públicas', 'economia e finanças públicas',
-  'auditoria', 'legislação',
-  'legislação tributária', 'legislação tributária estadual', 'legislação específica',
+  'matemática financeira e estatística',
+  // Administração e Gestão
+  'administração', 'administração pública', 'administração geral',
+  'administração geral e pública', 'administração financeira e orçamentária',
+  'gestão de pessoas', 'gestão pública', 'políticas públicas',
+  'gestão de projetos', 'gestão de contratos',
+  // Auditoria e Controle
+  'auditoria', 'auditoria governamental', 'auditoria fiscal',
+  'controle externo', 'controle interno',
+  // Legislação
+  'legislação', 'legislação tributária', 'legislação tributária estadual',
+  'legislação tributária municipal', 'legislação tributária federal',
+  'legislação específica', 'legislação aduaneira',
+  'legislação aplicada', 'legislação penal especial',
+  // Informática
+  'informática', 'noções de informática', 'conhecimentos de informática',
+  'tecnologia da informação', 'ti', 'segurança da informação',
+  'redes de computadores', 'banco de dados', 'sistemas operacionais',
+  'engenharia de software', 'programação', 'governança de ti',
+  // Áreas Específicas
+  'estatística', 'arquivologia', 'biblioteconomia',
+  'comércio internacional', 'relações internacionais',
   'atualidades', 'realidade brasileira', 'geografia', 'história',
   'história e geografia', 'história e geografia de',
-  'ética', 'ética e filosofia', 'ética no serviço público',
-  'redação', 'redação oficial',
-  'gestão de pessoas', 'gestão pública', 'políticas públicas',
-  'estatística', 'arquivologia', 'biblioteconomia',
-  'segurança da informação', 'redes de computadores', 'banco de dados',
-  'sistemas operacionais', 'engenharia de software', 'programação',
+  'ética', 'ética e filosofia', 'ética no serviço público', 'ética profissional',
+  'orçamento público', 'afo', 'administração financeira',
   'código tributário', 'tributário',
   'conhecimentos específicos', 'conhecimentos gerais', 'conhecimentos básicos',
-  'conhecimentos complementares', 'noções de', 'fundamentos de',
-  'inglês', 'espanhol', 'penal', 'empresarial', 'civil',
+  'conhecimentos complementares',
+  'regulação', 'agências reguladoras',
+  'processo administrativo', 'licitações e contratos',
+  'regime jurídico', 'servidores públicos',
+  'sistema financeiro nacional', 'mercado de capitais',
+  'criminologia', 'medicina legal',
+  'engenharia', 'arquitetura', 'agronomia',
+  'saúde pública', 'enfermagem', 'farmácia',
+  'pedagogia', 'didática', 'legislação educacional',
 ];
 
 // Detect if a line is a discipline header
