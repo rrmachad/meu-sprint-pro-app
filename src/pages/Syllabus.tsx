@@ -469,7 +469,7 @@ function ImportDialog({
                 ) : (
                   <div className="flex flex-col items-center gap-2">
                     <FileUp className="h-10 w-10 text-muted-foreground/50" />
-                    <p className="text-sm font-medium">Clique para selecionar um PDF</p>
+                    <p className="text-sm font-medium">Clique para selecionar um PDF ou TXT</p>
                     <p className="text-xs text-muted-foreground">
                       O sistema extrairá o texto e detectará disciplinas e tópicos automaticamente
                     </p>
