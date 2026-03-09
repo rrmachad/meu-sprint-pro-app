@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3 } from 'lucide-react';
+import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useAppStore } from '@/store/useAppStore';
@@ -29,11 +29,14 @@ export default function Dashboard() {
   const studyRecords = useAppStore((s) => s.studyRecords);
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
+  const goals = useAppStore((s) => s.settings.goals);
+  const streak = useAppStore((s) => s.streak);
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
   const todaySeconds = todayRecords.reduce((a, r) => a + r.durationSeconds, 0);
   const todayQuestions = todayRecords.reduce((a, r) => a + r.correctAnswers + r.wrongAnswers + r.blankAnswers, 0);
+  const todayPages = todayRecords.reduce((a, r) => a + r.pagesRead, 0);
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -151,6 +154,98 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Daily Goals */}
+      {(goals.weeklyHours > 0 || goals.dailyQuestions > 0 || goals.dailyPages > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Target className="h-4 w-4 text-primary" />
+                Metas Diárias
+              </CardTitle>
+              {streak > 0 && (
+                <div className="flex items-center gap-1.5 text-xs font-medium text-orange-500">
+                  <Flame className="h-4 w-4" />
+                  {streak} dia{streak > 1 ? 's' : ''} seguidos
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Hours goal */}
+              {goals.weeklyHours > 0 && (() => {
+                const dailyGoalSeconds = (goals.weeklyHours / 7) * 3600;
+                const hoursPercent = dailyGoalSeconds > 0 ? Math.min(100, Math.round((todaySeconds / dailyGoalSeconds) * 100)) : 0;
+                const goalH = Math.floor(dailyGoalSeconds / 3600);
+                const goalM = Math.round((dailyGoalSeconds % 3600) / 60);
+                return (
+                  <div className="space-y-2 rounded-lg border border-border p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <Clock className="h-4 w-4 text-primary" />
+                        Horas
+                      </div>
+                      <span className={`text-xs font-semibold ${hoursPercent >= 100 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                        {hoursPercent >= 100 ? '✓ Concluído' : `${hoursPercent}%`}
+                      </span>
+                    </div>
+                    <Progress value={hoursPercent} className="h-2.5" />
+                    <p className="text-xs text-muted-foreground">
+                      {formatTime(todaySeconds)} / {goalH}h{goalM > 0 ? ` ${goalM}m` : ''}
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* Questions goal */}
+              {goals.dailyQuestions > 0 && (() => {
+                const questPercent = Math.min(100, Math.round((todayQuestions / goals.dailyQuestions) * 100));
+                return (
+                  <div className="space-y-2 rounded-lg border border-border p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        Questões
+                      </div>
+                      <span className={`text-xs font-semibold ${questPercent >= 100 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                        {questPercent >= 100 ? '✓ Concluído' : `${questPercent}%`}
+                      </span>
+                    </div>
+                    <Progress value={questPercent} className="h-2.5" />
+                    <p className="text-xs text-muted-foreground">
+                      {todayQuestions} / {goals.dailyQuestions} questões
+                    </p>
+                  </div>
+                );
+              })()}
+
+              {/* Pages goal */}
+              {goals.dailyPages > 0 && (() => {
+                const pagesPercent = Math.min(100, Math.round((todayPages / goals.dailyPages) * 100));
+                return (
+                  <div className="space-y-2 rounded-lg border border-border p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <FileText className="h-4 w-4 text-primary" />
+                        Páginas
+                      </div>
+                      <span className={`text-xs font-semibold ${pagesPercent >= 100 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                        {pagesPercent >= 100 ? '✓ Concluído' : `${pagesPercent}%`}
+                      </span>
+                    </div>
+                    <Progress value={pagesPercent} className="h-2.5" />
+                    <p className="text-xs text-muted-foreground">
+                      {todayPages} / {goals.dailyPages} páginas
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts Row */}
       {(disciplineProgress.length > 0 || studyHoursData.length > 0) && (
