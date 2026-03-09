@@ -305,11 +305,14 @@ function ImportDialog({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    const isTxt = file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt');
+    const fileName = file.name.toLowerCase();
+    const isPdf = file.type === 'application/pdf' || fileName.endsWith('.pdf');
+    const isTxt = file.type === 'text/plain' || fileName.endsWith('.txt');
+    const isDocx = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileName.endsWith('.docx');
+    const isDoc = file.type === 'application/msword' || fileName.endsWith('.doc');
 
-    if (!isPdf && !isTxt) {
-      toast.error('Por favor, selecione um arquivo PDF ou TXT.');
+    if (!isPdf && !isTxt && !isDocx && !isDoc) {
+      toast.error('Por favor, selecione um arquivo PDF, TXT, DOC ou DOCX.');
       return;
     }
 
@@ -319,6 +322,22 @@ function ImportDialog({
       let text = '';
       if (isPdf) {
         text = await extractPdfText(file);
+      } else if (isDocx) {
+        const mammoth = await import('mammoth');
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        text = result.value;
+      } else if (isDoc) {
+        // .doc (legacy format) - try reading as text; mammoth may partially support it
+        try {
+          const mammoth = await import('mammoth');
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          text = result.value;
+        } catch {
+          // Fallback: read as text
+          text = await file.text();
+        }
       } else {
         text = await file.text();
       }
@@ -329,7 +348,8 @@ function ImportDialog({
       } else {
         setBulkPreview(parseFullSyllabus(text));
       }
-      toast.success(`${isPdf ? 'PDF' : 'TXT'} processado com sucesso!`);
+      const ext = fileName.split('.').pop()?.toUpperCase() || 'Arquivo';
+      toast.success(`${ext} processado com sucesso!`);
     } catch (err) {
       console.error('File extraction error:', err);
       toast.error('Erro ao processar o arquivo. Tente copiar e colar o texto manualmente.');
