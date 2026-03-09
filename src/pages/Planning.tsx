@@ -518,6 +518,7 @@ function CycleView({
   onUpdateBlocks: (blocks: CycleBlock[]) => void;
 }) {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const getDisciplineName = (id: string) => disciplines.find((d) => d.id === id)?.name || 'Disciplina';
 
   const dailyBlocks = useMemo(() => {
