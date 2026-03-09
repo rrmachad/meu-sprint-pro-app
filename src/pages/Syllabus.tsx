@@ -89,24 +89,33 @@ function splitTopics(rawText: string): string[] {
 
 // Common discipline keywords found in Brazilian public exam syllabi
 const DISCIPLINE_KEYWORDS = [
-  'língua portuguesa', 'português', 'matemática', 'raciocínio lógico',
+  'língua portuguesa', 'português', 'matemática', 'matemática financeira',
+  'raciocínio lógico', 'raciocínio lógico-matemático',
   'direito constitucional', 'direito administrativo', 'direito penal',
   'direito civil', 'direito processual', 'direito tributário', 'direito do trabalho',
   'direito empresarial', 'direito financeiro', 'direito eleitoral', 'direito ambiental',
   'direito previdenciário', 'direito internacional', 'direitos humanos',
+  'd. constitucional', 'd. administrativo', 'd. penal', 'd. civil',
+  'd. empresarial', 'd. tributário', 'd. processual',
   'informática', 'noções de informática', 'conhecimentos de informática',
+  'tecnologia da informação',
   'administração', 'administração pública', 'administração geral',
-  'contabilidade', 'contabilidade geral', 'contabilidade pública',
-  'economia', 'finanças públicas', 'auditoria', 'legislação',
+  'contabilidade', 'contabilidade geral', 'contabilidade pública', 'contabilidade de custos',
+  'custos', 'economia', 'finanças públicas', 'economia e finanças públicas',
+  'auditoria', 'legislação',
+  'legislação tributária', 'legislação tributária estadual', 'legislação específica',
   'atualidades', 'realidade brasileira', 'geografia', 'história',
-  'ética', 'ética no serviço público', 'redação', 'redação oficial',
+  'história e geografia', 'história e geografia de',
+  'ética', 'ética e filosofia', 'ética no serviço público',
+  'redação', 'redação oficial',
   'gestão de pessoas', 'gestão pública', 'políticas públicas',
   'estatística', 'arquivologia', 'biblioteconomia',
   'segurança da informação', 'redes de computadores', 'banco de dados',
   'sistemas operacionais', 'engenharia de software', 'programação',
-  'código tributário', 'legislação tributária', 'legislação específica',
+  'código tributário', 'tributário',
   'conhecimentos específicos', 'conhecimentos gerais', 'conhecimentos básicos',
   'conhecimentos complementares', 'noções de', 'fundamentos de',
+  'inglês', 'espanhol', 'penal', 'empresarial', 'civil',
 ];
 
 // Detect if a line is a discipline header
