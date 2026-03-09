@@ -1196,6 +1196,12 @@ export default function Syllabus() {
             Importar Edital
           </Button>
           {totalTopics > 0 && (
+            <Button variant="outline" onClick={() => setExportOpen(true)} className="gap-2">
+              <Download className="h-4 w-4" />
+              Exportar PDF
+            </Button>
+          )}
+          {totalTopics > 0 && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1 text-muted-foreground">
