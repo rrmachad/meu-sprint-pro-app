@@ -301,9 +301,9 @@ function ImportDialog({
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const [isDragging, setIsDragging] = useState(false);
+
+  const processFile = async (file: File) => {
 
     const fileName = file.name.toLowerCase();
     const isPdf = file.type === 'application/pdf' || fileName.endsWith('.pdf');
