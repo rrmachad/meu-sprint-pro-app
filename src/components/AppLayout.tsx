@@ -2,7 +2,8 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { StudyTimer } from '@/components/StudyTimer';
 import { useAppStore } from '@/store/useAppStore';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export function AppLayout() {
   const contestName = useAppStore((s) => s.settings.contest.name);
