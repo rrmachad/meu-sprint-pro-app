@@ -29,11 +29,14 @@ export default function Dashboard() {
   const studyRecords = useAppStore((s) => s.studyRecords);
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
+  const goals = useAppStore((s) => s.settings.goals);
+  const streak = useAppStore((s) => s.streak);
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
   const todaySeconds = todayRecords.reduce((a, r) => a + r.durationSeconds, 0);
   const todayQuestions = todayRecords.reduce((a, r) => a + r.correctAnswers + r.wrongAnswers + r.blankAnswers, 0);
+  const todayPages = todayRecords.reduce((a, r) => a + r.pagesRead, 0);
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
