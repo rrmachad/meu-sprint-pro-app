@@ -534,9 +534,9 @@ function GenerateDialog({
               </div>
               <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Peso 35%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Importância 25%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Situação 25%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Dificuldade 15%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-chart-1" /> Importância 25%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-chart-4" /> Situação 25%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-destructive" /> Dificuldade 15%</span>
               </div>
             </div>
           )}
