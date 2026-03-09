@@ -636,6 +636,7 @@ function CycleView({
 export default function Planning() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
+  const studyRecords = useAppStore((s) => s.studyRecords);
   const cycles = useAppStore((s) => s.cycles);
   const settings = useAppStore((s) => s.settings);
   const { addCycle, removeCycle, setActiveCycle } = useAppStore();
