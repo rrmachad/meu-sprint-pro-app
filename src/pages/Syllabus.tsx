@@ -493,6 +493,7 @@ export default function Syllabus() {
   const [importOpen, setImportOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const totalTopics = topics.length;
   const completedTopics = topics.filter((t) => t.completed).length;
