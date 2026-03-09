@@ -87,10 +87,37 @@ function splitTopics(rawText: string): string[] {
     .filter((t) => t.length > 2);
 }
 
+// Common discipline keywords found in Brazilian public exam syllabi
+const DISCIPLINE_KEYWORDS = [
+  'língua portuguesa', 'português', 'matemática', 'raciocínio lógico',
+  'direito constitucional', 'direito administrativo', 'direito penal',
+  'direito civil', 'direito processual', 'direito tributário', 'direito do trabalho',
+  'direito empresarial', 'direito financeiro', 'direito eleitoral', 'direito ambiental',
+  'direito previdenciário', 'direito internacional', 'direitos humanos',
+  'informática', 'noções de informática', 'conhecimentos de informática',
+  'administração', 'administração pública', 'administração geral',
+  'contabilidade', 'contabilidade geral', 'contabilidade pública',
+  'economia', 'finanças públicas', 'auditoria', 'legislação',
+  'atualidades', 'realidade brasileira', 'geografia', 'história',
+  'ética', 'ética no serviço público', 'redação', 'redação oficial',
+  'gestão de pessoas', 'gestão pública', 'políticas públicas',
+  'estatística', 'arquivologia', 'biblioteconomia',
+  'segurança da informação', 'redes de computadores', 'banco de dados',
+  'sistemas operacionais', 'engenharia de software', 'programação',
+  'código tributário', 'legislação tributária', 'legislação específica',
+  'conhecimentos específicos', 'conhecimentos gerais', 'conhecimentos básicos',
+  'conhecimentos complementares', 'noções de', 'fundamentos de',
+];
+
 // Detect if a line is a discipline header
 function isDisciplineHeader(line: string): boolean {
   const trimmed = line.trim();
-  if (trimmed.length < 3 || trimmed.length > 120) return false;
+  if (trimmed.length < 3 || trimmed.length > 150) return false;
+
+  const lower = trimmed.toLowerCase();
+
+  // Check against known discipline keywords
+  const matchesKeyword = DISCIPLINE_KEYWORDS.some((kw) => lower.includes(kw));
 
   // Pattern: starts with number like "1.", "1)", "1 -", "I.", "I -"
   const numberedHeader = /^(\d+|[IVXLC]+)[.)\-–—]\s*.+/i.test(trimmed);
@@ -100,10 +127,11 @@ function isDisciplineHeader(line: string): boolean {
   const isAllCaps = upperRatio > 0.6 && letters.length > 3;
   // Pattern: ends with ":"
   const endsWithColon = trimmed.endsWith(':');
-  // Pattern: "DISCIPLINA:" or "1. DISCIPLINA:" or "DISCIPLINA"
   // Should NOT contain too many separators (topics use . and ;)
   const hasFewSeparators = (trimmed.match(/[.;]/g) || []).length <= 2;
 
+  // A line is a header if it matches keyword OR structural patterns
+  if (matchesKeyword && hasFewSeparators) return true;
   return hasFewSeparators && (numberedHeader || isAllCaps || endsWithColon);
 }
 
@@ -122,7 +150,9 @@ interface ParsedDiscipline {
 }
 
 function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
-  const lines = rawText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+  // Normalize: replace multiple spaces with single, split into lines
+  const normalizedText = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalizedText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
   const result: ParsedDiscipline[] = [];
   let currentDiscipline: ParsedDiscipline | null = null;
   let contentBuffer = '';
@@ -136,15 +166,42 @@ function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
   };
 
   for (const line of lines) {
+    // Try to detect if line contains a discipline header possibly followed by content
+    // e.g. "LÍNGUA PORTUGUESA Ortografia e acentuação. Emprego do sinal..."
+    // Check if the beginning of the line matches a discipline pattern
+    let headerPart = '';
+    let remainingPart = '';
+
     if (isDisciplineHeader(line)) {
+      headerPart = line;
+    } else {
+      // Check if line starts with a known keyword followed by content
+      for (const kw of DISCIPLINE_KEYWORDS) {
+        const idx = line.toLowerCase().indexOf(kw);
+        if (idx === 0 || (idx > 0 && /^[\d.)\-–— ]*$/.test(line.substring(0, idx)))) {
+          // Check if after the keyword there's topic content (contains . or ;)
+          const afterKeyword = line.substring(idx + kw.length).trim();
+          if (afterKeyword.length > 10 && /[.;]/.test(afterKeyword)) {
+            headerPart = line.substring(0, idx + kw.length).trim();
+            remainingPart = afterKeyword;
+            break;
+          } else if (afterKeyword.length <= 10 || !afterKeyword) {
+            headerPart = line;
+            break;
+          }
+        }
+      }
+    }
+
+    if (headerPart) {
       flushBuffer();
       if (currentDiscipline && currentDiscipline.topics.length > 0) {
         result.push(currentDiscipline);
-      } else if (currentDiscipline && currentDiscipline.topics.length === 0) {
-        // Header without topics — might be a false positive, add back
-        // But still create new discipline
       }
-      currentDiscipline = { name: cleanDisciplineName(line), topics: [] };
+      currentDiscipline = { name: cleanDisciplineName(headerPart), topics: [] };
+      if (remainingPart) {
+        contentBuffer = remainingPart;
+      }
     } else {
       contentBuffer += ' ' + line;
     }
@@ -156,7 +213,7 @@ function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
     result.push(currentDiscipline);
   }
 
-  // If no disciplines detected, treat everything as topics under "Geral"
+  // If no disciplines detected, treat everything as topics under "Conteúdo Geral"
   if (result.length === 0) {
     const allTopics = splitTopics(rawText);
     if (allTopics.length > 0) {
@@ -235,17 +292,27 @@ function ImportDialog({
     }
   };
 
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      toast.error('Por favor, selecione um arquivo PDF.');
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isTxt = file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt');
+
+    if (!isPdf && !isTxt) {
+      toast.error('Por favor, selecione um arquivo PDF ou TXT.');
       return;
     }
+
     setPdfFileName(file.name);
     setLoading(true);
     try {
-      const text = await extractPdfText(file);
+      let text = '';
+      if (isPdf) {
+        text = await extractPdfText(file);
+      } else {
+        text = await file.text();
+      }
       setRawText(text);
       // Auto-analyze
       if (mode === 'single') {
@@ -253,10 +320,10 @@ function ImportDialog({
       } else {
         setBulkPreview(parseFullSyllabus(text));
       }
-      toast.success('PDF processado com sucesso!');
+      toast.success(`${isPdf ? 'PDF' : 'TXT'} processado com sucesso!`);
     } catch (err) {
-      console.error('PDF extraction error:', err);
-      toast.error('Erro ao processar o PDF. Tente copiar e colar o texto manualmente.');
+      console.error('File extraction error:', err);
+      toast.error('Erro ao processar o arquivo. Tente copiar e colar o texto manualmente.');
     } finally {
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -297,7 +364,7 @@ function ImportDialog({
             Importação Inteligente do Edital
           </DialogTitle>
           <DialogDescription>
-            Importe o conteúdo programático do edital via PDF ou colando o texto. O sistema detecta disciplinas e tópicos automaticamente.
+            Importe o conteúdo programático do edital via PDF, TXT ou colando o texto. O sistema detecta disciplinas e tópicos automaticamente.
           </DialogDescription>
         </DialogHeader>
 
@@ -353,7 +420,7 @@ function ImportDialog({
               </TabsTrigger>
               <TabsTrigger value="pdf" className="flex-1 gap-1.5">
                 <FileUp className="h-3.5 w-3.5" />
-                Importar PDF
+                Importar PDF / TXT
               </TabsTrigger>
             </TabsList>
 
@@ -384,9 +451,9 @@ function ImportDialog({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.txt"
                   className="hidden"
-                  onChange={handlePdfUpload}
+                  onChange={handleFileUpload}
                 />
                 {loading ? (
                   <div className="flex flex-col items-center gap-2">
@@ -402,7 +469,7 @@ function ImportDialog({
                 ) : (
                   <div className="flex flex-col items-center gap-2">
                     <FileUp className="h-10 w-10 text-muted-foreground/50" />
-                    <p className="text-sm font-medium">Clique para selecionar um PDF</p>
+                    <p className="text-sm font-medium">Clique para selecionar um PDF ou TXT</p>
                     <p className="text-xs text-muted-foreground">
                       O sistema extrairá o texto e detectará disciplinas e tópicos automaticamente
                     </p>
