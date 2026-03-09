@@ -1,7 +1,7 @@
 // ============ ENUMS ============
 
 export type DisciplineCategory = 'exatas' | 'humanas' | 'juridicas' | 'mista';
-export type ProvaType = 'P1' | 'P2' | 'ambas';
+export type ProvaType = string; // 'P1' | 'P2' | 'P3' etc.
 export type Importance = 'alta' | 'media' | 'baixa';
 export type UserSituation = 'nunca_estudei' | 'razoavelmente' | 'ja_estudei';
 export type Difficulty = 'muita_facilidade' | 'leve_facilidade' | 'normal' | 'leve_dificuldade' | 'muita_dificuldade';
