@@ -29,7 +29,13 @@ export function AppSidebar() {
   const location = useLocation();
   const streak = useAppStore((s) => s.streak);
   const topics = useAppStore((s) => s.topics);
+  const revisions = useAppStore((s) => s.revisions);
   const { theme, setTheme } = useTheme();
+
+  const pendingRevisionCount = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return revisions.filter((r) => !r.completed && r.dueDate <= today).length;
+  }, [revisions]);
 
   const completedTopics = topics.filter((t) => t.completed).length;
   const totalTopics = topics.length;
