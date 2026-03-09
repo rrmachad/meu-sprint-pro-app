@@ -555,7 +555,7 @@ export default function Indicators() {
           {/* ── Radar / Visão Geral ── */}
           <TabsContent value="radar" className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
-              <Card className="glass">
+              <Card className="glass" data-pdf-chart="Desempenho Multidimensional">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Desempenho Multidimensional</CardTitle>
                 </CardHeader>
