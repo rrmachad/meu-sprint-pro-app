@@ -301,9 +301,9 @@ function ImportDialog({
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const [isDragging, setIsDragging] = useState(false);
+
+  const processFile = async (file: File) => {
 
     const fileName = file.name.toLowerCase();
     const isPdf = file.type === 'application/pdf' || fileName.endsWith('.pdf');
@@ -357,6 +357,35 @@ function ImportDialog({
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    setTab('pdf');
+    await processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
   };
 
   const handleImport = () => {
@@ -474,8 +503,13 @@ function ImportDialog({
 
             <TabsContent value="pdf" className="space-y-3 mt-3">
               <div
-                className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                  isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                }`}
                 onClick={() => fileInputRef.current?.click()}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
               >
                 <input
                   ref={fileInputRef}
@@ -487,20 +521,25 @@ function ImportDialog({
                 {loading ? (
                   <div className="flex flex-col items-center gap-2">
                     <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                    <p className="text-sm text-muted-foreground">Processando PDF...</p>
+                    <p className="text-sm text-muted-foreground">Processando arquivo...</p>
+                  </div>
+                ) : isDragging ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-10 w-10 text-primary animate-bounce" />
+                    <p className="text-sm font-medium text-primary">Solte o arquivo aqui</p>
                   </div>
                 ) : pdfFileName ? (
                   <div className="flex flex-col items-center gap-2">
                     <FileText className="h-10 w-10 text-primary" />
                     <p className="text-sm font-medium">{pdfFileName}</p>
-                    <p className="text-xs text-muted-foreground">Clique para trocar o arquivo</p>
+                    <p className="text-xs text-muted-foreground">Clique ou arraste para trocar o arquivo</p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2">
                     <FileUp className="h-10 w-10 text-muted-foreground/50" />
-                    <p className="text-sm font-medium">Clique para selecionar PDF, TXT, DOC ou DOCX</p>
+                    <p className="text-sm font-medium">Arraste e solte ou clique para selecionar</p>
                     <p className="text-xs text-muted-foreground">
-                      O sistema extrairá o texto e detectará disciplinas e tópicos automaticamente
+                      PDF, TXT, DOC ou DOCX — detecção automática de disciplinas e tópicos
                     </p>
                   </div>
                 )}
