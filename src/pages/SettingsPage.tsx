@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
-import type { Discipline, DisciplineCategory, ProvaType, RevisionMark } from '@/types';
+import type { Discipline, DisciplineCategory, ProvaPhase, RevisionMark } from '@/types';
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
@@ -60,11 +60,37 @@ function ContestTab() {
   const settings = useAppStore((s) => s.settings);
   const updateSettings = useAppStore((s) => s.updateSettings);
 
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60 }];
+  const totalMinPercent = settings.contest.totalMinPercent ?? 70;
+
   const update = (field: string, value: string | number) => {
     updateSettings({
       contest: { ...settings.contest, [field]: value },
     });
     toast.success('Salvo com sucesso!');
+  };
+
+  const updatePhases = (newPhases: ProvaPhase[]) => {
+    updateSettings({
+      contest: { ...settings.contest, phases: newPhases },
+    });
+  };
+
+  const addPhase = () => {
+    const newPhases = [...phases, { name: `P${phases.length + 1}`, minPercent: 60 }];
+    updatePhases(newPhases);
+    toast.success('Fase adicionada!');
+  };
+
+  const removePhase = (index: number) => {
+    updatePhases(phases.filter((_, i) => i !== index));
+    toast.success('Fase removida!');
+  };
+
+  const updatePhase = (index: number, field: keyof ProvaPhase, value: string | number) => {
+    const updated = [...phases];
+    updated[index] = { ...updated[index], [field]: value };
+    updatePhases(updated);
   };
 
   return (
@@ -139,12 +165,80 @@ function ContestTab() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Fases da Prova */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-primary" />
+                Fases da Prova
+              </CardTitle>
+              <CardDescription>Configure as fases (P1, P2, P3…) e seus percentuais mínimos.</CardDescription>
+            </div>
+            <Button onClick={addPhase} size="sm" className="gap-1">
+              <Plus className="h-4 w-4" /> Adicionar Fase
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {phases.map((phase, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border">
+              <div className="space-y-1 flex-1">
+                <Label className="text-xs text-muted-foreground">Nome da Fase</Label>
+                <Input
+                  value={phase.name}
+                  onChange={(e) => updatePhase(i, 'name', e.target.value)}
+                  className="h-8 text-sm"
+                  placeholder="Ex: P1"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Mínimo (%)</Label>
+                <Input
+                  type="number"
+                  value={phase.minPercent}
+                  onChange={(e) => updatePhase(i, 'minPercent', Number(e.target.value))}
+                  min={0} max={100}
+                  className="h-8 w-20 text-sm"
+                />
+              </div>
+              {phases.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 text-muted-foreground hover:text-destructive h-8 w-8 mt-5"
+                  onClick={() => removePhase(i)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          ))}
+
+          <Separator />
+
+          <div className="space-y-2">
+            <Label>Mínimo Geral (%)</Label>
+            <Input
+              type="number"
+              value={totalMinPercent}
+              onChange={(e) => update('totalMinPercent', Number(e.target.value))}
+              min={0} max={100}
+              className="w-24"
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
 // ==================== DISCIPLINES TAB ====================
 function DisciplinesTab() {
+  const settings = useAppStore((s) => s.settings);
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60 }];
   const disciplines = useAppStore((s) => s.disciplines);
   const addDiscipline = useAppStore((s) => s.addDiscipline);
   const updateDiscipline = useAppStore((s) => s.updateDiscipline);
@@ -156,7 +250,7 @@ function DisciplinesTab() {
     name: '',
     category: 'humanas' as DisciplineCategory,
     weight: 10,
-    prova: 'P1' as ProvaType,
+    prova: 'P1' as string,
     defaultQuestions: 10,
   });
 
@@ -323,13 +417,16 @@ function DisciplinesTab() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Prova</Label>
-                <Select value={form.prova} onValueChange={(v) => setForm({ ...form, prova: v as ProvaType })}>
+                <Label>Prova/Fase</Label>
+                <Select value={form.prova} onValueChange={(v) => setForm({ ...form, prova: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="P1">P1</SelectItem>
-                    <SelectItem value="P2">P2</SelectItem>
-                    <SelectItem value="ambas">Ambas</SelectItem>
+                    {phases.map((p) => (
+                      <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                    ))}
+                    {phases.length > 1 && (
+                      <SelectItem value="todas">Todas</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
