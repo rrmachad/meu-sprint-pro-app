@@ -45,7 +45,7 @@ interface DisciplineForm {
   category: DisciplineCategory;
   questions: number;
   weightPerQuestion: number;
-  prova: ProvaType;
+  prova: string;
 }
 
 export function SetupWizard() {
