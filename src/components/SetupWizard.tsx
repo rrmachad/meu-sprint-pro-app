@@ -170,35 +170,38 @@ export function SetupWizard() {
   const StepIcon = STEPS[step].icon;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-background gradient-mesh p-4">
+      <Card className="w-full max-w-2xl glass-strong shadow-elevated border-border/50">
         <CardContent className="p-6 md:p-8">
           {/* Header */}
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <div className="relative flex h-11 w-11 items-center justify-center rounded-xl gradient-primary shadow-glow-sm shrink-0">
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
+              <div className="absolute -inset-0.5 rounded-xl bg-primary/20 blur-sm -z-10" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">ConcurseiroElite</h1>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">ConcurseiroElite</h1>
               <p className="text-xs text-muted-foreground">Configuração Inicial</p>
             </div>
           </div>
 
           {/* Progress */}
-          <div className="flex gap-1 my-6">
+          <div className="flex gap-1.5 my-6">
             {STEPS.map((_, i) => (
               <div
                 key={i}
-                className={`h-1.5 flex-1 rounded-full transition-colors ${
-                  i <= step ? 'bg-primary' : 'bg-muted'
+                className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+                  i <= step ? 'gradient-primary shadow-glow-sm' : 'bg-muted'
                 }`}
               />
             ))}
           </div>
 
           {/* Step info */}
-          <div className="flex items-center gap-2 mb-6">
-            <StepIcon className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-muted/30 border border-border/30">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+              <StepIcon className="h-4 w-4 text-primary" />
+            </div>
             <div>
               <p className="text-sm font-semibold text-foreground">
                 Passo {step + 1} de {STEPS.length} — {STEPS[step].title}
