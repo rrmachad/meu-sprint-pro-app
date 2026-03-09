@@ -513,7 +513,26 @@ function ImportDialog({
                   <div key={di}>
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant="default" className="text-[10px]">{disc.topics.length}</Badge>
-                      <span className="text-sm font-semibold text-foreground">{disc.name}</span>
+                      <Input
+                        value={disc.name}
+                        onChange={(e) => {
+                          const updated = [...bulkPreview];
+                          updated[di] = { ...updated[di], name: e.target.value };
+                          setBulkPreview(updated);
+                        }}
+                        className="h-7 text-sm font-semibold border-transparent hover:border-border focus:border-border bg-transparent px-1.5"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                        onClick={() => {
+                          setBulkPreview(bulkPreview.filter((_, i) => i !== di));
+                        }}
+                        title="Remover disciplina"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                     <div className="pl-4 space-y-0.5">
                       {disc.topics.map((topic, ti) => (
