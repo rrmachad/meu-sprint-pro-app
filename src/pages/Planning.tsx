@@ -136,19 +136,48 @@ function computeScores(
 
 function generateBlocks(
   scores: DisciplineScore[],
-  totalMinutesPerDay: number,
+  totalWeeklyMinutes: number,
   daysCount: number,
 ): CycleBlock[] {
-  if (scores.length === 0) return [];
+  if (scores.length === 0 || daysCount === 0) return [];
 
-  const totalMinutes = totalMinutesPerDay * daysCount;
   const totalScore = scores.reduce((a, s) => a + s.score, 0);
 
-  // Allocate minutes proportionally to score, minimum 30min
-  const allocated = scores.map((s) => ({
+  // Allocate minutes proportionally, ensuring total == totalWeeklyMinutes
+  const rawAllocations = scores.map((s) => ({
     ...s,
-    allocatedMinutes: Math.max(30, Math.round((s.score / totalScore) * totalMinutes)),
+    rawMinutes: (s.score / totalScore) * totalWeeklyMinutes,
   }));
+
+  // Round to nearest 5min, minimum 30min per discipline
+  let allocated = rawAllocations.map((s) => ({
+    ...s,
+    allocatedMinutes: Math.max(30, Math.round(s.rawMinutes / 5) * 5),
+  }));
+
+  // Adjust to exactly match totalWeeklyMinutes
+  let currentTotal = allocated.reduce((a, s) => a + s.allocatedMinutes, 0);
+  let diff = totalWeeklyMinutes - currentTotal;
+
+  // Sort by score descending to adjust highest-priority disciplines first
+  const sorted = [...allocated].sort((a, b) => b.score - a.score);
+  let idx = 0;
+  while (diff !== 0 && idx < sorted.length * 3) {
+    const target = sorted[idx % sorted.length];
+    const entry = allocated.find((a) => a.disciplineId === target.disciplineId)!;
+    if (diff > 0) {
+      const add = Math.min(diff, 5);
+      entry.allocatedMinutes += add;
+      diff -= add;
+    } else {
+      const sub = Math.min(-diff, 5);
+      if (entry.allocatedMinutes - sub >= 30) {
+        entry.allocatedMinutes -= sub;
+        diff += sub;
+      }
+    }
+    idx++;
+  }
 
   // Generate blocks (30-120min each)
   const blocks: CycleBlock[] = [];
@@ -157,10 +186,9 @@ function generateBlocks(
   for (const disc of allocated.sort((a, b) => b.score - a.score)) {
     let remaining = disc.allocatedMinutes;
     while (remaining >= 30) {
-      // Prefer blocks of 60-90min for optimal study sessions
       let duration: number;
       if (remaining >= 120) {
-        duration = 90; // Optimal block size
+        duration = 90;
       } else if (remaining >= 60) {
         duration = Math.min(remaining, 90);
       } else {
@@ -176,22 +204,19 @@ function generateBlocks(
     }
   }
 
-  // Smart reorder: alternate disciplines, distribute across days evenly
+  // Smart reorder: alternate disciplines
   const reordered: CycleBlock[] = [];
   const pool = [...blocks];
   let lastDiscipline = '';
   let secondLastDiscipline = '';
 
   while (pool.length > 0) {
-    // Try to find a block that's different from last 2 disciplines
     let nextIdx = pool.findIndex((b) =>
       b.disciplineId !== lastDiscipline && b.disciplineId !== secondLastDiscipline
     );
-    // Fallback: different from last
     if (nextIdx < 0) {
       nextIdx = pool.findIndex((b) => b.disciplineId !== lastDiscipline);
     }
-    // Final fallback: take first available
     if (nextIdx < 0) nextIdx = 0;
 
     const block = pool.splice(nextIdx, 1)[0];
