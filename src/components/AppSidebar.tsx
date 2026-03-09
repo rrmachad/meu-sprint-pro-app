@@ -1,7 +1,8 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
-  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon,
+  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon, Bell,
 } from 'lucide-react';
+import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
