@@ -626,12 +626,23 @@ export default function Syllabus() {
                   </SelectContent>
                 </Select>
 
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar tópico..."
+                    className="h-8 w-[200px] pl-7 text-xs"
+                  />
+                </div>
+
                 {activeFilterCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-8 text-xs gap-1"
-                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); }}
+                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}
                   >
                     <X className="h-3 w-3" /> Limpar filtros
                   </Button>
