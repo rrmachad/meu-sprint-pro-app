@@ -175,7 +175,10 @@ export default function Indicators() {
 
   const exportPdf = useCallback(async () => {
     try {
-      const { jsPDF } = await import('jspdf');
+      const [{ jsPDF }, html2canvas] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas').then((m) => m.default),
+      ]);
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pw = doc.internal.pageSize.getWidth();
       const margin = 15;
@@ -229,11 +232,38 @@ export default function Indicators() {
       y += 2;
       addSeparator();
 
-      // Per discipline
+      // ── Capture charts as images ──
+      if (chartsRef.current) {
+        const chartCards = chartsRef.current.querySelectorAll<HTMLElement>('[data-pdf-chart]');
+        for (const chartEl of chartCards) {
+          const title = chartEl.getAttribute('data-pdf-chart') || 'Gráfico';
+          
+          // Check if we need a new page
+          if (y > 120) { doc.addPage(); y = 20; }
+          
+          addLine(title, 12, true, [26, 42, 108]);
+          y += 2;
+
+          const canvas = await html2canvas(chartEl, {
+            scale: 2,
+            backgroundColor: '#0f1729',
+            logging: false,
+            useCORS: true,
+          });
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = pw - margin * 2;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          const finalHeight = Math.min(imgHeight, 120); // cap height
+
+          doc.addImage(imgData, 'PNG', margin, y, imgWidth, finalHeight);
+          y += finalHeight + 6;
+        }
+        addSeparator();
+      }
+
+      // Per discipline table
       addLine('Desempenho por Disciplina', 14, true, [26, 42, 108]);
       y += 2;
-
-      // Table header
       doc.setFillColor(240, 240, 245);
       doc.rect(margin, y - 4, pw - margin * 2, 7, 'F');
       doc.setFontSize(8);
@@ -244,7 +274,6 @@ export default function Indicators() {
         doc.text(h, cols[i], y);
       });
       y += 5;
-
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(50, 50, 50);
       disciplineStats.forEach((d) => {
@@ -258,11 +287,10 @@ export default function Indicators() {
         doc.text(`${d.topicProgress}%`, cols[4], y);
         y += 5;
       });
-
       y += 4;
       addSeparator();
 
-      // Last 7 days history
+      // Last 7 days
       addLine('Histórico — Últimos 7 dias', 14, true, [26, 42, 108]);
       y += 2;
       const recent7 = last30Days.slice(-7);
@@ -285,7 +313,6 @@ export default function Indicators() {
         doc.text(`${d.hitRate}%`, cols[3], y);
         y += 5;
       });
-
       y += 4;
       addSeparator();
 
