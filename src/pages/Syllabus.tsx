@@ -721,10 +721,22 @@ function ImportDialog({
                   </div>
                 ))}
               </div>
+              {/* Add discipline manually */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => {
+                  setBulkPreview([...bulkPreview, { name: 'Nova Disciplina', topics: [] }]);
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Adicionar Disciplina Manualmente
+              </Button>
               <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                 <span>
-                  Disciplinas que ainda não existem serão criadas automaticamente ao importar.
+                  Disciplinas que ainda não existem serão criadas automaticamente ao importar. Você pode adicionar disciplinas não detectadas manualmente.
                 </span>
               </div>
             </div>
