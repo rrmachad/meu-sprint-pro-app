@@ -455,7 +455,7 @@ export default function Indicators() {
             </Card>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <Card className="glass">
+              <Card className="glass" data-pdf-chart="Questões por Dia">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Target className="h-4 w-4 text-accent" />
