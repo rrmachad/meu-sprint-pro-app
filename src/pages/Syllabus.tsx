@@ -866,12 +866,235 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
   );
 }
 
+// ========== PDF EXPORT ==========
+function ExportPdfDialog({
+  open,
+  onOpenChange,
+  disciplines,
+  topics,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  disciplines: Discipline[];
+  topics: Topic[];
+}) {
+  const [exporting, setExporting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentDiscipline, setCurrentDiscipline] = useState('');
+
+  const handleExport = async () => {
+    setExporting(true);
+    setProgress(0);
+
+    try {
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 15;
+      const contentWidth = pageWidth - margin * 2;
+      let y = margin;
+
+      // Title page
+      pdf.setFontSize(22);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Edital Verticalizado', pageWidth / 2, 40, { align: 'center' });
+
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      const totalTopics = topics.length;
+      const completedTopics = topics.filter(t => t.completed).length;
+      const globalPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+      pdf.text(`Progresso Geral: ${completedTopics}/${totalTopics} tópicos (${globalPercent}%)`, pageWidth / 2, 52, { align: 'center' });
+      pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, 60, { align: 'center' });
+
+      // Progress bar on title page
+      const barX = margin + 20;
+      const barW = contentWidth - 40;
+      const barY = 68;
+      const barH = 6;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setFillColor(230, 230, 230);
+      pdf.roundedRect(barX, barY, barW, barH, 2, 2, 'FD');
+      if (globalPercent > 0) {
+        pdf.setFillColor(34, 197, 94);
+        pdf.roundedRect(barX, barY, barW * (globalPercent / 100), barH, 2, 2, 'F');
+      }
+
+      // Summary table
+      y = 85;
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Resumo por Disciplina', margin, y);
+      y += 8;
+
+      const sortedDiscs = [...disciplines].sort((a, b) => a.order - b.order);
+
+      pdf.setFontSize(9);
+      // Table header
+      pdf.setFillColor(240, 240, 240);
+      pdf.rect(margin, y, contentWidth, 7, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Disciplina', margin + 2, y + 5);
+      pdf.text('Progresso', pageWidth - margin - 30, y + 5);
+      y += 9;
+
+      pdf.setFont('helvetica', 'normal');
+      for (const disc of sortedDiscs) {
+        const dTopics = topics.filter(t => t.disciplineId === disc.id);
+        if (dTopics.length === 0) continue;
+        const done = dTopics.filter(t => t.completed).length;
+        const pct = Math.round((done / dTopics.length) * 100);
+
+        if (y > pageHeight - 20) { pdf.addPage(); y = margin; }
+
+        const name = disc.name.length > 50 ? disc.name.substring(0, 50) + '...' : disc.name;
+        pdf.text(name, margin + 2, y + 4);
+        pdf.text(`${done}/${dTopics.length} (${pct}%)`, pageWidth - margin - 30, y + 4);
+        y += 7;
+      }
+
+      // Discipline pages
+      for (let i = 0; i < sortedDiscs.length; i++) {
+        const disc = sortedDiscs[i];
+        const dTopics = topics.filter(t => t.disciplineId === disc.id).sort((a, b) => a.order - b.order);
+        if (dTopics.length === 0) continue;
+
+        setCurrentDiscipline(disc.name);
+        setProgress(Math.round(((i + 1) / sortedDiscs.length) * 100));
+
+        pdf.addPage();
+        y = margin;
+
+        // Discipline header
+        const done = dTopics.filter(t => t.completed).length;
+        const pct = Math.round((done / dTopics.length) * 100);
+
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(disc.name, margin, y + 6);
+        y += 10;
+
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`${done}/${dTopics.length} tópicos concluídos (${pct}%)`, margin, y + 4);
+        y += 6;
+
+        // Mini progress bar
+        pdf.setFillColor(230, 230, 230);
+        pdf.roundedRect(margin, y, contentWidth, 4, 1.5, 1.5, 'F');
+        if (pct > 0) {
+          pdf.setFillColor(34, 197, 94);
+          pdf.roundedRect(margin, y, contentWidth * (pct / 100), 4, 1.5, 1.5, 'F');
+        }
+        y += 10;
+
+        // Topics
+        pdf.setFontSize(9);
+        for (let ti = 0; ti < dTopics.length; ti++) {
+          const topic = dTopics[ti];
+          if (y > pageHeight - 15) { pdf.addPage(); y = margin; }
+
+          const status = topic.completed ? '✓' : '○';
+          const prefix = `${status} ${ti + 1}. `;
+
+          pdf.setFont('helvetica', topic.completed ? 'normal' : 'normal');
+          if (topic.completed) {
+            pdf.setTextColor(120, 120, 120);
+          } else {
+            pdf.setTextColor(30, 30, 30);
+          }
+
+          // Word wrap
+          const lines = pdf.splitTextToSize(prefix + topic.text, contentWidth - 4);
+          for (const line of lines) {
+            if (y > pageHeight - 15) { pdf.addPage(); y = margin; }
+            pdf.text(line, margin + 2, y + 3);
+            y += 4.5;
+          }
+          y += 1;
+        }
+
+        // Small delay for UI progress update
+        await new Promise(r => setTimeout(r, 10));
+      }
+
+      pdf.setTextColor(0, 0, 0);
+      pdf.save('edital-verticalizado.pdf');
+      toast.success('PDF exportado com sucesso!');
+      onOpenChange(false);
+    } catch (err) {
+      console.error('PDF export error:', err);
+      toast.error('Erro ao gerar o PDF.');
+    } finally {
+      setExporting(false);
+      setProgress(0);
+      setCurrentDiscipline('');
+    }
+  };
+
+  const totalTopics = topics.length;
+  const completedTopics = topics.filter(t => t.completed).length;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Download className="h-5 w-5 text-primary" />
+            Exportar Edital em PDF
+          </DialogTitle>
+          <DialogDescription>
+            Gere um PDF completo do seu edital verticalizado com o progresso de cada disciplina.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Disciplinas</span>
+              <span className="font-medium">{disciplines.length}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Tópicos totais</span>
+              <span className="font-medium">{totalTopics}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Concluídos</span>
+              <span className="font-medium text-green-500">{completedTopics}</span>
+            </div>
+          </div>
+
+          {exporting && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Exportando: {currentDiscipline}</span>
+                <span>{progress}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={exporting}>Cancelar</Button>
+          <Button onClick={handleExport} disabled={exporting || totalTopics === 0} className="gap-2">
+            <Download className="h-4 w-4" />
+            {exporting ? 'Exportando...' : 'Gerar PDF'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ========== MAIN PAGE ==========
 export default function Syllabus() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
   const { addTopic, addDiscipline, clearTopicsByDiscipline, clearAllTopics } = useAppStore();
   const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
