@@ -43,9 +43,9 @@ const CATEGORIES: { label: string; value: DisciplineCategory }[] = [
 interface DisciplineForm {
   name: string;
   category: DisciplineCategory;
-  weight: number;
+  questions: number;
+  weightPerQuestion: number;
   prova: ProvaType;
-  defaultQuestions: number;
 }
 
 export function SetupWizard() {
