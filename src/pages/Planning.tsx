@@ -14,6 +14,7 @@ import {
   Edit2, Plus, GripVertical, Download,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -467,38 +468,75 @@ function GenerateDialog({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Prioridade calculada</Label>
               <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                <TooltipProvider delayDuration={200}>
                 {scores.map((s, i) => (
-                  <div key={s.disciplineId} className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground w-5 text-right shrink-0">{i + 1}.</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm truncate flex items-center gap-1.5">
-                            {s.name}
-                            {s.cannotZero && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
-                          </span>
-                          <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                            {Math.round(s.score * 100)}pts • {s.progressPercent}% feito
-                          </span>
+                  <Tooltip key={s.disciplineId}>
+                    <TooltipTrigger asChild>
+                      <div className="space-y-1 cursor-pointer rounded-md px-1 py-0.5 hover:bg-accent/40 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground w-5 text-right shrink-0">{i + 1}.</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm truncate flex items-center gap-1.5">
+                                {s.name}
+                                {s.cannotZero && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
+                              </span>
+                              <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                                {Math.round(s.score * 100)}pts • {s.progressPercent}% feito
+                              </span>
+                            </div>
+                            <Progress value={Math.round(s.score * 100)} className="h-1.5 mt-1" />
+                          </div>
                         </div>
-                        <Progress value={Math.round(s.score * 100)} className="h-1.5 mt-1" />
+                        {/* Score breakdown mini bar */}
+                        <div className="flex gap-0.5 ml-7 h-1 rounded-full overflow-hidden">
+                          <div className="bg-primary" style={{ width: `${s.breakdown.weightScore / 0.35 * 35}%` }} />
+                          <div className="bg-chart-1" style={{ width: `${s.breakdown.importanceScore / 0.25 * 25}%` }} />
+                          <div className="bg-chart-4" style={{ width: `${s.breakdown.situationScore / 0.25 * 25}%` }} />
+                          <div className="bg-destructive" style={{ width: `${s.breakdown.difficultyScore / 0.15 * 15}%` }} />
+                        </div>
                       </div>
-                    </div>
-                    {/* Score breakdown mini bar */}
-                    <div className="flex gap-0.5 ml-7 h-1 rounded-full overflow-hidden">
-                      <div className="bg-primary" style={{ width: `${s.breakdown.weightScore / 0.35 * 35}%` }} title="Peso" />
-                      <div className="bg-blue-500" style={{ width: `${s.breakdown.importanceScore / 0.25 * 25}%` }} title="Importância" />
-                      <div className="bg-amber-500" style={{ width: `${s.breakdown.situationScore / 0.25 * 25}%` }} title="Situação" />
-                      <div className="bg-red-500" style={{ width: `${s.breakdown.difficultyScore / 0.15 * 15}%` }} title="Dificuldade" />
-                    </div>
-                  </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="w-64 p-3 space-y-2">
+                      <p className="font-semibold text-sm">{s.name}</p>
+                      <Separator />
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> Peso no Edital (35%)</span>
+                          <span className="font-medium">{(s.breakdown.weightScore * 100).toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-chart-1" /> Importância (25%)</span>
+                          <span className="font-medium">{(s.breakdown.importanceScore * 100).toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-chart-4" /> Situação (25%)</span>
+                          <span className="font-medium">{(s.breakdown.situationScore * 100).toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-destructive" /> Dificuldade (15%)</span>
+                          <span className="font-medium">{(s.breakdown.difficultyScore * 100).toFixed(1)}</span>
+                        </div>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between text-xs">
+                        <span>Score total</span>
+                        <span className="font-bold">{(s.score * 100).toFixed(1)} pts{s.cannotZero ? ' (+20% bônus)' : ''}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Progresso edital</span>
+                        <span>{s.pendingTopics} pendentes de {s.totalTopics}</span>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
                 ))}
+                </TooltipProvider>
               </div>
               <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Peso 35%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Importância 25%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Situação 25%</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Dificuldade 15%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-chart-1" /> Importância 25%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-chart-4" /> Situação 25%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-destructive" /> Dificuldade 15%</span>
               </div>
             </div>
           )}
