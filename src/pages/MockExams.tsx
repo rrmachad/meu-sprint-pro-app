@@ -314,7 +314,7 @@ export default function MockExams() {
             </Card>
 
             {radarData.length > 2 && (
-              <Card>
+              <Card data-pdf-chart>
                 <CardHeader><CardTitle className="text-base">Radar – Último Simulado</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
