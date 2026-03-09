@@ -570,14 +570,76 @@ function CycleView({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-
     const allBlocks = [...cycle.blocks];
     const oldIndex = allBlocks.findIndex((b) => b.id === active.id);
     const newIndex = allBlocks.findIndex((b) => b.id === over.id);
     if (oldIndex < 0 || newIndex < 0) return;
-
     const reordered = arrayMove(allBlocks, oldIndex, newIndex).map((b, i) => ({ ...b, number: i + 1 }));
     onUpdateBlocks(reordered);
+  };
+
+  const exportToPdf = async () => {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    // Title
+    doc.setFontSize(18);
+    doc.text(cycle.name, pageWidth / 2, y, { align: 'center' });
+    y += 8;
+    doc.setFontSize(10);
+    doc.text(
+      `${cycle.weeklyHours}h/semana • ${cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • ${cycle.blocks.length} blocos`,
+      pageWidth / 2, y, { align: 'center' }
+    );
+    y += 10;
+
+    // Time distribution
+    doc.setFontSize(12);
+    doc.text('Distribuição de Tempo', 14, y);
+    y += 6;
+    doc.setFontSize(9);
+    for (const d of discSummary) {
+      const h = Math.floor(d.minutes / 60);
+      const m = d.minutes % 60;
+      const pct = Math.round((d.minutes / totalMinutes) * 100);
+      doc.text(`• ${d.name}: ${h}h${String(m).padStart(2, '0')}min (${pct}%)`, 16, y);
+      y += 5;
+      if (y > 275) { doc.addPage(); y = 20; }
+    }
+    y += 4;
+
+    // Daily schedule
+    for (let dayIdx = 0; dayIdx < dailyBlocks.length; dayIdx++) {
+      const dayBlocksArr = dailyBlocks[dayIdx];
+      const dayName = cycle.studyDays[dayIdx] !== undefined
+        ? DAY_FULL[cycle.studyDays[dayIdx]]
+        : `Dia ${dayIdx + 1}`;
+      const dayMinutes = dayBlocksArr.reduce((a, b) => a + b.durationMinutes, 0);
+
+      if (y > 260) { doc.addPage(); y = 20; }
+
+      doc.setFontSize(11);
+      doc.text(`${dayName} — ${Math.floor(dayMinutes / 60)}h${String(dayMinutes % 60).padStart(2, '0')}min`, 14, y);
+      y += 2;
+      doc.setDrawColor(200);
+      doc.line(14, y, pageWidth - 14, y);
+      y += 5;
+
+      doc.setFontSize(9);
+      for (let bi = 0; bi < dayBlocksArr.length; bi++) {
+        const block = dayBlocksArr[bi];
+        doc.text(`B${bi + 1}  ${getDisciplineName(block.disciplineId)}`, 18, y);
+        doc.text(`${block.durationMinutes}min`, pageWidth - 18, y, { align: 'right' });
+        y += 5;
+        if (y > 275) { doc.addPage(); y = 20; }
+      }
+      y += 4;
+    }
+
+    doc.save(`${cycle.name.replace(/\s+/g, '_')}.pdf`);
+    toast.success('PDF exportado com sucesso!');
   };
 
   const addBlock = () => {
