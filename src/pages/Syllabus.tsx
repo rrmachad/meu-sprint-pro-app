@@ -453,7 +453,7 @@ function ImportDialog({
                   type="file"
                   accept=".pdf,.txt"
                   className="hidden"
-                  onChange={handlePdfUpload}
+                  onChange={handleFileUpload}
                 />
                 {loading ? (
                   <div className="flex flex-col items-center gap-2">
