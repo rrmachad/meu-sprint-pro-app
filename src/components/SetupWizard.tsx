@@ -59,7 +59,7 @@ export function SetupWizard() {
   const [vacancies, setVacancies] = useState(1);
   const [examDate, setExamDate] = useState('');
   const [disciplines, setDisciplines] = useState<DisciplineForm[]>([
-    { name: '', category: 'humanas', weight: 10, prova: 'P1', defaultQuestions: 10 },
+    { name: '', category: 'humanas', questions: 10, weightPerQuestion: 1, prova: 'P1' },
   ]);
   const [hasP2, setHasP2] = useState(false);
   const [p1Min, setP1Min] = useState(60);
