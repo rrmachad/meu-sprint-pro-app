@@ -33,7 +33,10 @@ const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const DAY_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 // ========== SCORE ALGORITHM ==========
-// Based on memory: Weight 35%, Importance 25%, Situation 25%, Difficulty 15%
+// Weights: Peso no Edital (35%), Importância (25%), Situação/Conhecimento (15%),
+// Progresso no Edital Verticalizado (15%), Dificuldade (10%)
+// cannotZero disciplines get a 20% boost
+
 interface DisciplineScore {
   disciplineId: string;
   name: string;
@@ -43,12 +46,21 @@ interface DisciplineScore {
   totalTopics: number;
   weight: number;
   allocatedMinutes: number;
+  cannotZero: boolean;
+  breakdown: {
+    weightScore: number;
+    importanceScore: number;
+    situationScore: number;
+    progressScore: number;
+    difficultyScore: number;
+  };
 }
 
 function computeScores(
-  disciplines: { id: string; name: string; weight: number }[],
+  disciplines: { id: string; name: string; weight: number; cannotZero?: boolean }[],
   topics: { disciplineId: string; completed: boolean }[],
   cycleDisciplines: CycleDiscipline[],
+  studyRecords: { disciplineId: string; durationSeconds: number }[],
 ): DisciplineScore[] {
   const importanceMap: Record<string, number> = { alta: 1.0, media: 0.6, baixa: 0.3 };
   const situationMap: Record<string, number> = { nunca_estudei: 1.0, razoavelmente: 0.5, ja_estudei: 0.2 };
@@ -58,6 +70,12 @@ function computeScores(
   };
 
   const maxWeight = Math.max(...disciplines.map((d) => d.weight), 1);
+
+  // Calculate total study time per discipline for auto-situation inference
+  const studyTimeByDisc: Record<string, number> = {};
+  studyRecords.forEach((r) => {
+    studyTimeByDisc[r.disciplineId] = (studyTimeByDisc[r.disciplineId] || 0) + r.durationSeconds;
+  });
 
   return disciplines.map((d) => {
     const dTopics = topics.filter((t) => t.disciplineId === d.id);
@@ -70,18 +88,35 @@ function computeScores(
     const progressFactor = total > 0 ? 1 - (completed / total) : 0.5;
 
     const cd = cycleDisciplines.find((c) => c.disciplineId === d.id);
+
+    // If user hasn't configured, try to infer situation from study records
+    let situationFactor: number;
+    if (cd) {
+      situationFactor = situationMap[cd.situation] ?? 0.5;
+    } else {
+      const totalHours = (studyTimeByDisc[d.id] || 0) / 3600;
+      if (totalHours === 0) situationFactor = 1.0;       // nunca_estudei
+      else if (totalHours < 5) situationFactor = 0.5;    // razoavelmente
+      else situationFactor = 0.2;                          // ja_estudei
+    }
+
     const importanceFactor = cd ? (importanceMap[cd.importance] ?? 0.6) : 0.6;
-    const situationFactor = cd ? (situationMap[cd.situation] ?? 0.5) : 0.5;
     const difficultyFactor = cd ? (difficultyMap[cd.difficulty] ?? 0.5) : 0.5;
     const weightFactor = maxWeight > 0 ? d.weight / maxWeight : 0.5;
 
-    // Combined score
-    const score =
-      weightFactor * 0.35 +
-      importanceFactor * 0.25 +
-      situationFactor * 0.15 +
-      difficultyFactor * 0.10 +
-      progressFactor * 0.15;
+    // Combined score with documented weights
+    const weightScore = weightFactor * 0.35;
+    const importanceScore = importanceFactor * 0.25;
+    const situationScore = situationFactor * 0.15;
+    const progressScore = progressFactor * 0.15;
+    const difficultyScore = difficultyFactor * 0.10;
+
+    let score = weightScore + importanceScore + situationScore + progressScore + difficultyScore;
+
+    // Boost for cannotZero disciplines
+    if (d.cannotZero) {
+      score *= 1.2;
+    }
 
     return {
       disciplineId: d.id,
@@ -92,6 +127,8 @@ function computeScores(
       totalTopics: total,
       weight: d.weight,
       allocatedMinutes: 0,
+      cannotZero: !!d.cannotZero,
+      breakdown: { weightScore, importanceScore, situationScore, progressScore, difficultyScore },
     };
   }).filter((d) => d.totalTopics > 0 || d.weight > 0);
 }
@@ -106,20 +143,28 @@ function generateBlocks(
   const totalMinutes = totalMinutesPerDay * daysCount;
   const totalScore = scores.reduce((a, s) => a + s.score, 0);
 
-  // Allocate minutes proportionally to score
+  // Allocate minutes proportionally to score, minimum 30min
   const allocated = scores.map((s) => ({
     ...s,
     allocatedMinutes: Math.max(30, Math.round((s.score / totalScore) * totalMinutes)),
   }));
 
-  // Generate blocks (30-150min each), alternating categories
+  // Generate blocks (30-120min each)
   const blocks: CycleBlock[] = [];
   let blockNum = 1;
 
   for (const disc of allocated.sort((a, b) => b.score - a.score)) {
     let remaining = disc.allocatedMinutes;
     while (remaining >= 30) {
-      const duration = Math.min(remaining, 120);
+      // Prefer blocks of 60-90min for optimal study sessions
+      let duration: number;
+      if (remaining >= 120) {
+        duration = 90; // Optimal block size
+      } else if (remaining >= 60) {
+        duration = Math.min(remaining, 90);
+      } else {
+        duration = remaining;
+      }
       blocks.push({
         id: crypto.randomUUID(),
         number: blockNum++,
@@ -130,16 +175,27 @@ function generateBlocks(
     }
   }
 
-  // Reorder to alternate disciplines (avoid consecutive same discipline)
+  // Smart reorder: alternate disciplines, distribute across days evenly
   const reordered: CycleBlock[] = [];
   const pool = [...blocks];
   let lastDiscipline = '';
+  let secondLastDiscipline = '';
 
   while (pool.length > 0) {
-    const nextIdx = pool.findIndex((b) => b.disciplineId !== lastDiscipline);
-    const idx = nextIdx >= 0 ? nextIdx : 0;
-    const block = pool.splice(idx, 1)[0];
+    // Try to find a block that's different from last 2 disciplines
+    let nextIdx = pool.findIndex((b) =>
+      b.disciplineId !== lastDiscipline && b.disciplineId !== secondLastDiscipline
+    );
+    // Fallback: different from last
+    if (nextIdx < 0) {
+      nextIdx = pool.findIndex((b) => b.disciplineId !== lastDiscipline);
+    }
+    // Final fallback: take first available
+    if (nextIdx < 0) nextIdx = 0;
+
+    const block = pool.splice(nextIdx, 1)[0];
     reordered.push({ ...block, number: reordered.length + 1 });
+    secondLastDiscipline = lastDiscipline;
     lastDiscipline = block.disciplineId;
   }
 
@@ -152,14 +208,16 @@ function GenerateDialog({
   onOpenChange,
   disciplines,
   topics,
+  studyRecords,
   existingCycleDisciplines,
   settings,
   onGenerate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  disciplines: { id: string; name: string; weight: number; category: string }[];
+  disciplines: { id: string; name: string; weight: number; category: string; cannotZero?: boolean }[];
   topics: { disciplineId: string; completed: boolean }[];
+  studyRecords: { disciplineId: string; durationSeconds: number }[];
   existingCycleDisciplines: CycleDiscipline[];
   settings: { weeklyHours: number; studyDays: number[] };
   onGenerate: (cycle: StudyCycle) => void;
@@ -167,6 +225,26 @@ function GenerateDialog({
   const [weeklyHours, setWeeklyHours] = useState(settings.weeklyHours || 20);
   const [studyDays, setStudyDays] = useState<number[]>(settings.studyDays.length > 0 ? settings.studyDays : [1, 2, 3, 4, 5]);
   const [cycleName, setCycleName] = useState('Ciclo Automático');
+  const [showConfig, setShowConfig] = useState(false);
+
+  // Per-discipline config state
+  const [discConfigs, setDiscConfigs] = useState<CycleDiscipline[]>(() => {
+    return disciplines.map((d) => {
+      const existing = existingCycleDisciplines.find((c) => c.disciplineId === d.id);
+      return existing || {
+        disciplineId: d.id,
+        importance: 'media' as Importance,
+        situation: 'razoavelmente' as UserSituation,
+        difficulty: 'normal' as Difficulty,
+      };
+    });
+  });
+
+  const updateDiscConfig = (disciplineId: string, field: string, value: string) => {
+    setDiscConfigs((prev) =>
+      prev.map((c) => c.disciplineId === disciplineId ? { ...c, [field]: value } : c)
+    );
+  };
 
   const discsWithTopics = disciplines.filter((d) => {
     const dTopics = topics.filter((t) => t.disciplineId === d.id);
@@ -174,9 +252,9 @@ function GenerateDialog({
   });
 
   const scores = useMemo(() =>
-    computeScores(discsWithTopics, topics, existingCycleDisciplines)
+    computeScores(discsWithTopics, topics, discConfigs, studyRecords)
       .sort((a, b) => b.score - a.score),
-    [discsWithTopics, topics, existingCycleDisciplines]
+    [discsWithTopics, topics, discConfigs, studyRecords]
   );
 
   const dailyMinutes = studyDays.length > 0 ? Math.round((weeklyHours * 60) / studyDays.length) : 0;
@@ -196,12 +274,7 @@ function GenerateDialog({
     const cycle: StudyCycle = {
       id: crypto.randomUUID(),
       name: cycleName,
-      disciplines: scores.map((s) => ({
-        disciplineId: s.disciplineId,
-        importance: existingCycleDisciplines.find((c) => c.disciplineId === s.disciplineId)?.importance || 'media',
-        situation: existingCycleDisciplines.find((c) => c.disciplineId === s.disciplineId)?.situation || 'razoavelmente',
-        difficulty: existingCycleDisciplines.find((c) => c.disciplineId === s.disciplineId)?.difficulty || 'normal',
-      })),
+      disciplines: discConfigs,
       blocks,
       weeklyHours,
       studyDays,
@@ -221,14 +294,14 @@ function GenerateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             Gerar Cronograma Automático
           </DialogTitle>
           <DialogDescription>
-            O cronograma será gerado com base no progresso do edital, peso das disciplinas e sua configuração.
+            O algoritmo distribui o tempo com base em: Peso (35%), Importância (25%), Progresso (15%), Situação (15%) e Dificuldade (10%).
           </DialogDescription>
         </DialogHeader>
 
@@ -274,30 +347,135 @@ function GenerateDialog({
             )}
           </div>
 
+          {/* Per-discipline configuration */}
+          {discsWithTopics.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Configuração por Disciplina</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => setShowConfig(!showConfig)}
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                  {showConfig ? 'Ocultar' : 'Personalizar'}
+                </Button>
+              </div>
+
+              {showConfig && (
+                <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3 max-h-[250px] overflow-y-auto">
+                  {discsWithTopics.map((d) => {
+                    const config = discConfigs.find((c) => c.disciplineId === d.id);
+                    return (
+                      <div key={d.id} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium truncate flex-1">{d.name}</span>
+                          {(d as any).cannotZero && (
+                            <Badge variant="destructive" className="text-[9px] shrink-0">Não pode zerar</Badge>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Importância</Label>
+                            <Select
+                              value={config?.importance || 'media'}
+                              onValueChange={(v) => updateDiscConfig(d.id, 'importance', v)}
+                            >
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="alta">Alta</SelectItem>
+                                <SelectItem value="media">Média</SelectItem>
+                                <SelectItem value="baixa">Baixa</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Situação</Label>
+                            <Select
+                              value={config?.situation || 'razoavelmente'}
+                              onValueChange={(v) => updateDiscConfig(d.id, 'situation', v)}
+                            >
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="nunca_estudei">Nunca estudei</SelectItem>
+                                <SelectItem value="razoavelmente">Razoável</SelectItem>
+                                <SelectItem value="ja_estudei">Já estudei</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Dificuldade</Label>
+                            <Select
+                              value={config?.difficulty || 'normal'}
+                              onValueChange={(v) => updateDiscConfig(d.id, 'difficulty', v)}
+                            >
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="muita_dificuldade">Muita dificuldade</SelectItem>
+                                <SelectItem value="leve_dificuldade">Leve dificuldade</SelectItem>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="leve_facilidade">Leve facilidade</SelectItem>
+                                <SelectItem value="muita_facilidade">Muita facilidade</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <Separator />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Priority preview */}
           {scores.length > 0 && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Prioridade calculada</Label>
               <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 space-y-2">
                 {scores.map((s, i) => (
-                  <div key={s.disciplineId} className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground w-5 text-right shrink-0">{i + 1}.</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm truncate">{s.name}</span>
-                        <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                          {s.progressPercent}% feito
-                        </span>
+                  <div key={s.disciplineId} className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-5 text-right shrink-0">{i + 1}.</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm truncate flex items-center gap-1.5">
+                            {s.name}
+                            {s.cannotZero && <AlertTriangle className="h-3 w-3 text-destructive shrink-0" />}
+                          </span>
+                          <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                            {Math.round(s.score * 100)}pts • {s.progressPercent}% feito
+                          </span>
+                        </div>
+                        <Progress value={Math.round(s.score * 100)} className="h-1.5 mt-1" />
                       </div>
-                      <Progress value={Math.round(s.score * 100)} className="h-1.5 mt-1" />
+                    </div>
+                    {/* Score breakdown mini bar */}
+                    <div className="flex gap-0.5 ml-7 h-1 rounded-full overflow-hidden">
+                      <div className="bg-primary" style={{ width: `${s.breakdown.weightScore * 100 / 0.35 * 35}%` }} title="Peso" />
+                      <div className="bg-blue-500" style={{ width: `${s.breakdown.importanceScore * 100 / 0.25 * 25}%` }} title="Importância" />
+                      <div className="bg-amber-500" style={{ width: `${s.breakdown.situationScore * 100 / 0.15 * 15}%` }} title="Situação" />
+                      <div className="bg-green-500" style={{ width: `${s.breakdown.progressScore * 100 / 0.15 * 15}%` }} title="Progresso" />
+                      <div className="bg-red-500" style={{ width: `${s.breakdown.difficultyScore * 100 / 0.10 * 10}%` }} title="Dificuldade" />
                     </div>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <AlertTriangle className="h-3 w-3" />
-                Disciplinas com menos progresso e maior peso recebem mais tempo.
-              </p>
+              <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Peso 35%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Importância 25%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Situação 15%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Progresso 15%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Dificuldade 10%</span>
+              </div>
             </div>
           )}
         </div>
