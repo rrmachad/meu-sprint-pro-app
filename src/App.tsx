@@ -1,12 +1,50 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { lazy, Suspense } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AppLayout } from '@/components/AppLayout';
+import { SetupWizard } from '@/components/SetupWizard';
+import { useAppStore } from '@/store/useAppStore';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Indicators = lazy(() => import('./pages/Indicators'));
+const Planning = lazy(() => import('./pages/Planning'));
+const Syllabus = lazy(() => import('./pages/Syllabus'));
+const MockExams = lazy(() => import('./pages/MockExams'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const queryClient = new QueryClient();
+
+function AppContent() {
+  const setupCompleted = useAppStore((s) => s.settings.setupCompleted);
+
+  if (!setupCompleted) {
+    return <SetupWizard />;
+  }
+
+  return (
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/indicadores" element={<Indicators />} />
+        <Route path="/planejamento" element={<Planning />} />
+        <Route path="/edital" element={<Syllabus />} />
+        <Route path="/simulados" element={<MockExams />} />
+        <Route path="/configuracoes" element={<SettingsPage />} />
+      </Route>
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+const Loading = () => (
+  <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -14,11 +52,9 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<Loading />}>
+          <AppContent />
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
