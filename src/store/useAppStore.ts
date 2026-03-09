@@ -10,10 +10,12 @@ const defaultSettings: AppSettings = {
   revision: { enabled: true, marks: ['24h', '7d', '30d', '60d'] },
   goals: { weeklyHours: 40, dailyQuestions: 50, dailyPages: 30 },
   weeklyHours: 40,
-  studyDays: [1, 2, 3, 4, 5], // Mon-Fri
+  studyDays: [1, 2, 3, 4, 5],
   onboardingCompleted: false,
   setupCompleted: false,
   moduleHints: {},
+  notificationsEnabled: false,
+  reminderMinutesBefore: 5,
 };
 
 interface AppActions {
