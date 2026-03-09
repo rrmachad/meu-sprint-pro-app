@@ -428,6 +428,7 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
                   onToggle={() => handleToggle(topic.id, topic.completed)}
                   onUpdate={(text) => handleUpdateTopic(topic.id, text)}
                   onDelete={() => handleDeleteTopic(topic.id)}
+                  searchQuery={searchQuery}
                 />
               ))}
             </SortableContext>
