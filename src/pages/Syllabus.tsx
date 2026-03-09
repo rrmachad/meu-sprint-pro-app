@@ -12,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   ClipboardList, Plus, Trash2, Edit2, Check, X, Upload,
   ChevronDown, ChevronRight, GripVertical, FileText, Sparkles,
-  CheckCircle2, Circle, Percent, Filter,
+  CheckCircle2, Circle, Percent, Filter, Search,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -192,17 +192,37 @@ function ImportDialog({
   );
 }
 
+// Helper to highlight search matches
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query.trim()) return <>{text}</>;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <>
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <mark key={i} className="bg-warning/30 text-foreground rounded-sm px-0.5">{part}</mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 // ========== TOPIC ROW (Sortable) ==========
 function TopicRow({
   topic,
   onToggle,
   onUpdate,
   onDelete,
+  searchQuery = '',
 }: {
   topic: Topic;
   onToggle: () => void;
   onUpdate: (text: string) => void;
   onDelete: () => void;
+  searchQuery?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(topic.text);
@@ -288,7 +308,7 @@ function TopicRow({
             }`}
             onDoubleClick={startEdit}
           >
-            {topic.text}
+            <HighlightText text={topic.text} query={searchQuery} />
           </span>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={startEdit}>
@@ -310,11 +330,12 @@ function TopicRow({
 }
 
 // ========== DISCIPLINE ACCORDION ==========
-function DisciplineSection({ discipline, statusFilter = 'all' }: { discipline: Discipline; statusFilter?: 'all' | 'pending' | 'completed' }) {
+function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' }: { discipline: Discipline; statusFilter?: 'all' | 'pending' | 'completed'; searchQuery?: string }) {
   const allDisciplineTopics = useAppStore((s) => s.topics.filter((t) => t.disciplineId === discipline.id));
   const topics = allDisciplineTopics.filter((t) => {
-    if (statusFilter === 'pending') return !t.completed;
-    if (statusFilter === 'completed') return t.completed;
+    if (statusFilter === 'pending' && t.completed) return false;
+    if (statusFilter === 'completed' && !t.completed) return false;
+    if (searchQuery.trim() && !t.text.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
   const allTopics = useAppStore((s) => s.topics);
@@ -407,6 +428,7 @@ function DisciplineSection({ discipline, statusFilter = 'all' }: { discipline: D
                   onToggle={() => handleToggle(topic.id, topic.completed)}
                   onUpdate={(text) => handleUpdateTopic(topic.id, text)}
                   onDelete={() => handleDeleteTopic(topic.id)}
+                  searchQuery={searchQuery}
                 />
               ))}
             </SortableContext>
@@ -471,6 +493,7 @@ export default function Syllabus() {
   const [importOpen, setImportOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const totalTopics = topics.length;
   const completedTopics = topics.filter((t) => t.completed).length;
@@ -498,12 +521,15 @@ export default function Syllabus() {
   // Check if a discipline has visible topics after status filter
   const hasVisibleTopics = (disciplineId: string) => {
     const discTopics = topics.filter((t) => t.disciplineId === disciplineId);
-    if (statusFilter === 'all') return true;
-    if (statusFilter === 'pending') return discTopics.some((t) => !t.completed);
-    return discTopics.some((t) => t.completed);
+    return discTopics.some((t) => {
+      if (statusFilter === 'pending' && t.completed) return false;
+      if (statusFilter === 'completed' && !t.completed) return false;
+      if (searchQuery.trim() && !t.text.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    });
   };
 
-  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0);
+  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
@@ -600,12 +626,23 @@ export default function Syllabus() {
                   </SelectContent>
                 </Select>
 
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar tópico..."
+                    className="h-8 w-[200px] pl-7 text-xs"
+                  />
+                </div>
+
                 {activeFilterCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-8 text-xs gap-1"
-                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); }}
+                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}
                   >
                     <X className="h-3 w-3" /> Limpar filtros
                   </Button>
@@ -655,7 +692,7 @@ export default function Syllabus() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground mb-2">Nenhum resultado para os filtros selecionados.</p>
-            <Button variant="outline" size="sm" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); }}>
+            <Button variant="outline" size="sm" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}>
               Limpar filtros
             </Button>
           </CardContent>
@@ -665,7 +702,7 @@ export default function Syllabus() {
           {filteredDisciplines
             .filter((d) => hasVisibleTopics(d.id))
             .map((discipline) => (
-              <DisciplineSection key={discipline.id} discipline={discipline} statusFilter={statusFilter} />
+              <DisciplineSection key={discipline.id} discipline={discipline} statusFilter={statusFilter} searchQuery={searchQuery} />
             ))}
         </Accordion>
       )}
