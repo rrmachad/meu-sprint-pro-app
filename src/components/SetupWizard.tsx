@@ -130,9 +130,9 @@ export function SetupWizard() {
           id: crypto.randomUUID(),
           name: d.name.trim(),
           category: d.category,
-          weight: d.weight,
+          weight: parseFloat(getDisciplinePercent(d).toFixed(2)),
           prova: d.prova,
-          defaultQuestions: d.defaultQuestions,
+          defaultQuestions: d.questions,
           order: i,
         };
         addDiscipline(disc);
