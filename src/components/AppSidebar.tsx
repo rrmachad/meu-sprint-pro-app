@@ -1,7 +1,8 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
-  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon,
+  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon, Bell,
 } from 'lucide-react';
+import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -28,7 +29,13 @@ export function AppSidebar() {
   const location = useLocation();
   const streak = useAppStore((s) => s.streak);
   const topics = useAppStore((s) => s.topics);
+  const revisions = useAppStore((s) => s.revisions);
   const { theme, setTheme } = useTheme();
+
+  const pendingRevisionCount = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return revisions.filter((r) => !r.completed && r.dueDate <= today).length;
+  }, [revisions]);
 
   const completedTopics = topics.filter((t) => t.completed).length;
   const totalTopics = topics.length;
@@ -93,7 +100,14 @@ export function AppSidebar() {
                       className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       activeClassName="bg-primary/10 text-primary font-semibold shadow-glow-sm"
                     >
-                      <item.icon className="h-4 w-4 shrink-0" />
+                      <div className="relative shrink-0">
+                        <item.icon className="h-4 w-4" />
+                        {item.url === '/' && pendingRevisionCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground px-0.5">
+                            {pendingRevisionCount > 9 ? '9+' : pendingRevisionCount}
+                          </span>
+                        )}
+                      </div>
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
