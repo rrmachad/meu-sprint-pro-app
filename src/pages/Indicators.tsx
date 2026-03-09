@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3, TrendingUp, Clock, CheckCircle2, BookOpen,
