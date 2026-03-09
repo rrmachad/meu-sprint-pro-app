@@ -420,7 +420,7 @@ function ImportDialog({
               </TabsTrigger>
               <TabsTrigger value="pdf" className="flex-1 gap-1.5">
                 <FileUp className="h-3.5 w-3.5" />
-                Importar PDF
+                Importar PDF / TXT
               </TabsTrigger>
             </TabsList>
 
