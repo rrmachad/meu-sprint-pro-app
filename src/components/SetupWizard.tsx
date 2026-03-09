@@ -347,13 +347,16 @@ export function SetupWizard() {
                             value={d.prova}
                             onValueChange={(v) => updateDisciplineRow(i, 'prova', v)}
                           >
-                            <SelectTrigger className="text-sm w-20">
+                            <SelectTrigger className="text-sm w-24">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="P1">P1</SelectItem>
-                              <SelectItem value="P2">P2</SelectItem>
-                              <SelectItem value="ambas">Ambas</SelectItem>
+                              {phases.map((p) => (
+                                <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                              ))}
+                              {phases.length > 1 && (
+                                <SelectItem value="todas">Todas</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                           <div className="ml-auto flex items-center gap-3 text-sm">
