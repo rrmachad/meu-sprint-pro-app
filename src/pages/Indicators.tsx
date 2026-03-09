@@ -346,10 +346,25 @@ export default function Indicators() {
 
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6">
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
+      <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Indicadores</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">{stats.uniqueDays} dias de estudo registrados</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center bg-muted/50 rounded-xl p-0.5 gap-0.5">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setPeriod(opt.value)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  period === opt.value
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground hidden sm:inline">{stats.uniqueDays} dias</span>
           <Button size="sm" variant="outline" className="gap-1.5 rounded-xl text-xs" onClick={exportPdf}>
             <Download className="h-3.5 w-3.5" />
             Exportar PDF
