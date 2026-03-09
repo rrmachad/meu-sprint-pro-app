@@ -547,14 +547,14 @@ export function SetupWizard() {
               variant="ghost"
               onClick={goPrev}
               disabled={step === 0}
-              className="gap-1"
+              className="gap-1.5 rounded-xl"
             >
               <ChevronLeft className="h-4 w-4" /> Voltar
             </Button>
             <Button
               onClick={goNext}
               disabled={!canProceed()}
-              className="gap-1"
+              className="gap-1.5 rounded-xl gradient-primary shadow-glow-sm hover:shadow-glow"
             >
               {step === STEPS.length - 1 ? (
                 <>Concluir <CheckCircle2 className="h-4 w-4" /></>
