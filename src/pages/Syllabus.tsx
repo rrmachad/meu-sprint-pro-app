@@ -317,9 +317,28 @@ function DisciplineSection({ discipline }: { discipline: Discipline }) {
   const [newTopicText, setNewTopicText] = useState('');
   const [addingTopic, setAddingTopic] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const sortedTopics = [...topics].sort((a, b) => a.order - b.order);
   const completed = topics.filter((t) => t.completed).length;
   const total = topics.length;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortedTopics.findIndex((t) => t.id === active.id);
+    const newIndex = sortedTopics.findIndex((t) => t.id === over.id);
+    const reordered = arrayMove(sortedTopics, oldIndex, newIndex).map((t, i) => ({ ...t, order: i }));
+
+    // Merge with other discipline topics
+    const otherTopics = allTopics.filter((t) => t.disciplineId !== discipline.id);
+    setTopics([...otherTopics, ...reordered]);
+  };
 
   const handleToggle = (id: string, current: boolean) => {
     updateTopic(id, { completed: !current });
