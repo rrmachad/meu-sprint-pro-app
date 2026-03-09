@@ -107,6 +107,24 @@ export default function Dashboard() {
   const completedTopics = topics.filter((t) => t.completed).length;
   const globalPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
+  // Pending revisions
+  const pendingRevisions = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return revisions
+      .filter((r) => !r.completed)
+      .map((r) => {
+        const disc = disciplines.find((d) => d.id === r.disciplineId);
+        const isOverdue = r.dueDate < today;
+        const isToday = r.dueDate === today;
+        return { ...r, disciplineName: disc?.name || 'Desconhecida', isOverdue, isToday };
+      })
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  }, [revisions, disciplines]);
+
+  const overdueCount = pendingRevisions.filter((r) => r.isOverdue).length;
+  const todayRevisions = pendingRevisions.filter((r) => r.isToday).length;
+  const upcomingRevisions = pendingRevisions.filter((r) => !r.isOverdue && !r.isToday).slice(0, 5);
+
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
       <div>
