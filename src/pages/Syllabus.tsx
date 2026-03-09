@@ -330,7 +330,7 @@ function TopicRow({
 }
 
 // ========== DISCIPLINE ACCORDION ==========
-function DisciplineSection({ discipline, statusFilter = 'all' }: { discipline: Discipline; statusFilter?: 'all' | 'pending' | 'completed' }) {
+function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' }: { discipline: Discipline; statusFilter?: 'all' | 'pending' | 'completed'; searchQuery?: string }) {
   const allDisciplineTopics = useAppStore((s) => s.topics.filter((t) => t.disciplineId === discipline.id));
   const topics = allDisciplineTopics.filter((t) => {
     if (statusFilter === 'pending') return !t.completed;
