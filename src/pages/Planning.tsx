@@ -567,6 +567,19 @@ function CycleView({
     setEditingBlockId(null);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const allBlocks = [...cycle.blocks];
+    const oldIndex = allBlocks.findIndex((b) => b.id === active.id);
+    const newIndex = allBlocks.findIndex((b) => b.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const reordered = arrayMove(allBlocks, oldIndex, newIndex).map((b, i) => ({ ...b, number: i + 1 }));
+    onUpdateBlocks(reordered);
+  };
+
   const addBlock = () => {
     const defaultDisc = disciplines[0]?.id || '';
     const newBlock: CycleBlock = {
