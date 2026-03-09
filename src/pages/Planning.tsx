@@ -725,7 +725,7 @@ export default function Planning() {
   const studyRecords = useAppStore((s) => s.studyRecords);
   const cycles = useAppStore((s) => s.cycles);
   const settings = useAppStore((s) => s.settings);
-  const { addCycle, removeCycle, setActiveCycle } = useAppStore();
+  const { addCycle, removeCycle, setActiveCycle, updateCycle } = useAppStore();
   const [generateOpen, setGenerateOpen] = useState(false);
 
   const activeCycle = cycles.find((c) => c.active);
