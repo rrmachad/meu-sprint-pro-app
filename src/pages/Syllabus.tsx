@@ -328,8 +328,8 @@ function DisciplineSection({ discipline, statusFilter = 'all' }: { discipline: D
   );
 
   const sortedTopics = [...topics].sort((a, b) => a.order - b.order);
-  const completed = topics.filter((t) => t.completed).length;
-  const total = topics.length;
+  const completed = allDisciplineTopics.filter((t) => t.completed).length;
+  const total = allDisciplineTopics.length;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   const handleDragEnd = (event: DragEndEvent) => {
