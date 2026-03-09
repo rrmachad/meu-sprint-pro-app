@@ -1,6 +1,6 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
-  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon, Bell,
+  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon, Bell, RotateCcw,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -18,6 +18,7 @@ const navItems = [
   { title: 'Painel Inicial', url: '/', icon: Home },
   { title: 'Indicadores', url: '/indicadores', icon: BarChart3 },
   { title: 'Planejamento', url: '/planejamento', icon: CalendarDays },
+  { title: 'Revisões', url: '/revisoes', icon: RotateCcw },
   { title: 'Edital', url: '/edital', icon: ClipboardList },
   { title: 'Simulados', url: '/simulados', icon: FileText },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
@@ -102,7 +103,7 @@ export function AppSidebar() {
                     >
                       <div className="relative shrink-0">
                         <item.icon className="h-4 w-4" />
-                        {item.url === '/' && pendingRevisionCount > 0 && (
+                        {(item.url === '/' || item.url === '/revisoes') && pendingRevisionCount > 0 && (
                           <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground px-0.5">
                             {pendingRevisionCount > 9 ? '9+' : pendingRevisionCount}
                           </span>
