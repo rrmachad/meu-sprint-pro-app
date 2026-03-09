@@ -664,10 +664,11 @@ function CycleView({
     y += 4;
 
     // Daily schedule
+    const sortedDays = [...cycle.studyDays].sort((a, b) => ((a === 0 ? 7 : a) - (b === 0 ? 7 : b)));
     for (let dayIdx = 0; dayIdx < dailyBlocks.length; dayIdx++) {
       const dayBlocksArr = dailyBlocks[dayIdx];
-      const dayName = cycle.studyDays[dayIdx] !== undefined
-        ? DAY_FULL[cycle.studyDays[dayIdx]]
+      const dayName = sortedDays[dayIdx] !== undefined
+        ? DAY_FULL[sortedDays[dayIdx]]
         : `Dia ${dayIdx + 1}`;
       const dayMinutes = dayBlocksArr.reduce((a, b) => a + b.durationMinutes, 0);
 
@@ -751,8 +752,9 @@ function CycleView({
 
         <Accordion type="multiple" className="space-y-1">
           {dailyBlocks.map((dayBlocks, dayIdx) => {
-            const dayName = cycle.studyDays[dayIdx] !== undefined
-              ? DAY_FULL[cycle.studyDays[dayIdx]]
+            const sortedStudyDays = [...cycle.studyDays].sort((a, b) => ((a === 0 ? 7 : a) - (b === 0 ? 7 : b)));
+            const dayName = sortedStudyDays[dayIdx] !== undefined
+              ? DAY_FULL[sortedStudyDays[dayIdx]]
               : `Dia ${dayIdx + 1}`;
             const dayMinutes = dayBlocks.reduce((a, b) => a + b.durationMinutes, 0);
 
