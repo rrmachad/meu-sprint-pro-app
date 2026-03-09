@@ -650,81 +650,26 @@ function CycleView({
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-3">
-                  <div className="space-y-1.5">
-                    {dayBlocks.map((block, bi) => {
-                      const isEditing = editingBlockId === block.id;
-
-                      return (
-                        <div key={block.id} className="rounded-md bg-muted/40 px-3 py-2">
-                          {isEditing ? (
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground w-8 shrink-0">B{bi + 1}</span>
-                                <Select
-                                  value={block.disciplineId}
-                                  onValueChange={(v) => updateBlock(block.id, { disciplineId: v })}
-                                >
-                                  <SelectTrigger className="h-7 text-xs flex-1">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {disciplines.map((d) => (
-                                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
-                                  onClick={() => removeBlock(block.id)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 shrink-0"
-                                  onClick={() => setEditingBlockId(null)}
-                                >
-                                  <Check className="h-3.5 w-3.5 text-primary" />
-                                </Button>
-                              </div>
-                              <div className="flex items-center gap-2 ml-8">
-                                <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-                                <Slider
-                                  value={[block.durationMinutes]}
-                                  onValueChange={([v]) => updateBlock(block.id, { durationMinutes: v })}
-                                  min={15}
-                                  max={180}
-                                  step={15}
-                                  className="flex-1"
-                                />
-                                <span className="text-xs text-muted-foreground w-12 text-right shrink-0">
-                                  {block.durationMinutes}min
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => setEditingBlockId(block.id)}
-                              title="Clique para editar"
-                            >
-                              <span className="text-xs text-muted-foreground w-8 shrink-0">B{bi + 1}</span>
-                              <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
-                              <span className="text-sm flex-1 truncate">{getDisciplineName(block.disciplineId)}</span>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                                <Clock className="h-3 w-3" />
-                                {block.durationMinutes}min
-                              </div>
-                              <Edit2 className="h-3 w-3 text-muted-foreground/50 shrink-0" />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={dayBlocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+                      <div className="space-y-1.5">
+                        {dayBlocks.map((block, bi) => (
+                          <SortableBlock
+                            key={block.id}
+                            block={block}
+                            index={bi}
+                            isEditing={editingBlockId === block.id}
+                            disciplines={disciplines}
+                            getDisciplineName={getDisciplineName}
+                            onEdit={() => setEditingBlockId(block.id)}
+                            onStopEdit={() => setEditingBlockId(null)}
+                            onUpdate={(updates) => updateBlock(block.id, updates)}
+                            onRemove={() => removeBlock(block.id)}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 </AccordionContent>
               </AccordionItem>
             );
@@ -737,6 +682,95 @@ function CycleView({
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+// ========== SORTABLE BLOCK ==========
+function SortableBlock({
+  block,
+  index,
+  isEditing,
+  disciplines,
+  getDisciplineName,
+  onEdit,
+  onStopEdit,
+  onUpdate,
+  onRemove,
+}: {
+  block: CycleBlock;
+  index: number;
+  isEditing: boolean;
+  disciplines: { id: string; name: string }[];
+  getDisciplineName: (id: string) => string;
+  onEdit: () => void;
+  onStopEdit: () => void;
+  onUpdate: (updates: Partial<CycleBlock>) => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="rounded-md bg-muted/40 px-3 py-2">
+      {isEditing ? (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground w-8 shrink-0">B{index + 1}</span>
+            <Select value={block.disciplineId} onValueChange={(v) => onUpdate({ disciplineId: v })}>
+              <SelectTrigger className="h-7 text-xs flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {disciplines.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0" onClick={onRemove}>
+              <Trash2 className="h-3 w-3" />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" onClick={onStopEdit}>
+              <Check className="h-3.5 w-3.5 text-primary" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-2 ml-8">
+            <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+            <Slider
+              value={[block.durationMinutes]}
+              onValueChange={([v]) => onUpdate({ durationMinutes: v })}
+              min={15} max={180} step={15}
+              className="flex-1"
+            />
+            <span className="text-xs text-muted-foreground w-12 text-right shrink-0">{block.durationMinutes}min</span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground shrink-0 touch-none">
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <div
+            className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={onEdit}
+            title="Clique para editar"
+          >
+            <span className="text-xs text-muted-foreground w-6 shrink-0">B{index + 1}</span>
+            <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-sm flex-1 truncate">{getDisciplineName(block.disciplineId)}</span>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+              <Clock className="h-3 w-3" />
+              {block.durationMinutes}min
+            </div>
+            <Edit2 className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
