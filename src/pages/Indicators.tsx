@@ -573,7 +573,7 @@ export default function Indicators() {
                 </CardContent>
               </Card>
 
-              <Card className="glass">
+              <Card className="glass" data-pdf-chart="Distribuição por Atividade">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Distribuição por Atividade</CardTitle>
                 </CardHeader>
