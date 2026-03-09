@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import {
   CalendarDays, Sparkles, Clock, BookOpen, AlertTriangle,
   RotateCcw, Check, ChevronDown, ChevronRight, Trash2, Settings2,
+  Edit2, Plus,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
