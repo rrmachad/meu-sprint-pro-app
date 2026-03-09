@@ -150,7 +150,9 @@ interface ParsedDiscipline {
 }
 
 function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
-  const lines = rawText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+  // Normalize: replace multiple spaces with single, split into lines
+  const normalizedText = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalizedText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
   const result: ParsedDiscipline[] = [];
   let currentDiscipline: ParsedDiscipline | null = null;
   let contentBuffer = '';
@@ -164,15 +166,42 @@ function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
   };
 
   for (const line of lines) {
+    // Try to detect if line contains a discipline header possibly followed by content
+    // e.g. "LÍNGUA PORTUGUESA Ortografia e acentuação. Emprego do sinal..."
+    // Check if the beginning of the line matches a discipline pattern
+    let headerPart = '';
+    let remainingPart = '';
+
     if (isDisciplineHeader(line)) {
+      headerPart = line;
+    } else {
+      // Check if line starts with a known keyword followed by content
+      for (const kw of DISCIPLINE_KEYWORDS) {
+        const idx = line.toLowerCase().indexOf(kw);
+        if (idx === 0 || (idx > 0 && /^[\d.)\-–— ]*$/.test(line.substring(0, idx)))) {
+          // Check if after the keyword there's topic content (contains . or ;)
+          const afterKeyword = line.substring(idx + kw.length).trim();
+          if (afterKeyword.length > 10 && /[.;]/.test(afterKeyword)) {
+            headerPart = line.substring(0, idx + kw.length).trim();
+            remainingPart = afterKeyword;
+            break;
+          } else if (afterKeyword.length <= 10 || !afterKeyword) {
+            headerPart = line;
+            break;
+          }
+        }
+      }
+    }
+
+    if (headerPart) {
       flushBuffer();
       if (currentDiscipline && currentDiscipline.topics.length > 0) {
         result.push(currentDiscipline);
-      } else if (currentDiscipline && currentDiscipline.topics.length === 0) {
-        // Header without topics — might be a false positive, add back
-        // But still create new discipline
       }
-      currentDiscipline = { name: cleanDisciplineName(line), topics: [] };
+      currentDiscipline = { name: cleanDisciplineName(headerPart), topics: [] };
+      if (remainingPart) {
+        contentBuffer = remainingPart;
+      }
     } else {
       contentBuffer += ' ' + line;
     }
@@ -184,7 +213,7 @@ function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
     result.push(currentDiscipline);
   }
 
-  // If no disciplines detected, treat everything as topics under "Geral"
+  // If no disciplines detected, treat everything as topics under "Conteúdo Geral"
   if (result.length === 0) {
     const allTopics = splitTopics(rawText);
     if (allTopics.length > 0) {
