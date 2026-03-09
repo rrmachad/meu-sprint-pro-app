@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAppStore } from '@/store/useAppStore';
-import type { Discipline, DisciplineCategory, ProvaType } from '@/types';
+import type { Discipline, DisciplineCategory, ProvaPhase } from '@/types';
 
 const STEPS = [
   { title: 'Seu Nome', icon: User, description: 'Como devemos te chamar?' },
@@ -45,7 +45,7 @@ interface DisciplineForm {
   category: DisciplineCategory;
   questions: number;
   weightPerQuestion: number;
-  prova: ProvaType;
+  prova: string;
 }
 
 export function SetupWizard() {
@@ -61,9 +61,7 @@ export function SetupWizard() {
   const [disciplines, setDisciplines] = useState<DisciplineForm[]>([
     { name: '', category: 'humanas', questions: 10, weightPerQuestion: 1, prova: 'P1' },
   ]);
-  const [hasP2, setHasP2] = useState(false);
-  const [p1Min, setP1Min] = useState(60);
-  const [p2Min, setP2Min] = useState(60);
+  const [phases, setPhases] = useState<ProvaPhase[]>([{ name: 'P1', minPercent: 60 }]);
   const [totalMin, setTotalMin] = useState(70);
   const [cannotZeroIndices, setCannotZeroIndices] = useState<number[]>([]);
   const [weeklyHours, setWeeklyHours] = useState(40);
@@ -119,6 +117,8 @@ export function SetupWizard() {
         organ,
         examDate,
         vacancies,
+        phases,
+        totalMinPercent: totalMin,
       },
       weeklyHours,
       studyDays,
@@ -347,13 +347,16 @@ export function SetupWizard() {
                             value={d.prova}
                             onValueChange={(v) => updateDisciplineRow(i, 'prova', v)}
                           >
-                            <SelectTrigger className="text-sm w-20">
+                            <SelectTrigger className="text-sm w-24">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="P1">P1</SelectItem>
-                              <SelectItem value="P2">P2</SelectItem>
-                              <SelectItem value="ambas">Ambas</SelectItem>
+                              {phases.map((p) => (
+                                <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                              ))}
+                              {phases.length > 1 && (
+                                <SelectItem value="todas">Todas</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                           <div className="ml-auto flex items-center gap-3 text-sm">
@@ -376,38 +379,60 @@ export function SetupWizard() {
 
               {step === 4 && (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="hasP2"
-                      checked={hasP2}
-                      onCheckedChange={(c) => setHasP2(!!c)}
-                    />
-                    <Label htmlFor="hasP2">A prova tem P2 (segunda prova)?</Label>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Mínimo P1 (%)</Label>
-                      <Input
-                        type="number"
-                        value={p1Min}
-                        onChange={(e) => setP1Min(Number(e.target.value))}
-                        min={0} max={100}
-                        className="mt-1 w-24"
-                      />
+                  {/* Dynamic Phases */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold">Fases da Prova</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPhases([...phases, { name: `P${phases.length + 1}`, minPercent: 60 }])}
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Adicionar Fase
+                      </Button>
                     </div>
-                    {hasP2 && (
-                      <div>
-                        <Label>Mínimo P2 (%)</Label>
-                        <Input
-                          type="number"
-                          value={p2Min}
-                          onChange={(e) => setP2Min(Number(e.target.value))}
-                          min={0} max={100}
-                          className="mt-1 w-24"
-                        />
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      {phases.map((phase, i) => (
+                        <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                          <Input
+                            value={phase.name}
+                            onChange={(e) => {
+                              const updated = [...phases];
+                              updated[i] = { ...updated[i], name: e.target.value };
+                              setPhases(updated);
+                            }}
+                            className="w-20 text-sm"
+                            placeholder="Nome"
+                          />
+                          <div className="flex items-center gap-1.5">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Mínimo (%)</Label>
+                            <Input
+                              type="number"
+                              value={phase.minPercent}
+                              onChange={(e) => {
+                                const updated = [...phases];
+                                updated[i] = { ...updated[i], minPercent: Number(e.target.value) };
+                                setPhases(updated);
+                              }}
+                              min={0} max={100}
+                              className="w-20 text-sm"
+                            />
+                          </div>
+                          {phases.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="shrink-0 text-muted-foreground hover:text-destructive h-8 w-8"
+                              onClick={() => setPhases(phases.filter((_, j) => j !== i))}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
                   <div>
                     <Label>Mínimo Geral (%)</Label>
                     <Input

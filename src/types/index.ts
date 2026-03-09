@@ -1,7 +1,7 @@
 // ============ ENUMS ============
 
 export type DisciplineCategory = 'exatas' | 'humanas' | 'juridicas' | 'mista';
-export type ProvaType = 'P1' | 'P2' | 'ambas';
+export type ProvaType = string; // 'P1' | 'P2' | 'P3' etc.
 export type Importance = 'alta' | 'media' | 'baixa';
 export type UserSituation = 'nunca_estudei' | 'razoavelmente' | 'ja_estudei';
 export type Difficulty = 'muita_facilidade' | 'leve_facilidade' | 'normal' | 'leve_dificuldade' | 'muita_dificuldade';
@@ -119,12 +119,19 @@ export interface Simulado {
 
 // ============ SETTINGS ============
 
+export interface ProvaPhase {
+  name: string; // P1, P2, P3...
+  minPercent: number;
+}
+
 export interface ContestInfo {
   name: string;
   organ: string;
   examDate: string;
   vacancies: number;
   candidateName: string;
+  phases: ProvaPhase[];
+  totalMinPercent: number;
 }
 
 export interface RevisionSettings {

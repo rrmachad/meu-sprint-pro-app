@@ -6,7 +6,7 @@ import type {
 } from '@/types';
 
 const defaultSettings: AppSettings = {
-  contest: { name: '', organ: '', examDate: '', vacancies: 0, candidateName: '' },
+  contest: { name: '', organ: '', examDate: '', vacancies: 0, candidateName: '', phases: [{ name: 'P1', minPercent: 60 }], totalMinPercent: 70 },
   revision: { enabled: true, marks: ['24h', '7d', '30d', '60d'] },
   goals: { weeklyHours: 40, dailyQuestions: 50, dailyPages: 30 },
   weeklyHours: 40,
