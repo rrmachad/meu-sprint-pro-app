@@ -12,7 +12,8 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   ClipboardList, Plus, Trash2, Edit2, Check, X, Upload,
   ChevronDown, ChevronRight, GripVertical, FileText, Sparkles,
-  CheckCircle2, Circle, Percent, Filter, Search,
+  CheckCircle2, Circle, Percent, Filter, Search, FileUp, Type,
+  AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from '@/components/ui/accordion';
@@ -46,130 +48,438 @@ const pageVariants = {
 };
 
 // ========== SMART PARSER ==========
-// Splits text by "." but preserves dots in law references like "Lei nº 8.429/1992", "art. 5º", "nº 6.404", decimal numbers, etc.
-function parseTopics(rawText: string): string[] {
-  // Replace law-style dots with placeholder
-  let text = rawText;
-
-  // Protect patterns: numbers with dots (8.429, 6.404, 10.520, 1.234.567)
-  text = text.replace(/(\d)\.(\d)/g, '$1⟨DOT⟩$2');
-
-  // Protect abbreviations: art., nº., inc., etc.
+function protectDots(text: string): string {
+  let t = text;
+  // Protect numbers with dots (8.429, 6.404, 10.520, 1.234.567)
+  t = t.replace(/(\d)\.(\d)/g, '$1⟨DOT⟩$2');
+  // Protect abbreviations
   const abbreviations = ['art', 'inc', 'nº', 'n°', 'nr', 'parágrafo', 'alínea', 'cf', 'ex', 'obs', 'prof', 'dr', 'dra', 'sr', 'sra', 'ltda', 'cia', 'etc'];
   abbreviations.forEach((abbr) => {
     const re = new RegExp(`\\b(${abbr})\\.`, 'gi');
-    text = text.replace(re, `$1⟨DOT⟩`);
+    t = t.replace(re, `$1⟨DOT⟩`);
   });
+  return t;
+}
 
-  // Split by period followed by space and capital letter, or period at end
+function restoreDots(text: string): string {
+  return text.replace(/⟨DOT⟩/g, '.');
+}
+
+function splitTopics(rawText: string): string[] {
+  let text = protectDots(rawText);
+
+  // Split by "." or ";" followed by space (or end of string)
   const parts = text
-    .split(/\.\s+/)
-    .map((s) => s.replace(/⟨DOT⟩/g, '.').trim())
+    .split(/[.;]\s+|[.;]$/)
+    .map((s) => restoreDots(s).trim())
     .filter((s) => s.length > 2);
 
-  // Also split by newlines if present
+  // Also split by newlines
   const result: string[] = [];
   parts.forEach((part) => {
     const lines = part.split(/\n+/).map((l) => l.trim()).filter((l) => l.length > 2);
     result.push(...lines);
   });
 
-  // Remove leading numbers/bullets like "1.", "1)", "- ", "• "
-  return result.map((t) => t.replace(/^[\d]+[.)]\s*/, '').replace(/^[-•·]\s*/, '').trim()).filter((t) => t.length > 2);
+  // Remove leading numbers/bullets
+  return result
+    .map((t) => t.replace(/^[\d]+[.)]\s*/, '').replace(/^[-•·]\s*/, '').trim())
+    .filter((t) => t.length > 2);
+}
+
+// Detect if a line is a discipline header
+function isDisciplineHeader(line: string): boolean {
+  const trimmed = line.trim();
+  if (trimmed.length < 3 || trimmed.length > 120) return false;
+
+  // Pattern: starts with number like "1.", "1)", "1 -", "I.", "I -"
+  const numberedHeader = /^(\d+|[IVXLC]+)[.)\-–—]\s*.+/i.test(trimmed);
+  // Pattern: ALL CAPS or mostly caps (at least 60% uppercase letters)
+  const letters = trimmed.replace(/[^a-zA-ZÀ-ÿ]/g, '');
+  const upperRatio = letters.length > 0 ? (letters.replace(/[^A-ZÀ-Ý]/g, '').length / letters.length) : 0;
+  const isAllCaps = upperRatio > 0.6 && letters.length > 3;
+  // Pattern: ends with ":"
+  const endsWithColon = trimmed.endsWith(':');
+  // Pattern: "DISCIPLINA:" or "1. DISCIPLINA:" or "DISCIPLINA"
+  // Should NOT contain too many separators (topics use . and ;)
+  const hasFewSeparators = (trimmed.match(/[.;]/g) || []).length <= 2;
+
+  return hasFewSeparators && (numberedHeader || isAllCaps || endsWithColon);
+}
+
+// Clean discipline name
+function cleanDisciplineName(raw: string): string {
+  return raw
+    .replace(/^(\d+|[IVXLC]+)[.)\-–—]\s*/i, '') // remove leading number
+    .replace(/:$/, '') // remove trailing colon
+    .trim();
+}
+
+// Parse full syllabus text into disciplines with topics
+interface ParsedDiscipline {
+  name: string;
+  topics: string[];
+}
+
+function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
+  const lines = rawText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+  const result: ParsedDiscipline[] = [];
+  let currentDiscipline: ParsedDiscipline | null = null;
+  let contentBuffer = '';
+
+  const flushBuffer = () => {
+    if (currentDiscipline && contentBuffer.trim()) {
+      const topics = splitTopics(contentBuffer);
+      currentDiscipline.topics.push(...topics);
+      contentBuffer = '';
+    }
+  };
+
+  for (const line of lines) {
+    if (isDisciplineHeader(line)) {
+      flushBuffer();
+      if (currentDiscipline && currentDiscipline.topics.length > 0) {
+        result.push(currentDiscipline);
+      } else if (currentDiscipline && currentDiscipline.topics.length === 0) {
+        // Header without topics — might be a false positive, add back
+        // But still create new discipline
+      }
+      currentDiscipline = { name: cleanDisciplineName(line), topics: [] };
+    } else {
+      contentBuffer += ' ' + line;
+    }
+  }
+
+  // Flush remaining
+  flushBuffer();
+  if (currentDiscipline && currentDiscipline.topics.length > 0) {
+    result.push(currentDiscipline);
+  }
+
+  // If no disciplines detected, treat everything as topics under "Geral"
+  if (result.length === 0) {
+    const allTopics = splitTopics(rawText);
+    if (allTopics.length > 0) {
+      result.push({ name: 'Conteúdo Geral', topics: allTopics });
+    }
+  }
+
+  return result;
+}
+
+// Extract text from PDF using pdfjs-dist
+async function extractPdfText(file: File): Promise<string> {
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const pageText = textContent.items
+      .map((item: any) => item.str)
+      .join(' ');
+    fullText += pageText + '\n';
+  }
+
+  return fullText;
 }
 
 // ========== IMPORT DIALOG ==========
+type ImportMode = 'single' | 'bulk';
+
 function ImportDialog({
   open,
   onOpenChange,
   disciplines,
-  onImport,
+  onImportSingle,
+  onImportBulk,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   disciplines: Discipline[];
-  onImport: (disciplineId: string, topics: string[]) => void;
+  onImportSingle: (disciplineId: string, topics: string[]) => void;
+  onImportBulk: (parsed: ParsedDiscipline[]) => void;
 }) {
+  const [tab, setTab] = useState<'text' | 'pdf'>('text');
+  const [mode, setMode] = useState<ImportMode>('bulk');
   const [rawText, setRawText] = useState('');
   const [selectedDiscipline, setSelectedDiscipline] = useState('');
-  const [preview, setPreview] = useState<string[]>([]);
+  const [singlePreview, setSinglePreview] = useState<string[]>([]);
+  const [bulkPreview, setBulkPreview] = useState<ParsedDiscipline[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pdfFileName, setPdfFileName] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleParse = () => {
-    const topics = parseTopics(rawText);
-    setPreview(topics);
+  const resetState = () => {
+    setRawText('');
+    setSelectedDiscipline('');
+    setSinglePreview([]);
+    setBulkPreview([]);
+    setLoading(false);
+    setPdfFileName('');
+  };
+
+  const handleAnalyze = () => {
+    if (!rawText.trim()) return;
+    if (mode === 'single') {
+      setSinglePreview(splitTopics(rawText));
+      setBulkPreview([]);
+    } else {
+      const parsed = parseFullSyllabus(rawText);
+      setBulkPreview(parsed);
+      setSinglePreview([]);
+    }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      toast.error('Por favor, selecione um arquivo PDF.');
+      return;
+    }
+    setPdfFileName(file.name);
+    setLoading(true);
+    try {
+      const text = await extractPdfText(file);
+      setRawText(text);
+      // Auto-analyze
+      if (mode === 'single') {
+        setSinglePreview(splitTopics(text));
+      } else {
+        setBulkPreview(parseFullSyllabus(text));
+      }
+      toast.success('PDF processado com sucesso!');
+    } catch (err) {
+      console.error('PDF extraction error:', err);
+      toast.error('Erro ao processar o PDF. Tente copiar e colar o texto manualmente.');
+    } finally {
+      setLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleImport = () => {
-    if (!selectedDiscipline) {
-      toast.error('Selecione uma disciplina.');
-      return;
+    if (mode === 'single') {
+      if (!selectedDiscipline) {
+        toast.error('Selecione uma disciplina.');
+        return;
+      }
+      if (singlePreview.length === 0) {
+        toast.error('Nenhum tópico para importar.');
+        return;
+      }
+      onImportSingle(selectedDiscipline, singlePreview);
+    } else {
+      if (bulkPreview.length === 0) {
+        toast.error('Nenhuma disciplina detectada.');
+        return;
+      }
+      onImportBulk(bulkPreview);
     }
-    if (preview.length === 0) {
-      toast.error('Nenhum tópico para importar. Cole o conteúdo e clique em "Analisar".');
-      return;
-    }
-    onImport(selectedDiscipline, preview);
-    setRawText('');
-    setPreview([]);
-    setSelectedDiscipline('');
+    resetState();
     onOpenChange(false);
   };
 
+  const totalTopics = mode === 'single' ? singlePreview.length : bulkPreview.reduce((acc, d) => acc + d.topics.length, 0);
+  const hasPreview = mode === 'single' ? singlePreview.length > 0 : bulkPreview.length > 0;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(v) => { if (!v) resetState(); onOpenChange(v); }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             Importação Inteligente do Edital
           </DialogTitle>
           <DialogDescription>
-            Cole o conteúdo programático do edital. O sistema identificará e separará os tópicos automaticamente.
+            Importe o conteúdo programático do edital via PDF ou colando o texto. O sistema detecta disciplinas e tópicos automaticamente.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Import mode toggle */}
           <div className="space-y-2">
-            <Label>Disciplina de destino</Label>
-            <Select value={selectedDiscipline} onValueChange={setSelectedDiscipline}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a disciplina..." />
-              </SelectTrigger>
-              <SelectContent>
-                {disciplines.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+            <Label className="text-xs text-muted-foreground">Modo de importação</Label>
+            <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs">
+              <button
+                onClick={() => { setMode('bulk'); setSinglePreview([]); setBulkPreview([]); }}
+                className={`flex-1 px-3 py-2 transition-colors flex items-center justify-center gap-1.5 ${
+                  mode === 'bulk' ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted text-muted-foreground'
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Edital Completo (auto-detectar disciplinas)
+              </button>
+              <button
+                onClick={() => { setMode('single'); setSinglePreview([]); setBulkPreview([]); }}
+                className={`flex-1 px-3 py-2 transition-colors flex items-center justify-center gap-1.5 ${
+                  mode === 'single' ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted text-muted-foreground'
+                }`}
+              >
+                <Type className="h-3.5 w-3.5" />
+                Disciplina específica
+              </button>
+            </div>
+          </div>
+
+          {/* Single mode: select discipline */}
+          {mode === 'single' && (
+            <div className="space-y-2">
+              <Label>Disciplina de destino</Label>
+              <Select value={selectedDiscipline} onValueChange={setSelectedDiscipline}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a disciplina..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {disciplines.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Source tabs: Text or PDF */}
+          <Tabs value={tab} onValueChange={(v) => setTab(v as 'text' | 'pdf')}>
+            <TabsList className="w-full">
+              <TabsTrigger value="text" className="flex-1 gap-1.5">
+                <Type className="h-3.5 w-3.5" />
+                Colar Texto
+              </TabsTrigger>
+              <TabsTrigger value="pdf" className="flex-1 gap-1.5">
+                <FileUp className="h-3.5 w-3.5" />
+                Importar PDF
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="text" className="space-y-3 mt-3">
+              <div className="space-y-2">
+                <Label>Conteúdo Programático</Label>
+                <Textarea
+                  value={rawText}
+                  onChange={(e) => setRawText(e.target.value)}
+                  placeholder={mode === 'bulk'
+                    ? "Cole aqui todo o conteúdo programático do edital. Exemplo:\n\nLÍNGUA PORTUGUESA\nCompreensão e interpretação de textos; Ortografia oficial; Acentuação gráfica...\n\nDIREITO CONSTITUCIONAL\nPrincípios fundamentais. Direitos e garantias fundamentais..."
+                    : "Cole aqui o conteúdo de uma disciplina. Exemplo:\n\nCompreensão e interpretação de textos. Ortografia oficial. Acentuação gráfica. Emprego das classes de palavras..."
+                  }
+                  className="min-h-[180px] text-sm font-mono"
+                />
+              </div>
+              <Button onClick={handleAnalyze} variant="outline" className="w-full gap-2" disabled={!rawText.trim()}>
+                <Sparkles className="h-4 w-4" />
+                Analisar Conteúdo
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="pdf" className="space-y-3 mt-3">
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={handlePdfUpload}
+                />
+                {loading ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <p className="text-sm text-muted-foreground">Processando PDF...</p>
+                  </div>
+                ) : pdfFileName ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <FileText className="h-10 w-10 text-primary" />
+                    <p className="text-sm font-medium">{pdfFileName}</p>
+                    <p className="text-xs text-muted-foreground">Clique para trocar o arquivo</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <FileUp className="h-10 w-10 text-muted-foreground/50" />
+                    <p className="text-sm font-medium">Clique para selecionar um PDF</p>
+                    <p className="text-xs text-muted-foreground">
+                      O sistema extrairá o texto e detectará disciplinas e tópicos automaticamente
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {rawText && !loading && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs text-muted-foreground">Texto extraído do PDF (você pode editar)</Label>
+                    <Badge variant="outline" className="text-[10px]">{rawText.length} caracteres</Badge>
+                  </div>
+                  <Textarea
+                    value={rawText}
+                    onChange={(e) => setRawText(e.target.value)}
+                    className="min-h-[120px] text-xs font-mono"
+                  />
+                  <Button onClick={handleAnalyze} variant="outline" className="w-full gap-2" size="sm">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Re-analisar Conteúdo
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          {/* Preview: Bulk mode */}
+          {mode === 'bulk' && bulkPreview.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">
+                  {bulkPreview.length} disciplina{bulkPreview.length > 1 ? 's' : ''} detectada{bulkPreview.length > 1 ? 's' : ''}
+                </Label>
+                <Badge variant="secondary" className="text-xs">
+                  {totalTopics} tópicos no total
+                </Badge>
+              </div>
+              <div className="max-h-[250px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+                {bulkPreview.map((disc, di) => (
+                  <div key={di}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="default" className="text-[10px]">{disc.topics.length}</Badge>
+                      <span className="text-sm font-semibold text-foreground">{disc.name}</span>
+                    </div>
+                    <div className="pl-4 space-y-0.5">
+                      {disc.topics.map((topic, ti) => (
+                        <div key={ti} className="flex items-start gap-2 text-xs">
+                          <span className="text-muted-foreground shrink-0 w-4 text-right">{ti + 1}.</span>
+                          <span className="text-foreground/80">{topic}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {di < bulkPreview.length - 1 && <Separator className="mt-2" />}
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>
+                  Disciplinas que ainda não existem serão criadas automaticamente ao importar.
+                </span>
+              </div>
+            </div>
+          )}
 
-          <div className="space-y-2">
-            <Label>Conteúdo Programático</Label>
-            <Textarea
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              placeholder="Cole aqui o conteúdo programático do edital. Exemplo:&#10;&#10;Direito Constitucional: Princípios fundamentais. Direitos e garantias fundamentais. Organização do Estado. Organização dos Poderes..."
-              className="min-h-[160px] text-sm font-mono"
-            />
-          </div>
-
-          <Button onClick={handleParse} variant="outline" className="w-full gap-2" disabled={!rawText.trim()}>
-            <Sparkles className="h-4 w-4" />
-            Analisar Conteúdo ({rawText.trim() ? 'Detectar tópicos' : 'Cole o texto acima'})
-          </Button>
-
-          {preview.length > 0 && (
+          {/* Preview: Single mode */}
+          {mode === 'single' && singlePreview.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-semibold">
-                  Tópicos detectados ({preview.length})
+                  Tópicos detectados ({singlePreview.length})
                 </Label>
-                <Badge variant="secondary" className="text-xs">
-                  Prévia
-                </Badge>
+                <Badge variant="secondary" className="text-xs">Prévia</Badge>
               </div>
               <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 space-y-1.5">
-                {preview.map((topic, i) => (
+                {singlePreview.map((topic, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm">
                     <span className="text-muted-foreground shrink-0 text-xs mt-0.5 w-5 text-right">{i + 1}.</span>
                     <span className="text-foreground">{topic}</span>
@@ -181,10 +491,14 @@ function ImportDialog({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleImport} disabled={preview.length === 0 || !selectedDiscipline} className="gap-2">
+          <Button variant="outline" onClick={() => { resetState(); onOpenChange(false); }}>Cancelar</Button>
+          <Button
+            onClick={handleImport}
+            disabled={!hasPreview || (mode === 'single' && !selectedDiscipline)}
+            className="gap-2"
+          >
             <Upload className="h-4 w-4" />
-            Importar {preview.length} Tópicos
+            Importar {totalTopics} Tópicos
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -489,7 +803,7 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
 export default function Syllabus() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
-  const { addTopic, clearTopicsByDiscipline, clearAllTopics } = useAppStore();
+  const { addTopic, addDiscipline, clearTopicsByDiscipline, clearAllTopics } = useAppStore();
   const [importOpen, setImportOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<string>('all');
@@ -499,7 +813,7 @@ export default function Syllabus() {
   const completedTopics = topics.filter((t) => t.completed).length;
   const globalPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
-  const handleImport = (disciplineId: string, topicTexts: string[]) => {
+  const handleImportSingle = (disciplineId: string, topicTexts: string[]) => {
     topicTexts.forEach((text, i) => {
       const topic: Topic = {
         id: crypto.randomUUID(),
@@ -511,6 +825,48 @@ export default function Syllabus() {
       addTopic(topic);
     });
     toast.success(`${topicTexts.length} tópicos importados com sucesso!`);
+  };
+
+  const handleImportBulk = (parsed: ParsedDiscipline[]) => {
+    let totalImported = 0;
+    let disciplinesCreated = 0;
+
+    parsed.forEach((disc) => {
+      let discipline = disciplines.find(
+        (d) => d.name.toLowerCase().trim() === disc.name.toLowerCase().trim()
+      );
+      if (!discipline) {
+        const newDisc: Discipline = {
+          id: crypto.randomUUID(),
+          name: disc.name,
+          category: 'mista',
+          weight: 0,
+          prova: 'P1',
+          defaultQuestions: 0,
+          order: disciplines.length + disciplinesCreated,
+        };
+        addDiscipline(newDisc);
+        discipline = newDisc;
+        disciplinesCreated++;
+      }
+
+      const existingCount = topics.filter((t) => t.disciplineId === discipline!.id).length;
+      disc.topics.forEach((text, i) => {
+        addTopic({
+          id: crypto.randomUUID(),
+          disciplineId: discipline!.id,
+          text,
+          completed: false,
+          order: existingCount + i,
+        });
+      });
+      totalImported += disc.topics.length;
+    });
+
+    const msg = disciplinesCreated > 0
+      ? `${totalImported} tópicos importados em ${parsed.length} disciplinas (${disciplinesCreated} nova${disciplinesCreated > 1 ? 's' : ''})!`
+      : `${totalImported} tópicos importados em ${parsed.length} disciplinas!`;
+    toast.success(msg);
   };
 
   // Filter disciplines
@@ -712,7 +1068,8 @@ export default function Syllabus() {
         open={importOpen}
         onOpenChange={setImportOpen}
         disciplines={disciplines}
-        onImport={handleImport}
+        onImportSingle={handleImportSingle}
+        onImportBulk={handleImportBulk}
       />
     </motion.div>
   );
