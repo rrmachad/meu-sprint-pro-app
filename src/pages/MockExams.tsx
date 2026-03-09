@@ -259,6 +259,7 @@ export default function MockExams() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {!hasData ? (
