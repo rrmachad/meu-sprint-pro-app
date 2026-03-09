@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3 } from 'lucide-react';
+import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useAppStore } from '@/store/useAppStore';
