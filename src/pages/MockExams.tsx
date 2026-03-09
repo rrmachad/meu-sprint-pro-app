@@ -369,22 +369,45 @@ export default function MockExams() {
               const totalC = s.disciplines.reduce((a, d) => a + d.correct, 0);
               const pct = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
               return (
-                <Card key={s.id}>
-                  <CardContent className="py-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold">
-                        {format(parseISO(s.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        {s.banca && <span className="ml-2 text-xs text-muted-foreground">({s.banca})</span>}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {totalQ} questões · {totalC} acertos · <span className="font-medium text-primary">{pct}%</span>
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => { removeSimulado(s.id); toast.info('Simulado removido'); }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </CardContent>
-                </Card>
+                <Collapsible key={s.id}>
+                  <Card>
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between">
+                        <CollapsibleTrigger className="flex items-center gap-2 text-left group flex-1">
+                          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                          <div>
+                            <p className="font-semibold">
+                              {format(parseISO(s.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                              {s.banca && <span className="ml-2 text-xs text-muted-foreground">({s.banca})</span>}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {totalQ} questões · {totalC} acertos · <span className="font-medium text-primary">{pct}%</span>
+                            </p>
+                          </div>
+                        </CollapsibleTrigger>
+                        <Button variant="ghost" size="icon" onClick={() => { removeSimulado(s.id); toast.info('Simulado removido'); }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <CollapsibleContent className="mt-3 space-y-2 border-t border-border pt-3">
+                        {s.disciplines.map((d) => {
+                          const dpct = d.questions > 0 ? Math.round((d.correct / d.questions) * 100) : 0;
+                          return (
+                            <div key={d.disciplineId} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span>{discName(d.disciplineId)}</span>
+                                <span className="text-muted-foreground">
+                                  {d.correct}/{d.questions} ({dpct}%)
+                                </span>
+                              </div>
+                              <Progress value={dpct} className="h-2" />
+                            </div>
+                          );
+                        })}
+                      </CollapsibleContent>
+                    </CardContent>
+                  </Card>
+                </Collapsible>
               );
             })}
           </TabsContent>
