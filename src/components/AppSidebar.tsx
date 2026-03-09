@@ -1,7 +1,8 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
-  FileText, Settings, GraduationCap, Flame, Sparkles,
+  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon,
 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import {
@@ -27,6 +28,7 @@ export function AppSidebar() {
   const location = useLocation();
   const streak = useAppStore((s) => s.streak);
   const topics = useAppStore((s) => s.topics);
+  const { theme, setTheme } = useTheme();
 
   const completedTopics = topics.filter((t) => t.completed).length;
   const totalTopics = topics.length;
@@ -102,7 +104,20 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-3 space-y-2">
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4 shrink-0" />
+          ) : (
+            <Moon className="h-4 w-4 shrink-0" />
+          )}
+          {!collapsed && (
+            <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
+          )}
+        </button>
         {!collapsed && (
           <div className="rounded-xl bg-sidebar-accent/30 border border-sidebar-border/30 p-3 text-center space-y-1">
             <div className="flex items-center justify-center gap-1.5 text-sidebar-foreground/40">
