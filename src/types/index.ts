@@ -119,12 +119,19 @@ export interface Simulado {
 
 // ============ SETTINGS ============
 
+export interface ProvaPhase {
+  name: string; // P1, P2, P3...
+  minPercent: number;
+}
+
 export interface ContestInfo {
   name: string;
   organ: string;
   examDate: string;
   vacancies: number;
   candidateName: string;
+  phases: ProvaPhase[];
+  totalMinPercent: number;
 }
 
 export interface RevisionSettings {
