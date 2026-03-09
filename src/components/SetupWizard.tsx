@@ -69,7 +69,14 @@ export function SetupWizard() {
   const [studyDays, setStudyDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
   const addDisciplineRow = () => {
-    setDisciplines([...disciplines, { name: '', category: 'humanas', weight: 10, prova: 'P1', defaultQuestions: 10 }]);
+    setDisciplines([...disciplines, { name: '', category: 'humanas', questions: 10, weightPerQuestion: 1, prova: 'P1' }]);
+  };
+
+  const getTotalPoints = () => disciplines.reduce((sum, d) => sum + d.questions * d.weightPerQuestion, 0);
+  const getDisciplinePoints = (d: DisciplineForm) => d.questions * d.weightPerQuestion;
+  const getDisciplinePercent = (d: DisciplineForm) => {
+    const total = getTotalPoints();
+    return total === 0 ? 0 : (getDisciplinePoints(d) / total) * 100;
   };
 
   const updateDisciplineRow = (index: number, field: keyof DisciplineForm, value: string | number) => {
