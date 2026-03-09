@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame } from 'lucide-react';
+import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store/useAppStore';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -31,6 +33,8 @@ export default function Dashboard() {
   const topics = useAppStore((s) => s.topics);
   const goals = useAppStore((s) => s.settings.goals);
   const streak = useAppStore((s) => s.streak);
+  const revisions = useAppStore((s) => s.revisions);
+  const completeRevision = useAppStore((s) => s.completeRevision);
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
@@ -102,6 +106,24 @@ export default function Dashboard() {
   const totalTopics = topics.length;
   const completedTopics = topics.filter((t) => t.completed).length;
   const globalPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+  // Pending revisions
+  const pendingRevisions = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return revisions
+      .filter((r) => !r.completed)
+      .map((r) => {
+        const disc = disciplines.find((d) => d.id === r.disciplineId);
+        const isOverdue = r.dueDate < today;
+        const isToday = r.dueDate === today;
+        return { ...r, disciplineName: disc?.name || 'Desconhecida', isOverdue, isToday };
+      })
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  }, [revisions, disciplines]);
+
+  const overdueCount = pendingRevisions.filter((r) => r.isOverdue).length;
+  const todayRevisions = pendingRevisions.filter((r) => r.isToday).length;
+  const upcomingRevisions = pendingRevisions.filter((r) => !r.isOverdue && !r.isToday).slice(0, 5);
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
@@ -243,6 +265,91 @@ export default function Dashboard() {
                 );
               })()}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Revision Notifications */}
+      {pendingRevisions.length > 0 && (
+        <Card className={overdueCount > 0 ? 'border-destructive/50' : ''}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Bell className="h-4 w-4 text-primary" />
+                Lembretes de Revisão
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                {overdueCount > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {overdueCount} atrasada{overdueCount > 1 ? 's' : ''}
+                  </Badge>
+                )}
+                {todayRevisions > 0 && (
+                  <Badge className="text-xs bg-primary text-primary-foreground">
+                    {todayRevisions} para hoje
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {/* Overdue */}
+            {pendingRevisions.filter((r) => r.isOverdue).map((r) => (
+              <div key={r.id} className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{r.disciplineName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Revisão {r.mark} · Vencida em {new Date(r.dueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="shrink-0 ml-2 text-xs" onClick={() => completeRevision(r.id)}>
+                  Concluir
+                </Button>
+              </div>
+            ))}
+
+            {/* Today */}
+            {pendingRevisions.filter((r) => r.isToday).map((r) => (
+              <div key={r.id} className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <CalendarCheck className="h-4 w-4 shrink-0 text-primary" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{r.disciplineName}</p>
+                    <p className="text-xs text-muted-foreground">Revisão {r.mark} · Hoje</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="shrink-0 ml-2 text-xs" onClick={() => completeRevision(r.id)}>
+                  Concluir
+                </Button>
+              </div>
+            ))}
+
+            {/* Upcoming */}
+            {upcomingRevisions.map((r) => (
+              <div key={r.id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{r.disciplineName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Revisão {r.mark} · {new Date(r.dueDate + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" className="shrink-0 ml-2 text-xs" onClick={() => completeRevision(r.id)}>
+                  Concluir
+                </Button>
+              </div>
+            ))}
+
+            {pendingRevisions.length > (overdueCount + todayRevisions + upcomingRevisions.length) && (
+              <p className="text-xs text-muted-foreground text-center pt-1">
+                +{pendingRevisions.length - overdueCount - todayRevisions - upcomingRevisions.length} revisões futuras
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
