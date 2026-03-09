@@ -386,6 +386,7 @@ function ImportDialog({
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+  };
 
   const handleImport = () => {
     if (mode === 'single') {
