@@ -310,9 +310,13 @@ function TopicRow({
 }
 
 // ========== DISCIPLINE ACCORDION ==========
-function DisciplineSection({ discipline }: { discipline: Discipline }) {
-  const topics = useAppStore((s) => s.topics.filter((t) => t.disciplineId === discipline.id));
-  const allTopics = useAppStore((s) => s.topics);
+function DisciplineSection({ discipline, statusFilter = 'all' }: { discipline: Discipline; statusFilter?: 'all' | 'pending' | 'completed' }) {
+  const allDisciplineTopics = useAppStore((s) => s.topics.filter((t) => t.disciplineId === discipline.id));
+  const topics = allDisciplineTopics.filter((t) => {
+    if (statusFilter === 'pending') return !t.completed;
+    if (statusFilter === 'completed') return t.completed;
+    return true;
+  });
   const { addTopic, updateTopic, removeTopic, setTopics } = useAppStore();
   const [newTopicText, setNewTopicText] = useState('');
   const [addingTopic, setAddingTopic] = useState(false);
