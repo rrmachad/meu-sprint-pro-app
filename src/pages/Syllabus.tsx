@@ -451,7 +451,7 @@ function ImportDialog({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.txt"
                   className="hidden"
                   onChange={handlePdfUpload}
                 />
