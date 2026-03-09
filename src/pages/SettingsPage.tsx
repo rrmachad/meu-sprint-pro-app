@@ -250,7 +250,7 @@ function DisciplinesTab() {
     name: '',
     category: 'humanas' as DisciplineCategory,
     weight: 10,
-    prova: 'P1' as ProvaType,
+    prova: 'P1' as string,
     defaultQuestions: 10,
   });
 
