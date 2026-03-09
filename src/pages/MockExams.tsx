@@ -332,7 +332,7 @@ export default function MockExams() {
 
           {/* Per discipline evolution */}
           <TabsContent value="disciplinas">
-            <Card>
+            <Card data-pdf-chart>
               <CardHeader><CardTitle className="text-base">Evolução por Disciplina (%)</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
