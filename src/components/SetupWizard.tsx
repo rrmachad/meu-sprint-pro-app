@@ -65,6 +65,7 @@ export function SetupWizard() {
   const [p1Min, setP1Min] = useState(60);
   const [p2Min, setP2Min] = useState(60);
   const [totalMin, setTotalMin] = useState(70);
+  const [cannotZeroIndices, setCannotZeroIndices] = useState<number[]>([]);
   const [weeklyHours, setWeeklyHours] = useState(40);
   const [studyDays, setStudyDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
