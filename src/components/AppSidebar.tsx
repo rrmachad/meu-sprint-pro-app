@@ -28,6 +28,7 @@ export function AppSidebar() {
   const location = useLocation();
   const streak = useAppStore((s) => s.streak);
   const topics = useAppStore((s) => s.topics);
+  const { theme, setTheme } = useTheme();
 
   const completedTopics = topics.filter((t) => t.completed).length;
   const totalTopics = topics.length;
