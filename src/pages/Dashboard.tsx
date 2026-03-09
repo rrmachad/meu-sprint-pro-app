@@ -338,6 +338,92 @@ export default function Dashboard() {
         </motion.div>
       )}
 
+      {/* Weekly Goals */}
+      {(goals.weeklyHours > 0 || goals.dailyQuestions > 0 || goals.dailyPages > 0) && (
+        <motion.div variants={itemVariants}>
+          <Card className="card-hover border-border/50">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10">
+                    <Trophy className="h-3.5 w-3.5 text-accent" />
+                  </div>
+                  Metas Semanais
+                </CardTitle>
+                <div className="flex items-center gap-1.5">
+                  {weeklyHoursPercent >= 100 && <Badge className="text-[10px] rounded-full px-2 bg-success/10 text-success border-success/20">Horas ✓</Badge>}
+                  {weeklyQuestionsPercent >= 100 && <Badge className="text-[10px] rounded-full px-2 bg-success/10 text-success border-success/20">Questões ✓</Badge>}
+                  {weeklyPagesPercent >= 100 && <Badge className="text-[10px] rounded-full px-2 bg-success/10 text-success border-success/20">Páginas ✓</Badge>}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Weekly progress bars */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {goals.weeklyHours > 0 && (
+                  <div className="space-y-2 rounded-xl border border-border/50 bg-muted/30 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-primary" />Horas</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${weeklyHoursPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                        {weeklyHoursPercent}%
+                      </span>
+                    </div>
+                    <Progress value={weeklyHoursPercent} className="h-1.5" />
+                    <p className="text-[10px] text-muted-foreground">{weeklyTotals.horas}h / {goals.weeklyHours}h</p>
+                  </div>
+                )}
+                {goals.dailyQuestions > 0 && (
+                  <div className="space-y-2 rounded-xl border border-border/50 bg-muted/30 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" />Questões</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${weeklyQuestionsPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                        {weeklyQuestionsPercent}%
+                      </span>
+                    </div>
+                    <Progress value={weeklyQuestionsPercent} className="h-1.5" />
+                    <p className="text-[10px] text-muted-foreground">{weeklyTotals.questoes} / {weeklyQuestionsGoal} questões</p>
+                  </div>
+                )}
+                {goals.dailyPages > 0 && (
+                  <div className="space-y-2 rounded-xl border border-border/50 bg-muted/30 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-chart-4" />Páginas</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${weeklyPagesPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                        {weeklyPagesPercent}%
+                      </span>
+                    </div>
+                    <Progress value={weeklyPagesPercent} className="h-1.5" />
+                    <p className="text-[10px] text-muted-foreground">{weeklyTotals.paginas} / {weeklyPagesGoal} páginas</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Cumulative chart */}
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={weeklyGoalsData} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '12px',
+                      color: 'hsl(var(--foreground))',
+                      fontSize: 12,
+                      boxShadow: '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
+                    }}
+                  />
+                  {goals.weeklyHours > 0 && <Area type="monotone" dataKey="horas" name="Horas" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.15)" strokeWidth={2} />}
+                  {goals.dailyQuestions > 0 && <Area type="monotone" dataKey="questoes" name="Questões" stroke="hsl(var(--accent))" fill="hsl(var(--accent) / 0.15)" strokeWidth={2} />}
+                  {goals.dailyPages > 0 && <Area type="monotone" dataKey="paginas" name="Páginas" stroke="hsl(var(--chart-4))" fill="hsl(var(--chart-4) / 0.15)" strokeWidth={2} />}
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Revision Notifications */}
       {pendingRevisions.length > 0 && (
         <motion.div variants={itemVariants}>
