@@ -89,33 +89,61 @@ function splitTopics(rawText: string): string[] {
 
 // Common discipline keywords found in Brazilian public exam syllabi
 const DISCIPLINE_KEYWORDS = [
-  'língua portuguesa', 'português', 'matemática', 'matemática financeira',
-  'raciocínio lógico', 'raciocínio lógico-matemático',
+  // Línguas
+  'língua portuguesa', 'português', 'redação', 'redação oficial', 'redação discursiva',
+  'inglês', 'língua inglesa', 'espanhol', 'língua espanhola',
+  // Matemática e Raciocínio
+  'matemática', 'matemática financeira', 'raciocínio lógico', 'raciocínio lógico-matemático',
+  'raciocínio lógico e matemático', 'raciocínio analítico',
+  // Direito
   'direito constitucional', 'direito administrativo', 'direito penal',
+  'direito processual penal', 'direito processual civil',
   'direito civil', 'direito processual', 'direito tributário', 'direito do trabalho',
-  'direito empresarial', 'direito financeiro', 'direito eleitoral', 'direito ambiental',
+  'direito empresarial', 'direito comercial', 'direito financeiro',
+  'direito eleitoral', 'direito ambiental',
   'direito previdenciário', 'direito internacional', 'direitos humanos',
-  'd. constitucional', 'd. administrativo', 'd. penal', 'd. civil',
-  'd. empresarial', 'd. tributário', 'd. processual',
-  'informática', 'noções de informática', 'conhecimentos de informática',
-  'tecnologia da informação',
-  'administração', 'administração pública', 'administração geral',
-  'contabilidade', 'contabilidade geral', 'contabilidade pública', 'contabilidade de custos',
+  'direito econômico', 'direito digital',
+  // Contabilidade e Finanças
+  'contabilidade', 'contabilidade geral', 'contabilidade pública',
+  'contabilidade de custos', 'contabilidade avançada', 'contabilidade aplicada ao setor público',
   'custos', 'economia', 'finanças públicas', 'economia e finanças públicas',
-  'auditoria', 'legislação',
-  'legislação tributária', 'legislação tributária estadual', 'legislação específica',
+  'matemática financeira e estatística',
+  // Administração e Gestão
+  'administração', 'administração pública', 'administração geral',
+  'administração geral e pública', 'administração financeira e orçamentária',
+  'gestão de pessoas', 'gestão pública', 'políticas públicas',
+  'gestão de projetos', 'gestão de contratos',
+  // Auditoria e Controle
+  'auditoria', 'auditoria governamental', 'auditoria fiscal',
+  'controle externo', 'controle interno',
+  // Legislação
+  'legislação', 'legislação tributária', 'legislação tributária estadual',
+  'legislação tributária municipal', 'legislação tributária federal',
+  'legislação específica', 'legislação aduaneira',
+  'legislação aplicada', 'legislação penal especial',
+  // Informática
+  'informática', 'noções de informática', 'conhecimentos de informática',
+  'tecnologia da informação', 'ti', 'segurança da informação',
+  'redes de computadores', 'banco de dados', 'sistemas operacionais',
+  'engenharia de software', 'programação', 'governança de ti',
+  // Áreas Específicas
+  'estatística', 'arquivologia', 'biblioteconomia',
+  'comércio internacional', 'relações internacionais',
   'atualidades', 'realidade brasileira', 'geografia', 'história',
   'história e geografia', 'história e geografia de',
-  'ética', 'ética e filosofia', 'ética no serviço público',
-  'redação', 'redação oficial',
-  'gestão de pessoas', 'gestão pública', 'políticas públicas',
-  'estatística', 'arquivologia', 'biblioteconomia',
-  'segurança da informação', 'redes de computadores', 'banco de dados',
-  'sistemas operacionais', 'engenharia de software', 'programação',
+  'ética', 'ética e filosofia', 'ética no serviço público', 'ética profissional',
+  'orçamento público', 'afo', 'administração financeira',
   'código tributário', 'tributário',
   'conhecimentos específicos', 'conhecimentos gerais', 'conhecimentos básicos',
-  'conhecimentos complementares', 'noções de', 'fundamentos de',
-  'inglês', 'espanhol', 'penal', 'empresarial', 'civil',
+  'conhecimentos complementares',
+  'regulação', 'agências reguladoras',
+  'processo administrativo', 'licitações e contratos',
+  'regime jurídico', 'servidores públicos',
+  'sistema financeiro nacional', 'mercado de capitais',
+  'criminologia', 'medicina legal',
+  'engenharia', 'arquitetura', 'agronomia',
+  'saúde pública', 'enfermagem', 'farmácia',
+  'pedagogia', 'didática', 'legislação educacional',
 ];
 
 // Detect if a line is a discipline header
@@ -159,8 +187,119 @@ interface ParsedDiscipline {
 }
 
 function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
-  // Normalize: replace multiple spaces with single, split into lines
+  // Normalize whitespace
   const normalizedText = rawText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  // Strategy: find all discipline keyword positions in the full text,
+  // then split the text at those positions.
+  // This handles PDFs where text is extracted as one continuous block.
+
+  // Sort keywords by length (longest first) to match most specific first
+  const sortedKeywords = [...DISCIPLINE_KEYWORDS].sort((a, b) => b.length - a.length);
+  const lowerText = normalizedText.toLowerCase();
+
+  // Find all potential discipline header positions
+  interface Match {
+    index: number;
+    keyword: string;
+    fullMatch: string;
+  }
+
+  const matches: Match[] = [];
+  const usedRanges: [number, number][] = [];
+
+  const isOverlapping = (start: number, end: number) =>
+    usedRanges.some(([s, e]) => start < e && end > s);
+
+  for (const kw of sortedKeywords) {
+    let searchFrom = 0;
+    while (searchFrom < lowerText.length) {
+      const idx = lowerText.indexOf(kw, searchFrom);
+      if (idx === -1) break;
+
+      const end = idx + kw.length;
+
+      // Ensure it's a word boundary (not part of a larger word)
+      const charBefore = idx > 0 ? lowerText[idx - 1] : ' ';
+      const charAfter = end < lowerText.length ? lowerText[end] : ' ';
+      const validBoundary =
+        /[\s\n.,;:()–—\-\d]/.test(charBefore) || idx === 0;
+      const validEnd =
+        /[\s\n.,;:()–—\-]/.test(charAfter) || end === lowerText.length;
+
+      if (validBoundary && validEnd && !isOverlapping(idx, end)) {
+        // Look backwards for a possible numbered prefix like "1." or "1 -"
+        let prefixStart = idx;
+        const textBefore = normalizedText.substring(Math.max(0, idx - 20), idx);
+        const prefixMatch = textBefore.match(/([\d]+[.)\-–—]\s*|[IVXLC]+[.)\-–—]\s*)$/i);
+        if (prefixMatch) {
+          prefixStart = idx - prefixMatch[0].length;
+        }
+
+        const fullMatch = normalizedText.substring(prefixStart, end).trim();
+        matches.push({ index: prefixStart, keyword: kw, fullMatch });
+        usedRanges.push([prefixStart, end]);
+      }
+
+      searchFrom = idx + 1;
+    }
+  }
+
+  // Sort matches by position
+  matches.sort((a, b) => a.index - b.index);
+
+  // Remove duplicate/overlapping matches (keep first occurrence)
+  const filteredMatches: Match[] = [];
+  for (const m of matches) {
+    const overlaps = filteredMatches.some(
+      (fm) => Math.abs(fm.index - m.index) < 5
+    );
+    if (!overlaps) {
+      filteredMatches.push(m);
+    }
+  }
+
+  // If no keyword matches found, fall back to line-by-line structural detection
+  if (filteredMatches.length === 0) {
+    return parseByLines(normalizedText);
+  }
+
+  // Split text at discipline boundaries
+  const result: ParsedDiscipline[] = [];
+
+  for (let i = 0; i < filteredMatches.length; i++) {
+    const match = filteredMatches[i];
+    const nextIndex = i + 1 < filteredMatches.length
+      ? filteredMatches[i + 1].index
+      : normalizedText.length;
+
+    const name = cleanDisciplineName(match.fullMatch);
+    const contentStart = match.index + match.fullMatch.length;
+    const content = normalizedText.substring(contentStart, nextIndex).trim();
+    const topics = splitTopics(content);
+
+    if (topics.length > 0) {
+      result.push({ name, topics });
+    } else if (content.length > 5) {
+      // If splitTopics returned nothing, add content as a single topic
+      result.push({ name, topics: [content.replace(/\s+/g, ' ').trim()] });
+    }
+  }
+
+  // Handle any text before the first discipline match
+  if (filteredMatches.length > 0 && filteredMatches[0].index > 50) {
+    const preText = normalizedText.substring(0, filteredMatches[0].index).trim();
+    const preTopics = splitTopics(preText);
+    if (preTopics.length > 0) {
+      result.unshift({ name: 'Conteúdo Inicial', topics: preTopics });
+    }
+  }
+
+  return result;
+}
+
+// Fallback: line-by-line parsing for structured documents
+function parseByLines(normalizedText: string): ParsedDiscipline[] {
   const lines = normalizedText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
   const result: ParsedDiscipline[] = [];
   let currentDiscipline: ParsedDiscipline | null = null;
@@ -175,56 +314,24 @@ function parseFullSyllabus(rawText: string): ParsedDiscipline[] {
   };
 
   for (const line of lines) {
-    // Try to detect if line contains a discipline header possibly followed by content
-    // e.g. "LÍNGUA PORTUGUESA Ortografia e acentuação. Emprego do sinal..."
-    // Check if the beginning of the line matches a discipline pattern
-    let headerPart = '';
-    let remainingPart = '';
-
     if (isDisciplineHeader(line)) {
-      headerPart = line;
-    } else {
-      // Check if line starts with a known keyword followed by content
-      for (const kw of DISCIPLINE_KEYWORDS) {
-        const idx = line.toLowerCase().indexOf(kw);
-        if (idx === 0 || (idx > 0 && /^[\d.)\-–— ]*$/.test(line.substring(0, idx)))) {
-          // Check if after the keyword there's topic content (contains . or ;)
-          const afterKeyword = line.substring(idx + kw.length).trim();
-          if (afterKeyword.length > 10 && /[.;]/.test(afterKeyword)) {
-            headerPart = line.substring(0, idx + kw.length).trim();
-            remainingPart = afterKeyword;
-            break;
-          } else if (afterKeyword.length <= 10 || !afterKeyword) {
-            headerPart = line;
-            break;
-          }
-        }
-      }
-    }
-
-    if (headerPart) {
       flushBuffer();
       if (currentDiscipline && currentDiscipline.topics.length > 0) {
         result.push(currentDiscipline);
       }
-      currentDiscipline = { name: cleanDisciplineName(headerPart), topics: [] };
-      if (remainingPart) {
-        contentBuffer = remainingPart;
-      }
+      currentDiscipline = { name: cleanDisciplineName(line), topics: [] };
     } else {
       contentBuffer += ' ' + line;
     }
   }
 
-  // Flush remaining
   flushBuffer();
   if (currentDiscipline && currentDiscipline.topics.length > 0) {
     result.push(currentDiscipline);
   }
 
-  // If no disciplines detected, treat everything as topics under "Conteúdo Geral"
   if (result.length === 0) {
-    const allTopics = splitTopics(rawText);
+    const allTopics = splitTopics(normalizedText);
     if (allTopics.length > 0) {
       result.push({ name: 'Conteúdo Geral', topics: allTopics });
     }
