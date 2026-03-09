@@ -751,8 +751,9 @@ function CycleView({
 
         <Accordion type="multiple" className="space-y-1">
           {dailyBlocks.map((dayBlocks, dayIdx) => {
-            const dayName = cycle.studyDays[dayIdx] !== undefined
-              ? DAY_FULL[cycle.studyDays[dayIdx]]
+            const sortedStudyDays = [...cycle.studyDays].sort((a, b) => ((a === 0 ? 7 : a) - (b === 0 ? 7 : b)));
+            const dayName = sortedStudyDays[dayIdx] !== undefined
+              ? DAY_FULL[sortedStudyDays[dayIdx]]
               : `Dia ${dayIdx + 1}`;
             const dayMinutes = dayBlocks.reduce((a, b) => a + b.durationMinutes, 0);
 
