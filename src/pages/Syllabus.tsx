@@ -1,6 +1,15 @@
 import { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates,
+  useSortable, verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   ClipboardList, Plus, Trash2, Edit2, Check, X, Upload,
   ChevronDown, ChevronRight, GripVertical, FileText, Sparkles,
   CheckCircle2, Circle, Percent,
@@ -183,7 +192,7 @@ function ImportDialog({
   );
 }
 
-// ========== TOPIC ROW ==========
+// ========== TOPIC ROW (Sortable) ==========
 function TopicRow({
   topic,
   onToggle,
@@ -198,6 +207,18 @@ function TopicRow({
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(topic.text);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging,
+  } = useSortable({ id: topic.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : undefined,
+    position: 'relative' as const,
+  };
 
   const startEdit = () => {
     setEditText(topic.text);
@@ -218,15 +239,22 @@ function TopicRow({
   };
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, x: -8 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 8 }}
-      className={`group flex items-start gap-2.5 rounded-lg px-3 py-2 transition-colors ${
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group flex items-start gap-1 rounded-lg px-2 py-2 transition-colors ${
         topic.completed ? 'bg-success/5' : 'hover:bg-muted/50'
       }`}
     >
+      <button
+        {...attributes}
+        {...listeners}
+        className="mt-0.5 shrink-0 cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground/40 hover:text-muted-foreground touch-none"
+        tabIndex={-1}
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
       <Checkbox
         checked={topic.completed}
         onCheckedChange={onToggle}
@@ -277,20 +305,40 @@ function TopicRow({
           </div>
         </>
       )}
-    </motion.div>
+    </div>
   );
 }
 
 // ========== DISCIPLINE ACCORDION ==========
 function DisciplineSection({ discipline }: { discipline: Discipline }) {
   const topics = useAppStore((s) => s.topics.filter((t) => t.disciplineId === discipline.id));
-  const { addTopic, updateTopic, removeTopic } = useAppStore();
+  const allTopics = useAppStore((s) => s.topics);
+  const { addTopic, updateTopic, removeTopic, setTopics } = useAppStore();
   const [newTopicText, setNewTopicText] = useState('');
   const [addingTopic, setAddingTopic] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const sortedTopics = [...topics].sort((a, b) => a.order - b.order);
   const completed = topics.filter((t) => t.completed).length;
   const total = topics.length;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sortedTopics.findIndex((t) => t.id === active.id);
+    const newIndex = sortedTopics.findIndex((t) => t.id === over.id);
+    const reordered = arrayMove(sortedTopics, oldIndex, newIndex).map((t, i) => ({ ...t, order: i }));
+
+    // Merge with other discipline topics
+    const otherTopics = allTopics.filter((t) => t.disciplineId !== discipline.id);
+    setTopics([...otherTopics, ...reordered]);
+  };
 
   const handleToggle = (id: string, current: boolean) => {
     updateTopic(id, { completed: !current });
@@ -345,10 +393,9 @@ function DisciplineSection({ discipline }: { discipline: Discipline }) {
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4 pt-0">
         <div className="space-y-1">
-          <AnimatePresence mode="popLayout">
-            {topics
-              .sort((a, b) => a.order - b.order)
-              .map((topic) => (
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={sortedTopics.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+              {sortedTopics.map((topic) => (
                 <TopicRow
                   key={topic.id}
                   topic={topic}
@@ -357,7 +404,8 @@ function DisciplineSection({ discipline }: { discipline: Discipline }) {
                   onDelete={() => handleDeleteTopic(topic.id)}
                 />
               ))}
-          </AnimatePresence>
+            </SortableContext>
+          </DndContext>
 
           {topics.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
