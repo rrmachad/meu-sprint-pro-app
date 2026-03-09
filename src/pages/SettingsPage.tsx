@@ -417,13 +417,16 @@ function DisciplinesTab() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Prova</Label>
-                <Select value={form.prova} onValueChange={(v) => setForm({ ...form, prova: v as ProvaType })}>
+                <Label>Prova/Fase</Label>
+                <Select value={form.prova} onValueChange={(v) => setForm({ ...form, prova: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="P1">P1</SelectItem>
-                    <SelectItem value="P2">P2</SelectItem>
-                    <SelectItem value="ambas">Ambas</SelectItem>
+                    {phases.map((p) => (
+                      <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                    ))}
+                    {phases.length > 1 && (
+                      <SelectItem value="todas">Todas</SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
