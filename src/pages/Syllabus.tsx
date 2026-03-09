@@ -1068,7 +1068,8 @@ export default function Syllabus() {
         open={importOpen}
         onOpenChange={setImportOpen}
         disciplines={disciplines}
-        onImport={handleImport}
+        onImportSingle={handleImportSingle}
+        onImportBulk={handleImportBulk}
       />
     </motion.div>
   );
