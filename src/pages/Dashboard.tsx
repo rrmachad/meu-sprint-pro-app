@@ -14,12 +14,12 @@ import {
 const containerVariants = {
   initial: {},
   animate: { transition: { staggerChildren: 0.06 } },
-};
+} as const;
 
 const itemVariants = {
   initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
-};
+  animate: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+} as const;
 
 const COLORS = [
   'hsl(var(--chart-1))',
