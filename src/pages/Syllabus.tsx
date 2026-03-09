@@ -87,10 +87,37 @@ function splitTopics(rawText: string): string[] {
     .filter((t) => t.length > 2);
 }
 
+// Common discipline keywords found in Brazilian public exam syllabi
+const DISCIPLINE_KEYWORDS = [
+  'língua portuguesa', 'português', 'matemática', 'raciocínio lógico',
+  'direito constitucional', 'direito administrativo', 'direito penal',
+  'direito civil', 'direito processual', 'direito tributário', 'direito do trabalho',
+  'direito empresarial', 'direito financeiro', 'direito eleitoral', 'direito ambiental',
+  'direito previdenciário', 'direito internacional', 'direitos humanos',
+  'informática', 'noções de informática', 'conhecimentos de informática',
+  'administração', 'administração pública', 'administração geral',
+  'contabilidade', 'contabilidade geral', 'contabilidade pública',
+  'economia', 'finanças públicas', 'auditoria', 'legislação',
+  'atualidades', 'realidade brasileira', 'geografia', 'história',
+  'ética', 'ética no serviço público', 'redação', 'redação oficial',
+  'gestão de pessoas', 'gestão pública', 'políticas públicas',
+  'estatística', 'arquivologia', 'biblioteconomia',
+  'segurança da informação', 'redes de computadores', 'banco de dados',
+  'sistemas operacionais', 'engenharia de software', 'programação',
+  'código tributário', 'legislação tributária', 'legislação específica',
+  'conhecimentos específicos', 'conhecimentos gerais', 'conhecimentos básicos',
+  'conhecimentos complementares', 'noções de', 'fundamentos de',
+];
+
 // Detect if a line is a discipline header
 function isDisciplineHeader(line: string): boolean {
   const trimmed = line.trim();
-  if (trimmed.length < 3 || trimmed.length > 120) return false;
+  if (trimmed.length < 3 || trimmed.length > 150) return false;
+
+  const lower = trimmed.toLowerCase();
+
+  // Check against known discipline keywords
+  const matchesKeyword = DISCIPLINE_KEYWORDS.some((kw) => lower.includes(kw));
 
   // Pattern: starts with number like "1.", "1)", "1 -", "I.", "I -"
   const numberedHeader = /^(\d+|[IVXLC]+)[.)\-–—]\s*.+/i.test(trimmed);
@@ -100,10 +127,11 @@ function isDisciplineHeader(line: string): boolean {
   const isAllCaps = upperRatio > 0.6 && letters.length > 3;
   // Pattern: ends with ":"
   const endsWithColon = trimmed.endsWith(':');
-  // Pattern: "DISCIPLINA:" or "1. DISCIPLINA:" or "DISCIPLINA"
   // Should NOT contain too many separators (topics use . and ;)
   const hasFewSeparators = (trimmed.match(/[.;]/g) || []).length <= 2;
 
+  // A line is a header if it matches keyword OR structural patterns
+  if (matchesKeyword && hasFewSeparators) return true;
   return hasFewSeparators && (numberedHeader || isAllCaps || endsWithColon);
 }
 
