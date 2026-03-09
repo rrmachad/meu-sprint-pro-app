@@ -49,12 +49,20 @@ const itemVariants = {
 
 export default function Indicators() {
   const disciplines = useAppStore((s) => s.disciplines);
-  const studyRecords = useAppStore((s) => s.studyRecords);
+  const allStudyRecords = useAppStore((s) => s.studyRecords);
   const topics = useAppStore((s) => s.topics);
   const simulados = useAppStore((s) => s.simulados);
   const goals = useAppStore((s) => s.settings.goals);
+  const [period, setPeriod] = useState<PeriodFilter>('all');
 
-  const hasData = studyRecords.length > 0;
+  const studyRecords = useMemo(() => {
+    if (period === 'all') return allStudyRecords;
+    const now = new Date();
+    const cutoff = period === '7d' ? subDays(now, 7) : period === '30d' ? subDays(now, 30) : subMonths(now, 3);
+    return allStudyRecords.filter((r) => isAfter(parseISO(r.date), cutoff));
+  }, [allStudyRecords, period]);
+
+  const hasData = allStudyRecords.length > 0;
 
   // ─── Computed metrics ───
   const stats = useMemo(() => {
