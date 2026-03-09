@@ -327,7 +327,7 @@ function GenerateDialog({
             Gerar Cronograma Automático
           </DialogTitle>
           <DialogDescription>
-            O algoritmo distribui o tempo com base em: Peso (35%), Importância (25%), Progresso (15%), Situação (15%) e Dificuldade (10%).
+            O algoritmo distribui o tempo com base em: Peso no Edital (35%), Importância (25%), Situação (25%) e Dificuldade (15%). O total de horas gerado será exatamente igual à carga semanal configurada.
           </DialogDescription>
         </DialogHeader>
 
