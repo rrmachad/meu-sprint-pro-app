@@ -387,6 +387,7 @@ export default function MockExams() {
             })}
           </TabsContent>
         </Tabs>
+        </div>
       )}
     </motion.div>
   );
