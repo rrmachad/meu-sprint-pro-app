@@ -34,6 +34,7 @@ function AppContent() {
         <Route path="/planejamento" element={<Planning />} />
         <Route path="/edital" element={<Syllabus />} />
         <Route path="/simulados" element={<MockExams />} />
+        <Route path="/revisoes" element={<Revisions />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />

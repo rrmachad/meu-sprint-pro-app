@@ -18,6 +18,7 @@ const navItems = [
   { title: 'Painel Inicial', url: '/', icon: Home },
   { title: 'Indicadores', url: '/indicadores', icon: BarChart3 },
   { title: 'Planejamento', url: '/planejamento', icon: CalendarDays },
+  { title: 'Revisões', url: '/revisoes', icon: RotateCcw },
   { title: 'Edital', url: '/edital', icon: ClipboardList },
   { title: 'Simulados', url: '/simulados', icon: FileText },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
