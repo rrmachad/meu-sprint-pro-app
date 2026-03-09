@@ -38,6 +38,7 @@ function AppContent() {
         <Route path="/revisoes" element={<Revisions />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
       </Route>
+      <Route path="/cadastro" element={<Register />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
