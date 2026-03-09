@@ -755,6 +755,7 @@ export default function Planning() {
         onOpenChange={setGenerateOpen}
         disciplines={disciplines}
         topics={topics}
+        studyRecords={studyRecords}
         existingCycleDisciplines={activeCycleDisciplines}
         settings={settings}
         onGenerate={handleGenerate}
