@@ -42,8 +42,7 @@ const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const DAY_FULL = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
 // ========== SCORE ALGORITHM ==========
-// Weights: Peso no Edital (35%), Importância (25%), Situação/Conhecimento (15%),
-// Progresso no Edital Verticalizado (15%), Dificuldade (10%)
+// Weights: Peso no Edital (35%), Importância (25%), Situação (25%), Dificuldade (15%)
 // cannotZero disciplines get a 20% boost
 
 interface DisciplineScore {
@@ -60,7 +59,6 @@ interface DisciplineScore {
     weightScore: number;
     importanceScore: number;
     situationScore: number;
-    progressScore: number;
     difficultyScore: number;
   };
 }
