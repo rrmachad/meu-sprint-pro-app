@@ -114,9 +114,28 @@ export function StudyTimer() {
     addStudyRecord(record);
     updateStreak(today);
 
+    // Auto-generate revisions (24h, 7d, 30d, 60d)
+    const revisionSettings = useAppStore.getState().settings.revision;
+    if (revisionSettings.enabled) {
+      const markDays: Record<string, number> = { '24h': 1, '7d': 7, '30d': 30, '60d': 60 };
+      const addRevision = useAppStore.getState().addRevision;
+      for (const mark of revisionSettings.marks) {
+        const due = new Date(today);
+        due.setDate(due.getDate() + (markDays[mark] || 1));
+        addRevision({
+          id: crypto.randomUUID(),
+          disciplineId: selectedDiscipline,
+          studyDate: today,
+          mark,
+          dueDate: due.toISOString().split('T')[0],
+          completed: false,
+        });
+      }
+    }
+
     const discName = disciplines.find((d) => d.id === selectedDiscipline)?.name || '';
     const mins = Math.round(elapsed / 60);
-    toast.success(`${mins} min de ${discName} registrados!`);
+    toast.success(`${mins} min de ${discName} registrados! Revisões agendadas.`);
 
     // Reset
     setElapsed(0);
