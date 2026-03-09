@@ -296,7 +296,7 @@ export default function MockExams() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-pdf-chart>
               <CardHeader><CardTitle className="text-base">Volume de Questões e Acertos</CardTitle></CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
