@@ -464,6 +464,8 @@ export default function Syllabus() {
   const topics = useAppStore((s) => s.topics);
   const { addTopic, clearTopicsByDiscipline, clearAllTopics } = useAppStore();
   const [importOpen, setImportOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [disciplineFilter, setDisciplineFilter] = useState<string>('all');
 
   const totalTopics = topics.length;
   const completedTopics = topics.filter((t) => t.completed).length;
@@ -482,6 +484,21 @@ export default function Syllabus() {
     });
     toast.success(`${topicTexts.length} tópicos importados com sucesso!`);
   };
+
+  // Filter disciplines
+  const filteredDisciplines = disciplines
+    .filter((d) => disciplineFilter === 'all' || d.id === disciplineFilter)
+    .sort((a, b) => a.order - b.order);
+
+  // Check if a discipline has visible topics after status filter
+  const hasVisibleTopics = (disciplineId: string) => {
+    const discTopics = topics.filter((t) => t.disciplineId === disciplineId);
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'pending') return discTopics.some((t) => !t.completed);
+    return discTopics.some((t) => t.completed);
+  };
+
+  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0);
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
@@ -531,6 +548,69 @@ export default function Syllabus() {
         </div>
       </div>
 
+      {/* Filters */}
+      {disciplines.length > 0 && totalTopics > 0 && (
+        <Card>
+          <CardContent className="py-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                Filtros
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="text-[10px] h-5">{activeFilterCount} ativo{activeFilterCount > 1 ? 's' : ''}</Badge>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 flex-1">
+                {/* Status filter */}
+                <div className="flex items-center rounded-lg border border-border overflow-hidden text-xs">
+                  {([
+                    { value: 'all', label: 'Todos' },
+                    { value: 'pending', label: 'Pendentes' },
+                    { value: 'completed', label: 'Concluídos' },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setStatusFilter(opt.value)}
+                      className={`px-3 py-1.5 transition-colors ${
+                        statusFilter === opt.value
+                          ? 'bg-primary text-primary-foreground font-medium'
+                          : 'hover:bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Discipline filter */}
+                <Select value={disciplineFilter} onValueChange={setDisciplineFilter}>
+                  <SelectTrigger className="w-[200px] h-8 text-xs">
+                    <SelectValue placeholder="Todas as disciplinas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as disciplinas</SelectItem>
+                    {disciplines.sort((a, b) => a.order - b.order).map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {activeFilterCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs gap-1"
+                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); }}
+                  >
+                    <X className="h-3 w-3" /> Limpar filtros
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Global Progress */}
       {totalTopics > 0 && (
         <Card>
@@ -565,12 +645,22 @@ export default function Syllabus() {
             </Button>
           </CardContent>
         </Card>
+      ) : filteredDisciplines.filter((d) => hasVisibleTopics(d.id)).length === 0 && activeFilterCount > 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Filter className="h-10 w-10 text-muted-foreground/30 mb-3" />
+            <p className="text-sm text-muted-foreground mb-2">Nenhum resultado para os filtros selecionados.</p>
+            <Button variant="outline" size="sm" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); }}>
+              Limpar filtros
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <Accordion type="multiple" className="space-y-2">
-          {disciplines
-            .sort((a, b) => a.order - b.order)
+          {filteredDisciplines
+            .filter((d) => hasVisibleTopics(d.id))
             .map((discipline) => (
-              <DisciplineSection key={discipline.id} discipline={discipline} />
+              <DisciplineSection key={discipline.id} discipline={discipline} statusFilter={statusFilter} />
             ))}
         </Accordion>
       )}
