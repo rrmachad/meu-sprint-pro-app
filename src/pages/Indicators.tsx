@@ -415,7 +415,7 @@ export default function Indicators() {
       </div>
 
       {/* ─── Tabs ─── */}
-      <motion.div variants={itemVariants}>
+      <motion.div variants={itemVariants} ref={chartsRef}>
         <Tabs defaultValue="evolucao" className="space-y-4">
           <TabsList className="glass">
             <TabsTrigger value="evolucao">Evolução</TabsTrigger>
