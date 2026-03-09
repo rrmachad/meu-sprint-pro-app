@@ -292,17 +292,27 @@ function ImportDialog({
     }
   };
 
-  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      toast.error('Por favor, selecione um arquivo PDF.');
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isTxt = file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt');
+
+    if (!isPdf && !isTxt) {
+      toast.error('Por favor, selecione um arquivo PDF ou TXT.');
       return;
     }
+
     setPdfFileName(file.name);
     setLoading(true);
     try {
-      const text = await extractPdfText(file);
+      let text = '';
+      if (isPdf) {
+        text = await extractPdfText(file);
+      } else {
+        text = await file.text();
+      }
       setRawText(text);
       // Auto-analyze
       if (mode === 'single') {
@@ -310,10 +320,10 @@ function ImportDialog({
       } else {
         setBulkPreview(parseFullSyllabus(text));
       }
-      toast.success('PDF processado com sucesso!');
+      toast.success(`${isPdf ? 'PDF' : 'TXT'} processado com sucesso!`);
     } catch (err) {
-      console.error('PDF extraction error:', err);
-      toast.error('Erro ao processar o PDF. Tente copiar e colar o texto manualmente.');
+      console.error('File extraction error:', err);
+      toast.error('Erro ao processar o arquivo. Tente copiar e colar o texto manualmente.');
     } finally {
       setLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
