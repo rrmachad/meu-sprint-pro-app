@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3, TrendingUp, Clock, CheckCircle2, BookOpen,
@@ -54,6 +54,7 @@ export default function Indicators() {
   const simulados = useAppStore((s) => s.simulados);
   const goals = useAppStore((s) => s.settings.goals);
   const [period, setPeriod] = useState<PeriodFilter>('all');
+  const chartsRef = useRef<HTMLDivElement>(null);
 
   const studyRecords = useMemo(() => {
     if (period === 'all') return allStudyRecords;
@@ -174,7 +175,10 @@ export default function Indicators() {
 
   const exportPdf = useCallback(async () => {
     try {
-      const { jsPDF } = await import('jspdf');
+      const [{ jsPDF }, html2canvas] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas').then((m) => m.default),
+      ]);
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pw = doc.internal.pageSize.getWidth();
       const margin = 15;
@@ -228,11 +232,38 @@ export default function Indicators() {
       y += 2;
       addSeparator();
 
-      // Per discipline
+      // ── Capture charts as images ──
+      if (chartsRef.current) {
+        const chartCards = chartsRef.current.querySelectorAll<HTMLElement>('[data-pdf-chart]');
+        for (const chartEl of chartCards) {
+          const title = chartEl.getAttribute('data-pdf-chart') || 'Gráfico';
+          
+          // Check if we need a new page
+          if (y > 120) { doc.addPage(); y = 20; }
+          
+          addLine(title, 12, true, [26, 42, 108]);
+          y += 2;
+
+          const canvas = await html2canvas(chartEl, {
+            scale: 2,
+            backgroundColor: '#0f1729',
+            logging: false,
+            useCORS: true,
+          });
+          const imgData = canvas.toDataURL('image/png');
+          const imgWidth = pw - margin * 2;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          const finalHeight = Math.min(imgHeight, 120); // cap height
+
+          doc.addImage(imgData, 'PNG', margin, y, imgWidth, finalHeight);
+          y += finalHeight + 6;
+        }
+        addSeparator();
+      }
+
+      // Per discipline table
       addLine('Desempenho por Disciplina', 14, true, [26, 42, 108]);
       y += 2;
-
-      // Table header
       doc.setFillColor(240, 240, 245);
       doc.rect(margin, y - 4, pw - margin * 2, 7, 'F');
       doc.setFontSize(8);
@@ -243,7 +274,6 @@ export default function Indicators() {
         doc.text(h, cols[i], y);
       });
       y += 5;
-
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(50, 50, 50);
       disciplineStats.forEach((d) => {
@@ -257,11 +287,10 @@ export default function Indicators() {
         doc.text(`${d.topicProgress}%`, cols[4], y);
         y += 5;
       });
-
       y += 4;
       addSeparator();
 
-      // Last 7 days history
+      // Last 7 days
       addLine('Histórico — Últimos 7 dias', 14, true, [26, 42, 108]);
       y += 2;
       const recent7 = last30Days.slice(-7);
@@ -284,7 +313,6 @@ export default function Indicators() {
         doc.text(`${d.hitRate}%`, cols[3], y);
         y += 5;
       });
-
       y += 4;
       addSeparator();
 
@@ -387,7 +415,7 @@ export default function Indicators() {
       </div>
 
       {/* ─── Tabs ─── */}
-      <motion.div variants={itemVariants}>
+      <motion.div variants={itemVariants} ref={chartsRef}>
         <Tabs defaultValue="evolucao" className="space-y-4">
           <TabsList className="glass">
             <TabsTrigger value="evolucao">Evolução</TabsTrigger>
@@ -397,7 +425,7 @@ export default function Indicators() {
 
           {/* ── Evolução ── */}
           <TabsContent value="evolucao" className="space-y-4">
-            <Card className="glass">
+            <Card className="glass" data-pdf-chart="Horas de Estudo — Últimos 30 dias">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-primary" />
@@ -427,7 +455,7 @@ export default function Indicators() {
             </Card>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <Card className="glass">
+              <Card className="glass" data-pdf-chart="Questões por Dia">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Target className="h-4 w-4 text-accent" />
@@ -447,7 +475,7 @@ export default function Indicators() {
                 </CardContent>
               </Card>
 
-              <Card className="glass">
+              <Card className="glass" data-pdf-chart="Taxa de Acerto (%)">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <Brain className="h-4 w-4 text-success" />
@@ -471,7 +499,7 @@ export default function Indicators() {
 
           {/* ── Disciplinas ── */}
           <TabsContent value="disciplinas" className="space-y-4">
-            <Card className="glass">
+            <Card className="glass" data-pdf-chart="Horas por Disciplina">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Horas por Disciplina</CardTitle>
               </CardHeader>
@@ -527,7 +555,7 @@ export default function Indicators() {
           {/* ── Radar / Visão Geral ── */}
           <TabsContent value="radar" className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
-              <Card className="glass">
+              <Card className="glass" data-pdf-chart="Desempenho Multidimensional">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Desempenho Multidimensional</CardTitle>
                 </CardHeader>
@@ -545,7 +573,7 @@ export default function Indicators() {
                 </CardContent>
               </Card>
 
-              <Card className="glass">
+              <Card className="glass" data-pdf-chart="Distribuição por Atividade">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm">Distribuição por Atividade</CardTitle>
                 </CardHeader>
