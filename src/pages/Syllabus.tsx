@@ -1433,12 +1433,14 @@ export default function Syllabus() {
   const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
 
   return (
-    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
+    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ClipboardList className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold flex items-center gap-2 tracking-tight">
+            <div className="h-8 w-8 rounded-xl gradient-orange flex items-center justify-center">
+              <ClipboardList className="h-4 w-4 text-sporty-orange-foreground" />
+            </div>
             Edital Verticalizado
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -1446,12 +1448,12 @@ export default function Syllabus() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setImportOpen(true)} className="gap-2">
+          <Button onClick={() => setImportOpen(true)} className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90">
             <Sparkles className="h-4 w-4" />
             Importar Edital
           </Button>
           {totalTopics > 0 && (
-            <Button variant="outline" onClick={() => setExportOpen(true)} className="gap-2">
+            <Button variant="outline" onClick={() => setExportOpen(true)} className="gap-2 rounded-xl border-border/40 hover:border-primary/40">
               <Download className="h-4 w-4" />
               Exportar PDF
             </Button>
