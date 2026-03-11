@@ -50,6 +50,18 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        "electric-blue": {
+          DEFAULT: "hsl(var(--electric-blue))",
+          foreground: "hsl(var(--electric-blue-foreground))",
+        },
+        "sporty-orange": {
+          DEFAULT: "hsl(var(--sporty-orange))",
+          foreground: "hsl(var(--sporty-orange-foreground))",
+        },
+        "neon-green": {
+          DEFAULT: "hsl(var(--neon-green))",
+          foreground: "hsl(var(--neon-green-foreground))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -82,11 +94,12 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        'glow-sm': '0 0 10px -3px hsl(var(--primary) / 0.2)',
-        'glow': '0 0 20px -5px hsl(var(--primary) / 0.3)',
-        'glow-lg': '0 0 40px -10px hsl(var(--primary) / 0.3)',
+        'glow-sm': '0 0 10px -3px hsl(var(--primary) / 0.25)',
+        'glow': '0 0 20px -5px hsl(var(--primary) / 0.35)',
+        'glow-lg': '0 0 40px -10px hsl(var(--primary) / 0.35)',
         'soft': '0 2px 15px -3px hsl(var(--foreground) / 0.06), 0 4px 6px -4px hsl(var(--foreground) / 0.04)',
         'elevated': '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
+        'neon': '0 0 20px -5px hsl(var(--neon-green) / 0.4)',
       },
       keyframes: {
         "accordion-down": {

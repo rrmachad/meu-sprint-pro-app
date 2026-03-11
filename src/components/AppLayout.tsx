@@ -6,33 +6,44 @@ import { useStudyReminders } from '@/hooks/useStudyReminders';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Wifi, WifiOff } from 'lucide-react';
+import { Wifi, WifiOff, Zap } from 'lucide-react';
 
 export function AppLayout() {
-  const contestName = useAppStore((s) => s.settings.contest.name);
+  const candidateName = useAppStore((s) => s.settings.contest.candidateName);
   const location = useLocation();
   const { connectionStatus } = useSupabaseSync();
   useStudyReminders();
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 6) return 'Boa madrugada';
+    if (h < 12) return 'Bom dia';
+    if (h < 18) return 'Boa tarde';
+    return 'Boa noite';
+  };
 
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center gap-3 border-b border-border/50 bg-card/60 backdrop-blur-xl px-4 shrink-0 sticky top-0 z-30">
+          <header className="h-14 flex items-center gap-3 border-b border-border/30 bg-card/40 backdrop-blur-xl px-4 shrink-0 sticky top-0 z-30">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
-            <div className="h-5 w-px bg-border/60" />
-            {contestName && (
-              <span className="text-sm font-medium text-muted-foreground truncate">
-                {contestName}
+            <div className="h-5 w-px bg-border/40" />
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-semibold text-foreground truncate">
+                {greeting()}, <span className="text-neon-green">{candidateName || 'Atleta'}</span>
               </span>
-            )}
+              <span className="text-[10px] text-muted-foreground">
+                {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+              </span>
+            </div>
             <div className="ml-auto flex items-center gap-2">
               {connectionStatus === 'connected' ? (
-                <div className="flex items-center gap-1.5 text-xs text-emerald-500" title="Conectado em tempo real">
+                <div className="flex items-center gap-1.5 text-xs text-neon-green" title="Conectado em tempo real">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-green opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-neon-green" />
                   </span>
                   <Wifi className="h-3.5 w-3.5" />
                 </div>

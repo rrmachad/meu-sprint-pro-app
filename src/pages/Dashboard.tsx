@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy } from 'lucide-react';
+import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, AreaChart, Area,
+  PieChart, Pie, Cell, Legend, AreaChart, Area, LineChart, Line,
 } from 'recharts';
 
 const containerVariants = {
@@ -31,13 +31,6 @@ const COLORS = [
   'hsl(199 89% 48%)',
   'hsl(350 80% 55%)',
   'hsl(170 60% 45%)',
-];
-
-const statCardStyles = [
-  { gradient: 'from-primary/10 to-primary/5', iconBg: 'gradient-primary', iconColor: 'text-primary-foreground' },
-  { gradient: 'from-accent/10 to-accent/5', iconBg: 'gradient-accent', iconColor: 'text-accent-foreground' },
-  { gradient: 'from-success/10 to-success/5', iconBg: 'gradient-success', iconColor: 'text-success-foreground' },
-  { gradient: 'from-chart-4/10 to-chart-5/5', iconBg: 'bg-chart-4', iconColor: 'text-primary-foreground' },
 ];
 
 export default function Dashboard() {
@@ -114,10 +107,31 @@ export default function Dashboard() {
     ];
   }, [topics]);
 
+  // Weekly performance line chart data
+  const weeklyPerformanceData = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+    return weekDays.map((label, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayRecords = studyRecords.filter((r) => r.date === dateStr);
+      const hours = dayRecords.reduce((a, r) => a + r.durationSeconds, 0) / 3600;
+      return { name: label, horas: Math.round(hours * 10) / 10 };
+    });
+  }, [studyRecords]);
+
   // Weekly goals cumulative data
   const weeklyGoalsData = useMemo(() => {
     const now = new Date();
-    const dayOfWeek = now.getDay(); // 0=Sun
+    const dayOfWeek = now.getDay();
     const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const monday = new Date(now);
     monday.setDate(now.getDate() - mondayOffset);
@@ -183,60 +197,74 @@ export default function Dashboard() {
   const todayRevisions = pendingRevisions.filter((r) => r.isToday).length;
   const upcomingRevisions = pendingRevisions.filter((r) => !r.isOverdue && !r.isToday).slice(0, 5);
 
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 6) return 'Boa madrugada';
-    if (h < 12) return 'Bom dia';
-    if (h < 18) return 'Boa tarde';
-    return 'Boa noite';
+  const tooltipStyle = {
+    backgroundColor: 'hsl(var(--card))',
+    border: '1px solid hsl(var(--border))',
+    borderRadius: '12px',
+    color: 'hsl(var(--foreground))',
+    fontSize: 12,
+    boxShadow: '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
   };
 
   const statCards = [
-    { label: 'Tempo Hoje', value: formatTime(todaySeconds), icon: Clock, style: statCardStyles[0] },
-    { label: 'Questões Hoje', value: todayQuestions.toString(), icon: Target, style: statCardStyles[1] },
-    { label: 'Edital', value: `${globalPercent}%`, subtitle: `${completedTopics}/${totalTopics} tópicos`, icon: CheckCircle2, style: statCardStyles[2] },
-    { label: 'Registros Totais', value: studyRecords.length.toString(), icon: TrendingUp, style: statCardStyles[3] },
+    {
+      label: 'Tempo de Foco',
+      value: formatTime(todaySeconds),
+      icon: Timer,
+      gradient: 'from-electric-blue/15 to-electric-blue/5',
+      iconBg: 'gradient-blue',
+      iconColor: 'text-electric-blue-foreground',
+      glowClass: 'hover:glow-blue',
+    },
+    {
+      label: 'Questões Hoje',
+      value: todayQuestions.toString(),
+      icon: Crosshair,
+      gradient: 'from-sporty-orange/15 to-sporty-orange/5',
+      iconBg: 'gradient-orange',
+      iconColor: 'text-sporty-orange-foreground',
+      glowClass: 'hover:glow-orange',
+    },
+    {
+      label: 'Progresso do Alvo',
+      value: `${globalPercent}%`,
+      subtitle: `${completedTopics}/${totalTopics} tópicos`,
+      icon: CheckCircle2,
+      gradient: 'from-neon-green/15 to-neon-green/5',
+      iconBg: 'gradient-neon',
+      iconColor: 'text-neon-green-foreground',
+      glowClass: 'hover:glow-neon',
+    },
+    {
+      label: 'Registros Totais',
+      value: studyRecords.length.toString(),
+      icon: Activity,
+      gradient: 'from-chart-4/15 to-chart-5/5',
+      iconBg: 'bg-chart-4',
+      iconColor: 'text-primary-foreground',
+      glowClass: '',
+    },
   ];
 
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
-      {/* Welcome Header */}
-      <motion.div variants={itemVariants} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
-            {greeting()}, <span className="text-primary">{candidateName || 'Estudante'}</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </p>
-        </div>
-        {streak > 0 && (
-          <div className="hidden sm:flex items-center gap-2 rounded-xl gradient-accent px-4 py-2.5 shadow-lg">
-            <Flame className="h-5 w-5 text-accent-foreground" />
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-accent-foreground">{streak} {streak === 1 ? 'dia' : 'dias'}</span>
-              <span className="text-[10px] text-accent-foreground/70">seguidos 🔥</span>
-            </div>
-          </div>
-        )}
-      </motion.div>
 
-      {/* Stat Cards */}
+      {/* Stat Cards - Tactile glassmorphism */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, i) => (
+        {statCards.map((stat) => (
           <motion.div key={stat.label} variants={itemVariants}>
-            <Card className={`card-hover border-border/50 bg-gradient-to-br ${stat.style.gradient}`}>
+            <Card className={`glass border-border/30 bg-gradient-to-br ${stat.gradient} ${stat.glowClass} transition-all duration-300`}>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</p>
-                    <p className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{stat.value}</p>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+                    <p className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">{stat.value}</p>
                     {stat.subtitle && (
                       <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
                     )}
                   </div>
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.style.iconBg} shadow-soft`}>
-                    <stat.icon className={`h-5 w-5 ${stat.style.iconColor}`} />
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.iconBg} shadow-soft`}>
+                    <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
                   </div>
                 </div>
               </CardContent>
@@ -245,194 +273,233 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Daily Goals */}
+      {/* Sprints do Dia & Sprints da Semana */}
       {(goals.weeklyHours > 0 || goals.dailyQuestions > 0 || goals.dailyPages > 0) && (
-        <motion.div variants={itemVariants}>
-          <Card className="card-hover border-border/50">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-primary">
-                    <Target className="h-3.5 w-3.5 text-primary-foreground" />
-                  </div>
-                  Metas Diárias
-                </CardTitle>
-                {streak > 0 && (
-                  <div className="sm:hidden flex items-center gap-1.5 text-xs font-bold text-accent">
-                    <Flame className="h-4 w-4" />
-                    {streak} dia{streak > 1 ? 's' : ''}
-                  </div>
-                )}
-              </div>
+        <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Daily Sprints */}
+          <Card className="glass border-border/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-neon">
+                  <Target className="h-3.5 w-3.5 text-neon-green-foreground" />
+                </div>
+                Sprints do Dia
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {goals.weeklyHours > 0 && (() => {
-                  const dailyGoalSeconds = (goals.weeklyHours / 7) * 3600;
-                  const hoursPercent = dailyGoalSeconds > 0 ? Math.min(100, Math.round((todaySeconds / dailyGoalSeconds) * 100)) : 0;
-                  const goalH = Math.floor(dailyGoalSeconds / 3600);
-                  const goalM = Math.round((dailyGoalSeconds % 3600) / 60);
-                  return (
-                    <div className="space-y-3 rounded-xl border border-border/50 bg-muted/30 p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 text-sm font-semibold">
-                          <Clock className="h-4 w-4 text-primary" />
-                          Horas
-                        </div>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${hoursPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                          {hoursPercent >= 100 ? '✓ Concluído' : `${hoursPercent}%`}
-                        </span>
-                      </div>
-                      <Progress value={hoursPercent} className="h-2" />
-                      <p className="text-xs text-muted-foreground">
+            <CardContent className="space-y-4">
+              {goals.weeklyHours > 0 && (() => {
+                const dailyGoalSeconds = (goals.weeklyHours / 7) * 3600;
+                const hoursPercent = dailyGoalSeconds > 0 ? Math.min(100, Math.round((todaySeconds / dailyGoalSeconds) * 100)) : 0;
+                const goalH = Math.floor(dailyGoalSeconds / 3600);
+                const goalM = Math.round((dailyGoalSeconds % 3600) / 60);
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-electric-blue" />
+                        Horas
+                      </span>
+                      <span className="text-xs font-mono text-muted-foreground">
                         {formatTime(todaySeconds)} / {goalH}h{goalM > 0 ? ` ${goalM}m` : ''}
-                      </p>
+                      </span>
                     </div>
-                  );
-                })()}
+                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full gradient-blue transition-all duration-500"
+                        style={{ width: `${hoursPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
 
-                {goals.dailyQuestions > 0 && (() => {
-                  const questPercent = Math.min(100, Math.round((todayQuestions / goals.dailyQuestions) * 100));
-                  return (
-                    <div className="space-y-3 rounded-xl border border-border/50 bg-muted/30 p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 text-sm font-semibold">
-                          <CheckCircle2 className="h-4 w-4 text-accent" />
-                          Questões
-                        </div>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${questPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                          {questPercent >= 100 ? '✓ Concluído' : `${questPercent}%`}
-                        </span>
-                      </div>
-                      <Progress value={questPercent} className="h-2" />
-                      <p className="text-xs text-muted-foreground">
-                        {todayQuestions} / {goals.dailyQuestions} questões
-                      </p>
+              {goals.dailyQuestions > 0 && (() => {
+                const questPercent = Math.min(100, Math.round((todayQuestions / goals.dailyQuestions) * 100));
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold flex items-center gap-2">
+                        <Crosshair className="h-3.5 w-3.5 text-sporty-orange" />
+                        Questões
+                      </span>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {todayQuestions} / {goals.dailyQuestions}
+                      </span>
                     </div>
-                  );
-                })()}
+                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full gradient-orange transition-all duration-500"
+                        style={{ width: `${questPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
 
-                {goals.dailyPages > 0 && (() => {
-                  const pagesPercent = Math.min(100, Math.round((todayPages / goals.dailyPages) * 100));
-                  return (
-                    <div className="space-y-3 rounded-xl border border-border/50 bg-muted/30 p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 text-sm font-semibold">
-                          <FileText className="h-4 w-4 text-chart-4" />
-                          Páginas
-                        </div>
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${pagesPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                          {pagesPercent >= 100 ? '✓ Concluído' : `${pagesPercent}%`}
-                        </span>
-                      </div>
-                      <Progress value={pagesPercent} className="h-2" />
-                      <p className="text-xs text-muted-foreground">
-                        {todayPages} / {goals.dailyPages} páginas
-                      </p>
+              {goals.dailyPages > 0 && (() => {
+                const pagesPercent = Math.min(100, Math.round((todayPages / goals.dailyPages) * 100));
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold flex items-center gap-2">
+                        <FileText className="h-3.5 w-3.5 text-neon-green" />
+                        Páginas
+                      </span>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {todayPages} / {goals.dailyPages}
+                      </span>
                     </div>
-                  );
-                })()}
-              </div>
+                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full gradient-neon transition-all duration-500"
+                        style={{ width: `${pagesPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
-        </motion.div>
-      )}
 
-      {/* Weekly Goals */}
-      {(goals.weeklyHours > 0 || goals.dailyQuestions > 0 || goals.dailyPages > 0) && (
-        <motion.div variants={itemVariants}>
-          <Card className="card-hover border-border/50">
-            <CardHeader className="pb-2">
+          {/* Weekly Sprints */}
+          <Card className="glass border-border/30">
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10">
-                    <Trophy className="h-3.5 w-3.5 text-accent" />
+                <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sporty-orange/10">
+                    <Trophy className="h-3.5 w-3.5 text-sporty-orange" />
                   </div>
-                  Metas Semanais
+                  Sprints da Semana
                 </CardTitle>
                 <div className="flex items-center gap-1.5">
-                  {weeklyHoursPercent >= 100 && <Badge className="text-[10px] rounded-full px-2 bg-success/10 text-success border-success/20">Horas ✓</Badge>}
-                  {weeklyQuestionsPercent >= 100 && <Badge className="text-[10px] rounded-full px-2 bg-success/10 text-success border-success/20">Questões ✓</Badge>}
-                  {weeklyPagesPercent >= 100 && <Badge className="text-[10px] rounded-full px-2 bg-success/10 text-success border-success/20">Páginas ✓</Badge>}
+                  {weeklyHoursPercent >= 100 && <Badge className="text-[9px] rounded-full px-2 bg-neon-green/10 text-neon-green border-neon-green/20">✓</Badge>}
+                  {weeklyQuestionsPercent >= 100 && <Badge className="text-[9px] rounded-full px-2 bg-neon-green/10 text-neon-green border-neon-green/20">✓</Badge>}
+                  {weeklyPagesPercent >= 100 && <Badge className="text-[9px] rounded-full px-2 bg-neon-green/10 text-neon-green border-neon-green/20">✓</Badge>}
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Weekly progress bars */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {goals.weeklyHours > 0 && (
-                  <div className="space-y-2 rounded-xl border border-border/50 bg-muted/30 p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-primary" />Horas</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${weeklyHoursPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                        {weeklyHoursPercent}%
-                      </span>
-                    </div>
-                    <Progress value={weeklyHoursPercent} className="h-1.5" />
-                    <p className="text-[10px] text-muted-foreground">{weeklyTotals.horas}h / {goals.weeklyHours}h</p>
+              {goals.weeklyHours > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-electric-blue" />
+                      Horas
+                    </span>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {weeklyTotals.horas}h / {goals.weeklyHours}h
+                    </span>
                   </div>
-                )}
-                {goals.dailyQuestions > 0 && (
-                  <div className="space-y-2 rounded-xl border border-border/50 bg-muted/30 p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-accent" />Questões</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${weeklyQuestionsPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                        {weeklyQuestionsPercent}%
-                      </span>
-                    </div>
-                    <Progress value={weeklyQuestionsPercent} className="h-1.5" />
-                    <p className="text-[10px] text-muted-foreground">{weeklyTotals.questoes} / {weeklyQuestionsGoal} questões</p>
+                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full gradient-blue transition-all duration-500"
+                      style={{ width: `${weeklyHoursPercent}%` }}
+                    />
                   </div>
-                )}
-                {goals.dailyPages > 0 && (
-                  <div className="space-y-2 rounded-xl border border-border/50 bg-muted/30 p-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-chart-4" />Páginas</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${weeklyPagesPercent >= 100 ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
-                        {weeklyPagesPercent}%
-                      </span>
-                    </div>
-                    <Progress value={weeklyPagesPercent} className="h-1.5" />
-                    <p className="text-[10px] text-muted-foreground">{weeklyTotals.paginas} / {weeklyPagesGoal} páginas</p>
+                </div>
+              )}
+              {goals.dailyQuestions > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold flex items-center gap-2">
+                      <Crosshair className="h-3.5 w-3.5 text-sporty-orange" />
+                      Questões
+                    </span>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {weeklyTotals.questoes} / {weeklyQuestionsGoal}
+                    </span>
                   </div>
-                )}
-              </div>
-
-              {/* Cumulative chart */}
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={weeklyGoalsData} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '12px',
-                      color: 'hsl(var(--foreground))',
-                      fontSize: 12,
-                      boxShadow: '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
-                    }}
-                  />
-                  {goals.weeklyHours > 0 && <Area type="monotone" dataKey="horas" name="Horas" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.15)" strokeWidth={2} />}
-                  {goals.dailyQuestions > 0 && <Area type="monotone" dataKey="questoes" name="Questões" stroke="hsl(var(--accent))" fill="hsl(var(--accent) / 0.15)" strokeWidth={2} />}
-                  {goals.dailyPages > 0 && <Area type="monotone" dataKey="paginas" name="Páginas" stroke="hsl(var(--chart-4))" fill="hsl(var(--chart-4) / 0.15)" strokeWidth={2} />}
-                </AreaChart>
-              </ResponsiveContainer>
+                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full gradient-orange transition-all duration-500"
+                      style={{ width: `${weeklyQuestionsPercent}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              {goals.dailyPages > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold flex items-center gap-2">
+                      <FileText className="h-3.5 w-3.5 text-neon-green" />
+                      Páginas
+                    </span>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {weeklyTotals.paginas} / {weeklyPagesGoal}
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full gradient-neon transition-all duration-500"
+                      style={{ width: `${weeklyPagesPercent}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
       )}
 
+      {/* Performance Line Chart */}
+      <motion.div variants={itemVariants}>
+        <Card className="glass border-border/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-neon">
+                <Activity className="h-3.5 w-3.5 text-neon-green-foreground" />
+              </div>
+              Performance Semanal
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={weeklyPerformanceData} margin={{ left: 0, right: 10, top: 10, bottom: 5 }}>
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value}h`, 'Horas']} />
+                <Line
+                  type="monotone"
+                  dataKey="horas"
+                  stroke="hsl(var(--neon-green))"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: 'hsl(var(--neon-green))', stroke: 'hsl(var(--card))', strokeWidth: 2 }}
+                  activeDot={{ r: 6, fill: 'hsl(var(--neon-green))', stroke: 'hsl(var(--neon-green))', strokeWidth: 2 }}
+                  filter="url(#glow)"
+                />
+                <defs>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                    <feMerge>
+                      <feMergeNode in="coloredBlur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Revision Notifications */}
       {pendingRevisions.length > 0 && (
         <motion.div variants={itemVariants}>
-          <Card className={`card-hover border-border/50 ${overdueCount > 0 ? 'border-destructive/30' : ''}`}>
+          <Card className={`glass border-border/30 ${overdueCount > 0 ? 'border-destructive/30' : ''}`}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-                    <Bell className="h-3.5 w-3.5 text-primary" />
+                <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-electric-blue/10">
+                    <Bell className="h-3.5 w-3.5 text-electric-blue" />
                   </div>
                   Lembretes de Revisão
                 </CardTitle>
@@ -443,7 +510,7 @@ export default function Dashboard() {
                     </Badge>
                   )}
                   {todayRevisions > 0 && (
-                    <Badge className="text-xs rounded-full px-2.5 bg-primary text-primary-foreground">
+                    <Badge className="text-xs rounded-full px-2.5 bg-neon-green text-neon-green-foreground">
                       {todayRevisions} para hoje
                     </Badge>
                   )}
@@ -462,29 +529,29 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" className="shrink-0 ml-2 text-xs rounded-lg" onClick={() => completeRevision(r.id)}>
+                  <Button size="sm" variant="outline" className="shrink-0 ml-2 text-xs rounded-lg border-neon-green/30 text-neon-green hover:bg-neon-green/10" onClick={() => completeRevision(r.id)}>
                     Concluir
                   </Button>
                 </div>
               ))}
 
               {pendingRevisions.filter((r) => r.isToday).map((r) => (
-                <div key={r.id} className="flex items-center justify-between rounded-xl border border-primary/20 bg-primary/5 p-3">
+                <div key={r.id} className="flex items-center justify-between rounded-xl border border-neon-green/20 bg-neon-green/5 p-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <CalendarCheck className="h-4 w-4 shrink-0 text-primary" />
+                    <CalendarCheck className="h-4 w-4 shrink-0 text-neon-green" />
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{r.disciplineName}</p>
                       <p className="text-xs text-muted-foreground">Revisão {r.mark} · Hoje</p>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" className="shrink-0 ml-2 text-xs rounded-lg" onClick={() => completeRevision(r.id)}>
+                  <Button size="sm" variant="outline" className="shrink-0 ml-2 text-xs rounded-lg border-neon-green/30 text-neon-green hover:bg-neon-green/10" onClick={() => completeRevision(r.id)}>
                     Concluir
                   </Button>
                 </div>
               ))}
 
               {upcomingRevisions.map((r) => (
-                <div key={r.id} className="flex items-center justify-between rounded-xl border border-border/50 p-3">
+                <div key={r.id} className="flex items-center justify-between rounded-xl border border-border/30 p-3">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0">
@@ -514,11 +581,11 @@ export default function Dashboard() {
       {(disciplineProgress.length > 0 || studyHoursData.length > 0) && (
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {disciplineProgress.length > 0 && (
-            <Card className="card-hover border-border/50">
+            <Card className="glass border-border/30">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-chart-1/10">
-                    <BarChart3 className="h-3.5 w-3.5 text-chart-1" />
+                <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-electric-blue/10">
+                    <BarChart3 className="h-3.5 w-3.5 text-electric-blue" />
                   </div>
                   Progresso por Disciplina
                 </CardTitle>
@@ -526,20 +593,9 @@ export default function Dashboard() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={Math.max(200, disciplineProgress.length * 36)}>
                   <BarChart data={disciplineProgress} layout="vertical" margin={{ left: 0, right: 20, top: 5, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                    <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '12px',
-                        color: 'hsl(var(--foreground))',
-                        fontSize: 12,
-                        boxShadow: '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
-                      }}
-                      formatter={(value: number) => [`${value}%`, 'Progresso']}
-                    />
+                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value}%`, 'Progresso']} />
                     <Bar dataKey="percent" radius={[0, 6, 6, 0]} maxBarSize={20}>
                       {disciplineProgress.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -553,13 +609,13 @@ export default function Dashboard() {
 
           <div className="space-y-4">
             {pieData.length > 0 && (
-              <Card className="card-hover border-border/50">
+              <Card className="glass border-border/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10">
-                      <Target className="h-3.5 w-3.5 text-success" />
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neon-green/10">
+                      <Target className="h-3.5 w-3.5 text-neon-green" />
                     </div>
-                    Progresso Geral do Edital
+                    Progresso Geral
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex items-center justify-center">
@@ -575,22 +631,13 @@ export default function Dashboard() {
                         strokeWidth={2}
                         stroke="hsl(var(--card))"
                       >
-                        <Cell fill="hsl(var(--success))" />
+                        <Cell fill="hsl(var(--neon-green))" />
                         <Cell fill="hsl(var(--muted))" />
                       </Pie>
                       <Legend
                         formatter={(value) => <span style={{ color: 'hsl(var(--foreground))', fontSize: 12 }}>{value}</span>}
                       />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '12px',
-                          color: 'hsl(var(--foreground))',
-                          fontSize: 12,
-                          boxShadow: '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
-                        }}
-                      />
+                      <Tooltip contentStyle={tooltipStyle} />
                     </PieChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -598,33 +645,22 @@ export default function Dashboard() {
             )}
 
             {studyHoursData.length > 0 && (
-              <Card className="card-hover border-border/50">
+              <Card className="glass border-border/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-chart-2/10">
-                      <Clock className="h-3.5 w-3.5 text-chart-2" />
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sporty-orange/10">
+                      <Clock className="h-3.5 w-3.5 text-sporty-orange" />
                     </div>
-                    Horas de Estudo (últimos 30 dias)
+                    Horas de Estudo (30 dias)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={studyHoursData} margin={{ left: 0, right: 10, top: 5, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                      <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '12px',
-                          color: 'hsl(var(--foreground))',
-                          fontSize: 12,
-                          boxShadow: '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
-                        }}
-                        formatter={(value: number) => [`${value}h`, 'Horas']}
-                      />
-                      <Bar dataKey="horas" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} maxBarSize={30} />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value}h`, 'Horas']} />
+                      <Bar dataKey="horas" fill="hsl(var(--electric-blue))" radius={[6, 6, 0, 0]} maxBarSize={30} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -637,9 +673,9 @@ export default function Dashboard() {
       {/* Discipline Progress List */}
       {disciplineProgress.length > 0 && (
         <motion.div variants={itemVariants}>
-          <Card className="card-hover border-border/50">
+          <Card className="glass border-border/30">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-chart-5/10">
                   <BookOpen className="h-3.5 w-3.5 text-chart-5" />
                 </div>
@@ -651,9 +687,17 @@ export default function Dashboard() {
                 <div key={i} className="space-y-1.5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-foreground font-medium truncate max-w-[60%]">{d.fullName}</span>
-                    <span className="text-muted-foreground text-xs font-medium">{d.completed}/{d.total} ({d.percent}%)</span>
+                    <span className="text-muted-foreground text-xs font-mono">{d.completed}/{d.total} ({d.percent}%)</span>
                   </div>
-                  <Progress value={d.percent} className="h-2" />
+                  <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${d.percent}%`,
+                        background: `linear-gradient(90deg, ${COLORS[i % COLORS.length]}, ${COLORS[(i + 1) % COLORS.length]})`,
+                      }}
+                    />
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -663,15 +707,15 @@ export default function Dashboard() {
 
       {studyRecords.length === 0 && topics.length === 0 && (
         <motion.div variants={itemVariants}>
-          <Card className="border-dashed border-border/50">
+          <Card className="glass border-dashed border-border/30">
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary shadow-glow mb-6">
-                <Sparkles className="h-8 w-8 text-primary-foreground" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-neon shadow-neon mb-6">
+                <Sparkles className="h-8 w-8 text-neon-green-foreground" />
               </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">Comece sua jornada!</h3>
+              <h3 className="text-xl font-extrabold text-foreground mb-2">Pronto para o Sprint?</h3>
               <p className="text-sm text-muted-foreground max-w-md leading-relaxed">
                 Importe seu edital e registre seu primeiro estudo.
-                Seu progresso vai aparecer aqui com gráficos e métricas detalhadas.
+                Suas métricas de performance vão aparecer aqui.
               </p>
             </CardContent>
           </Card>
