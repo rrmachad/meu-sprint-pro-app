@@ -143,27 +143,53 @@ function persistRevision(r: RevisionEntry) {
   }).then(({ error }) => error && showDbError('Revisão', error));
 }
 
-function persistSettings() {
+async function persistSettings() {
   const uid = getUid();
   if (!uid) return;
+
   const { settings, streak, lastStudyDate } = useAppStore.getState();
-  supabase.from('user_settings').upsert({
-    user_id: uid,
-    contest_name: settings.contest.name, contest_organ: settings.contest.organ,
-    exam_date: settings.contest.examDate || null, vacancies: settings.contest.vacancies,
+  const payload = {
+    contest_name: settings.contest.name,
+    contest_organ: settings.contest.organ,
+    exam_date: settings.contest.examDate || null,
+    vacancies: settings.contest.vacancies,
     candidate_name: settings.contest.candidateName,
     phases: settings.contest.phases as any,
     total_min_percent: settings.contest.totalMinPercent,
-    revision_enabled: settings.revision.enabled, revision_marks: settings.revision.marks,
+    revision_enabled: settings.revision.enabled,
+    revision_marks: settings.revision.marks,
     weekly_hours: settings.goals.weeklyHours,
-    daily_questions: settings.goals.dailyQuestions, daily_pages: settings.goals.dailyPages,
+    daily_questions: settings.goals.dailyQuestions,
+    daily_pages: settings.goals.dailyPages,
     study_days: settings.studyDays,
-    onboarding_completed: settings.onboardingCompleted, setup_completed: settings.setupCompleted,
+    onboarding_completed: settings.onboardingCompleted,
+    setup_completed: settings.setupCompleted,
     module_hints: settings.moduleHints as any,
     notifications_enabled: settings.notificationsEnabled,
     reminder_minutes_before: settings.reminderMinutesBefore,
-    streak, last_study_date: lastStudyDate,
-  }, { onConflict: 'user_id' }).then(({ error }) => error && showDbError('Configurações', error));
+    streak,
+    last_study_date: lastStudyDate,
+  };
+
+  const { data, error } = await supabase
+    .from('user_settings')
+    .update(payload)
+    .eq('user_id', uid)
+    .select('id')
+    .limit(1);
+
+  if (error) {
+    showDbError('Configurações', error);
+    return;
+  }
+
+  if (data && data.length > 0) return;
+
+  const { error: insertError } = await supabase
+    .from('user_settings')
+    .insert({ user_id: uid, ...payload });
+
+  if (insertError) showDbError('Configurações', insertError);
 }
 
 function persistCycle(c: StudyCycle) {
