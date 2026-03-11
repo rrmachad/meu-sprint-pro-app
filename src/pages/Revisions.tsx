@@ -265,9 +265,11 @@ export default function Revisions() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="glass border-dashed">
+            <Card className="glass border-dashed border-border/30">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <CalendarCheck className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                <div className="w-12 h-12 rounded-xl gradient-blue flex items-center justify-center mb-3">
+                  <CalendarCheck className="h-6 w-6 text-electric-blue-foreground" />
+                </div>
                 <p className="text-sm text-muted-foreground">Selecione um dia no calendário</p>
               </CardContent>
             </Card>
