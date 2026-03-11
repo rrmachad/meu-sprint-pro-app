@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -27,20 +27,30 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 const queryClient = new QueryClient();
 
+const ONBOARDING_KEY = 'meu-sprint-pro-onboarding-done';
+
+function useOnboardingSeen() {
+  const [seen, setSeen] = useState(() => localStorage.getItem(ONBOARDING_KEY) === '1');
+  const markSeen = () => {
+    localStorage.setItem(ONBOARDING_KEY, '1');
+    setSeen(true);
+  };
+  const reset = () => {
+    localStorage.removeItem(ONBOARDING_KEY);
+    setSeen(false);
+  };
+  return { seen, markSeen, reset };
+}
+
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
   const setupCompleted = useAppStore((s) => s.settings.setupCompleted);
-  const onboardingCompleted = useAppStore((s) => s.settings.onboardingCompleted);
 
   // Sync data from Supabase when logged in
   const { syncing } = useSupabaseSync();
 
   if (loading || syncing) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
-
-  if (!onboardingCompleted) {
-    return <MobileOnboarding />;
-  }
 
   if (!setupCompleted) {
     return <SetupWizard />;
@@ -64,8 +74,14 @@ function ProtectedRoutes() {
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const { seen, markSeen } = useOnboardingSeen();
 
   if (loading) return <Loading />;
+
+  // Show onboarding BEFORE login for first-time visitors
+  if (!seen) {
+    return <MobileOnboarding onComplete={markSeen} />;
+  }
 
   return (
     <Routes>
@@ -103,3 +119,6 @@ const App = () => (
 );
 
 export default App;
+
+// Export for settings page reset
+export { ONBOARDING_KEY };
