@@ -223,9 +223,9 @@ export default function Revisions() {
         {/* Selected date / detail panel */}
         <motion.div variants={itemVariants} className="space-y-4">
           {selectedDate ? (
-            <Card className="glass">
+            <Card className="glass border-border/30">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">
                   {format(new Date(selectedDate + 'T12:00:00'), "dd 'de' MMMM", { locale: ptBR })}
                 </CardTitle>
               </CardHeader>
