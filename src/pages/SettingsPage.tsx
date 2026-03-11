@@ -864,6 +864,7 @@ function BackupTab() {
         </CardContent>
       </Card>
 
+      <Card className="glass border-destructive/20 rounded-xl bg-gradient-to-br from-destructive/5 to-transparent">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg text-destructive">
             <div className="p-1.5 rounded-lg bg-destructive/20">
