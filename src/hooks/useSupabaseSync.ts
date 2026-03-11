@@ -82,6 +82,7 @@ export function useSupabaseSync() {
 
   const loadAll = useCallback(async () => {
     if (!user) { setSyncing(false); return; }
+    setSyncing(true);
     const uid = user.id;
 
     const [
