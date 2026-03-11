@@ -154,10 +154,10 @@ export default function Revisions() {
       <div className="grid lg:grid-cols-[1fr_340px] gap-6">
         {/* Calendar */}
         <motion.div variants={itemVariants}>
-          <Card className="glass">
+          <Card className="glass border-border/30">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">Calendário de Revisões</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">Calendário de Revisões</CardTitle>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
                     <ChevronLeft className="h-4 w-4" />
