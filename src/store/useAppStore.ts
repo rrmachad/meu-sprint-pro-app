@@ -140,7 +140,7 @@ function persistRevision(r: RevisionEntry) {
   supabase.from('revisions').upsert({
     id: r.id, user_id: uid, discipline_id: r.disciplineId, study_date: r.studyDate,
     mark: r.mark, due_date: r.dueDate, completed: r.completed,
-  }).then(({ error }) => error && console.error('persist revision:', error));
+  }).then(({ error }) => error && showDbError('Revisão', error));
 }
 
 function persistSettings() {
