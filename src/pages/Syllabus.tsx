@@ -1564,16 +1564,18 @@ export default function Syllabus() {
 
       {/* Global Progress */}
       {totalTopics > 0 && (
-        <Card>
+        <Card className="glass border-border/30 bg-gradient-to-r from-neon-green/10 to-neon-green/5">
           <CardContent className="py-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Percent className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Progresso Geral</span>
+                <Percent className="h-4 w-4 text-neon-green" />
+                <span className="text-sm font-bold uppercase tracking-wider">Progresso Geral</span>
               </div>
-              <span className="text-sm font-bold text-primary">{globalPercent}%</span>
+              <span className="text-sm font-extrabold text-neon-green">{globalPercent}%</span>
             </div>
-            <Progress value={globalPercent} className="h-2.5" />
+            <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+              <div className="h-full rounded-full gradient-neon transition-all duration-700" style={{ width: `${globalPercent}%` }} />
+            </div>
             <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
               <span>{completedTopics} de {totalTopics} tópicos concluídos</span>
               <span>{totalTopics - completedTopics} restantes</span>
