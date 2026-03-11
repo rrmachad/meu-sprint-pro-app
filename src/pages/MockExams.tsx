@@ -450,6 +450,7 @@ export default function MockExams() {
                         </CollapsibleContent>
                       </CardContent>
                     </Card>
+                    </motion.div>
                   </Collapsible>
                 );
               })}
