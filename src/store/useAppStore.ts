@@ -1,9 +1,15 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type {
   AppState, AppSettings, Discipline, Topic, StudyRecord,
   RevisionEntry, StudyCycle, ScheduleSlot, Simulado, DailyNote,
 } from '@/types';
+
+function showDbError(context: string, error: any) {
+  console.error(context, error);
+  toast.error('Erro ao salvar dados', { description: error?.message || context });
+}
 
 const defaultSettings: AppSettings = {
   contest: { name: '', organ: '', examDate: '', vacancies: 0, candidateName: '', phases: [{ name: 'P1', minPercent: 60 }], totalMinPercent: 70 },
@@ -104,7 +110,7 @@ function persistDiscipline(d: Discipline) {
     id: d.id, user_id: uid, name: d.name, category: d.category, weight: d.weight,
     prova: d.prova, default_questions: d.defaultQuestions, sort_order: d.order,
     cannot_zero: d.cannotZero || false,
-  }).then(({ error }) => error && console.error('persist discipline:', error));
+  }).then(({ error }) => error && showDbError('Disciplina', error));
 }
 
 function persistTopic(t: Topic) {
@@ -113,7 +119,7 @@ function persistTopic(t: Topic) {
   supabase.from('topics').upsert({
     id: t.id, user_id: uid, discipline_id: t.disciplineId, text: t.text,
     completed: t.completed, sort_order: t.order,
-  }).then(({ error }) => error && console.error('persist topic:', error));
+  }).then(({ error }) => error && showDbError('Tópico', error));
 }
 
 function persistStudyRecord(r: StudyRecord) {
@@ -125,7 +131,7 @@ function persistStudyRecord(r: StudyRecord) {
     correct_answers: r.correctAnswers, wrong_answers: r.wrongAnswers,
     blank_answers: r.blankAnswers, pages_read: r.pagesRead,
     topics_completed: r.topicsCompleted, notes: r.notes,
-  }).then(({ error }) => error && console.error('persist study record:', error));
+  }).then(({ error }) => error && showDbError('Registro de estudo', error));
 }
 
 function persistRevision(r: RevisionEntry) {
@@ -134,7 +140,7 @@ function persistRevision(r: RevisionEntry) {
   supabase.from('revisions').upsert({
     id: r.id, user_id: uid, discipline_id: r.disciplineId, study_date: r.studyDate,
     mark: r.mark, due_date: r.dueDate, completed: r.completed,
-  }).then(({ error }) => error && console.error('persist revision:', error));
+  }).then(({ error }) => error && showDbError('Revisão', error));
 }
 
 function persistSettings() {
@@ -157,7 +163,7 @@ function persistSettings() {
     notifications_enabled: settings.notificationsEnabled,
     reminder_minutes_before: settings.reminderMinutesBefore,
     streak, last_study_date: lastStudyDate,
-  }, { onConflict: 'user_id' }).then(({ error }) => error && console.error('persist settings:', error));
+  }, { onConflict: 'user_id' }).then(({ error }) => error && showDbError('Configurações', error));
 }
 
 function persistCycle(c: StudyCycle) {
@@ -167,7 +173,7 @@ function persistCycle(c: StudyCycle) {
     id: c.id, user_id: uid, name: c.name, weekly_hours: c.weeklyHours,
     study_days: c.studyDays, active: c.active,
   }).then(async ({ error }) => {
-    if (error) { console.error('persist cycle:', error); return; }
+    if (error) { showDbError('Ciclo', error); return; }
     // Sync blocks
     await supabase.from('cycle_blocks').delete().eq('cycle_id', c.id);
     if (c.blocks.length > 0) {
@@ -201,7 +207,7 @@ function persistSimulado(s: Simulado) {
     total_min_percent: s.totalMinPercent,
     p1_disciplines: s.p1Disciplines, p2_disciplines: s.p2Disciplines,
   }).then(async ({ error }) => {
-    if (error) { console.error('persist simulado:', error); return; }
+    if (error) { showDbError('Simulado', error); return; }
     await supabase.from('simulado_disciplines').delete().eq('simulado_id', s.id);
     if (s.disciplines.length > 0) {
       await supabase.from('simulado_disciplines').insert(
