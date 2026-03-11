@@ -262,5 +262,5 @@ export function useSupabaseSync() {
     loadAll();
   }, [loadAll]);
 
-  return { reload: loadAll, syncing };
+  return { reload: loadAll, syncing, connectionStatus };
 }
