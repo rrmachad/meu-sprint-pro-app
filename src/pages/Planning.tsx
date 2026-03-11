@@ -842,7 +842,7 @@ function SortableBlock({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="rounded-md bg-muted/40 px-3 py-2">
+    <div ref={setNodeRef} style={style} className="rounded-xl bg-muted/20 glass border border-border/20 px-3 py-2 hover:border-primary/20 transition-all">
       {isEditing ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
