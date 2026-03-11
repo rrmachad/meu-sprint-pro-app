@@ -1291,10 +1291,12 @@ function ExportPdfDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md glass border-border/30">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5 text-primary" />
+            <div className="h-8 w-8 rounded-xl gradient-neon flex items-center justify-center">
+              <Download className="h-4 w-4 text-neon-green-foreground" />
+            </div>
             Exportar Edital em PDF
           </DialogTitle>
           <DialogDescription>
