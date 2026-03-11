@@ -997,9 +997,11 @@ export default function Planning() {
             ))}
         </div>
       ) : (
-        <Card className="border-dashed">
+        <Card className="border-dashed glass border-border/30">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <CalendarDays className="h-12 w-12 text-muted-foreground/40 mb-4" />
+            <div className="w-16 h-16 rounded-2xl gradient-neon flex items-center justify-center mb-4 shadow-neon">
+              <CalendarDays className="h-8 w-8 text-neon-green-foreground" />
+            </div>
             <h3 className="text-lg font-semibold mb-1">Nenhum cronograma criado</h3>
             <p className="text-sm text-muted-foreground max-w-md mb-4">
               {hasDisciplinesWithTopics
@@ -1008,11 +1010,11 @@ export default function Planning() {
               }
             </p>
             {hasDisciplinesWithTopics ? (
-              <Button onClick={() => setGenerateOpen(true)} className="gap-2">
+              <Button onClick={() => setGenerateOpen(true)} className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold">
                 <Sparkles className="h-4 w-4" /> Gerar Cronograma
               </Button>
             ) : (
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="rounded-xl border-border/40 hover:border-primary/40">
                 <a href="/edital">Ir para Edital Verticalizado</a>
               </Button>
             )}
