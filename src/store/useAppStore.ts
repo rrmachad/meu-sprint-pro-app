@@ -33,6 +33,7 @@ interface AppActions {
   updateSettings: (settings: Partial<AppSettings>) => void;
   completeSetup: () => void;
   completeOnboarding: () => void;
+  resetOnboarding: () => void;
   markModuleHint: (module: string) => void;
 
   // Disciplines
@@ -264,6 +265,10 @@ export const useAppStore = create<AppState & AppActions>()(
     },
     completeOnboarding: () => {
       set((state) => ({ settings: { ...state.settings, onboardingCompleted: true } }));
+      persistSettings();
+    },
+    resetOnboarding: () => {
+      set((state) => ({ settings: { ...state.settings, onboardingCompleted: false } }));
       persistSettings();
     },
     markModuleHint: (module) => {

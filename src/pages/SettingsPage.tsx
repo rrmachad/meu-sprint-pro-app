@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Settings, Building2, BookOpen, RotateCcw, Target,
   Download, Upload, Plus, Trash2, Edit2,
-  HelpCircle, AlertTriangle, Bell, Shield, Zap,
+  HelpCircle, AlertTriangle, Bell, Shield, Zap, Play,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -836,6 +836,31 @@ function BackupTab() {
             <Shield className="h-3 w-3 text-primary" />
             Os dados são salvos automaticamente. Use o backup para transferir entre dispositivos ou como segurança.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card className="glass border-border/30 rounded-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <div className="p-1.5 rounded-lg gradient-neon">
+              <Play className="h-4 w-4 text-primary-foreground" />
+            </div>
+            Onboarding
+          </CardTitle>
+          <CardDescription>Reveja a apresentação inicial do Meu Sprint Pro.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            className="gap-2 glass border-border/30 hover:border-primary/40 hover:glow-neon rounded-xl"
+            onClick={() => {
+              useAppStore.getState().resetOnboarding();
+              toast.success('Onboarding reiniciado! Você será redirecionado.');
+            }}
+          >
+            <Play className="h-4 w-4 text-primary" />
+            Re-exibir Onboarding
+          </Button>
         </CardContent>
       </Card>
 
