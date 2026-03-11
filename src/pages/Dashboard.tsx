@@ -210,7 +210,8 @@ export default function Dashboard() {
   const statCards = [
     {
       label: 'Tempo de Foco',
-      value: formatTime(todaySeconds),
+      numericValue: todaySeconds,
+      formatFn: (v: number) => formatTime(v),
       icon: Timer,
       gradient: 'from-electric-blue/15 to-electric-blue/5',
       iconBg: 'gradient-blue',
@@ -219,7 +220,8 @@ export default function Dashboard() {
     },
     {
       label: 'Questões Hoje',
-      value: todayQuestions.toString(),
+      numericValue: todayQuestions,
+      formatFn: (v: number) => v.toString(),
       icon: Crosshair,
       gradient: 'from-sporty-orange/15 to-sporty-orange/5',
       iconBg: 'gradient-orange',
@@ -228,7 +230,8 @@ export default function Dashboard() {
     },
     {
       label: 'Progresso do Alvo',
-      value: `${globalPercent}%`,
+      numericValue: globalPercent,
+      formatFn: (v: number) => `${v}%`,
       subtitle: `${completedTopics}/${totalTopics} tópicos`,
       icon: CheckCircle2,
       gradient: 'from-neon-green/15 to-neon-green/5',
@@ -238,7 +241,8 @@ export default function Dashboard() {
     },
     {
       label: 'Registros Totais',
-      value: studyRecords.length.toString(),
+      numericValue: studyRecords.length,
+      formatFn: (v: number) => v.toString(),
       icon: Activity,
       gradient: 'from-chart-4/15 to-chart-5/5',
       iconBg: 'bg-chart-4',
@@ -250,27 +254,10 @@ export default function Dashboard() {
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
 
-      {/* Stat Cards - Tactile glassmorphism */}
+      {/* Stat Cards - Tactile glassmorphism with count-up */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => (
-          <motion.div key={stat.label} variants={itemVariants}>
-            <Card className={`glass border-border/30 bg-gradient-to-br ${stat.gradient} ${stat.glowClass} transition-all duration-300`}>
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-                    <p className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">{stat.value}</p>
-                    {stat.subtitle && (
-                      <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
-                    )}
-                  </div>
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.iconBg} shadow-soft`}>
-                    <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <StatCard key={stat.label} stat={stat} />
         ))}
       </div>
 
