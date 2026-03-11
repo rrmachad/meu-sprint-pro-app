@@ -425,10 +425,28 @@ export const useAppStore = create<AppState & AppActions>()(
       set((s) => ({ dailyNotes: [...s.dailyNotes.filter((n) => n.date !== note.date), note] }));
       const uid = getUid();
       if (uid) {
-        supabase.from('daily_notes').upsert(
-          { user_id: uid, date: note.date, content: note.content },
-          { onConflict: 'user_id,date' }
-        ).then(() => {});
+        (async () => {
+          const { data, error } = await supabase
+            .from('daily_notes')
+            .update({ content: note.content })
+            .eq('user_id', uid)
+            .eq('date', note.date)
+            .select('id')
+            .limit(1);
+
+          if (error) {
+            showDbError('Nota diária', error);
+            return;
+          }
+
+          if (data && data.length > 0) return;
+
+          const { error: insertError } = await supabase
+            .from('daily_notes')
+            .insert({ user_id: uid, date: note.date, content: note.content });
+
+          if (insertError) showDbError('Nota diária', insertError);
+        })();
       }
     },
 
