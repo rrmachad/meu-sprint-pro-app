@@ -25,20 +25,23 @@ const slides = [
   },
 ];
 
-export function MobileOnboarding() {
+export function MobileOnboarding({ onComplete }: { onComplete?: () => void } = {}) {
   const [current, setCurrent] = useState(0);
-  const completeOnboarding = useAppStore((s) => s.completeOnboarding);
   const isLast = current === slides.length - 1;
+
+  const finish = () => {
+    onComplete?.();
+  };
 
   const next = () => {
     if (isLast) {
-      completeOnboarding();
+      finish();
     } else {
       setCurrent((p) => p + 1);
     }
   };
 
-  const skip = () => completeOnboarding();
+  const skip = () => finish();
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-background overflow-hidden">
