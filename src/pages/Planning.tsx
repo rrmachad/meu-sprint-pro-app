@@ -808,7 +808,7 @@ function CycleView({
         </Button>
       </CardContent>
     </Card>
-  );
+    </motion.div>
 }
 
 // ========== SORTABLE BLOCK ==========
