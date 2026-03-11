@@ -110,7 +110,7 @@ function persistDiscipline(d: Discipline) {
     id: d.id, user_id: uid, name: d.name, category: d.category, weight: d.weight,
     prova: d.prova, default_questions: d.defaultQuestions, sort_order: d.order,
     cannot_zero: d.cannotZero || false,
-  }).then(({ error }) => error && console.error('persist discipline:', error));
+  }).then(({ error }) => error && showDbError('Disciplina', error));
 }
 
 function persistTopic(t: Topic) {
