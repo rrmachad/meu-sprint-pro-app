@@ -52,7 +52,10 @@ const Login = () => {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          <Link to="/esqueci-senha" className="text-primary underline">Esqueci minha senha</Link>
+        </p>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
           Não tem conta?{' '}
           <Link to="/cadastro" className="text-primary underline">Cadastre-se</Link>
         </p>
