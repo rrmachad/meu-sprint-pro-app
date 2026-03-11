@@ -1035,9 +1035,9 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-sm">{discipline.name}</span>
-              <Badge variant="outline" className="text-[10px]">{discipline.prova}</Badge>
+              <Badge variant="outline" className="text-[10px] rounded-full border-border/40">{discipline.prova}</Badge>
               {discipline.cannotZero && (
-                <Badge variant="destructive" className="text-[10px]">Não pode zerar</Badge>
+                <Badge variant="destructive" className="text-[10px] rounded-full">Não pode zerar</Badge>
               )}
             </div>
             {total > 0 && (
