@@ -207,7 +207,7 @@ function persistSimulado(s: Simulado) {
     total_min_percent: s.totalMinPercent,
     p1_disciplines: s.p1Disciplines, p2_disciplines: s.p2Disciplines,
   }).then(async ({ error }) => {
-    if (error) { console.error('persist simulado:', error); return; }
+    if (error) { showDbError('Simulado', error); return; }
     await supabase.from('simulado_disciplines').delete().eq('simulado_id', s.id);
     if (s.disciplines.length > 0) {
       await supabase.from('simulado_disciplines').insert(
