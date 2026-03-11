@@ -1586,14 +1586,16 @@ export default function Syllabus() {
 
       {/* Disciplines */}
       {disciplines.length === 0 ? (
-        <Card className="border-dashed">
+        <Card className="border-dashed glass border-border/30">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <ClipboardList className="h-12 w-12 text-muted-foreground/40 mb-4" />
+            <div className="w-16 h-16 rounded-2xl gradient-orange flex items-center justify-center mb-4">
+              <ClipboardList className="h-8 w-8 text-sporty-orange-foreground" />
+            </div>
             <h3 className="text-lg font-semibold mb-1">Nenhuma disciplina cadastrada</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Cadastre suas disciplinas nas Configurações para começar a organizar o edital.
             </p>
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="rounded-xl border-border/40 hover:border-primary/40">
               <a href="/configuracoes">Ir para Configurações</a>
             </Button>
           </CardContent>
