@@ -119,7 +119,7 @@ function persistTopic(t: Topic) {
   supabase.from('topics').upsert({
     id: t.id, user_id: uid, discipline_id: t.disciplineId, text: t.text,
     completed: t.completed, sort_order: t.order,
-  }).then(({ error }) => error && console.error('persist topic:', error));
+  }).then(({ error }) => error && showDbError('Tópico', error));
 }
 
 function persistStudyRecord(r: StudyRecord) {
