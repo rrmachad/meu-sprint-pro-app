@@ -136,7 +136,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-3 space-y-2">
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          className="flex items-center gap-3 w-full rounded-xl px-3 py-3 min-h-[44px] text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
           {theme === 'dark' ? (
             <Sun className="h-4 w-4 shrink-0" />
