@@ -339,7 +339,7 @@ function GenerateDialog({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Horas semanais de estudo</Label>
-              <Badge variant="secondary" className="text-xs">{weeklyHours}h/semana</Badge>
+              <Badge variant="secondary" className="text-xs rounded-full">{weeklyHours}h/semana</Badge>
             </div>
             <Slider
               value={[weeklyHours]}
