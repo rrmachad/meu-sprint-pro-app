@@ -1,9 +1,15 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type {
   AppState, AppSettings, Discipline, Topic, StudyRecord,
   RevisionEntry, StudyCycle, ScheduleSlot, Simulado, DailyNote,
 } from '@/types';
+
+function showDbError(context: string, error: any) {
+  console.error(context, error);
+  toast.error('Erro ao salvar dados', { description: error?.message || context });
+}
 
 const defaultSettings: AppSettings = {
   contest: { name: '', organ: '', examDate: '', vacancies: 0, candidateName: '', phases: [{ name: 'P1', minPercent: 60 }], totalMinPercent: 70 },
