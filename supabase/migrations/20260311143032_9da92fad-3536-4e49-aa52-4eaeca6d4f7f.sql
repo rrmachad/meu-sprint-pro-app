@@ -1,0 +1,1 @@
+ALTER PUBLICATION supabase_realtime ADD TABLE public.disciplines, public.topics, public.study_records, public.revisions, public.study_cycles, public.cycle_blocks, public.cycle_disciplines, public.schedule_slots, public.simulados, public.simulado_disciplines, public.daily_notes, public.user_settings;

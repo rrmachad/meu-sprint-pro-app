@@ -1,7 +1,8 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/hooks/useAuth';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import type {
   Discipline, Topic, StudyRecord, RevisionEntry,
   StudyCycle, ScheduleSlot, Simulado, DailyNote, AppSettings,
@@ -45,10 +46,37 @@ function mapDailyNote(row: any): DailyNote {
   return { date: row.date, content: row.content || '' };
 }
 
+// Helper to apply a realtime event to a list in the store
+function applyRealtimeEvent<T extends { id: string }>(
+  stateKey: string,
+  eventType: string,
+  newRow: any,
+  oldRow: any,
+  mapper: (row: any) => T,
+) {
+  const state = useAppStore.getState() as any;
+  const list: T[] = state[stateKey] || [];
+
+  if (eventType === 'INSERT') {
+    if (!list.find((item) => item.id === newRow.id)) {
+      useAppStore.setState({ [stateKey]: [...list, mapper(newRow)] } as any);
+    }
+  } else if (eventType === 'UPDATE') {
+    useAppStore.setState({
+      [stateKey]: list.map((item) => (item.id === newRow.id ? mapper(newRow) : item)),
+    } as any);
+  } else if (eventType === 'DELETE') {
+    useAppStore.setState({
+      [stateKey]: list.filter((item) => item.id !== oldRow.id),
+    } as any);
+  }
+}
+
 export function useSupabaseSync() {
   const { user } = useAuth();
   const store = useAppStore;
   const [syncing, setSyncing] = useState(true);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const loadAll = useCallback(async () => {
     if (!user) { setSyncing(false); return; }
@@ -162,6 +190,64 @@ export function useSupabaseSync() {
     });
     setSyncing(false);
   }, [user]);
+
+  // Subscribe to realtime changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`sync-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'disciplines' }, (payload) => {
+        applyRealtimeEvent('disciplines', payload.eventType, payload.new, payload.old, mapDiscipline);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'topics' }, (payload) => {
+        applyRealtimeEvent('topics', payload.eventType, payload.new, payload.old, mapTopic);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'study_records' }, (payload) => {
+        applyRealtimeEvent('studyRecords', payload.eventType, payload.new, payload.old, mapStudyRecord);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'revisions' }, (payload) => {
+        applyRealtimeEvent('revisions', payload.eventType, payload.new, payload.old, mapRevision);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedule_slots' }, (payload) => {
+        applyRealtimeEvent('scheduleSlots', payload.eventType, payload.new, payload.old, mapScheduleSlot);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_notes' }, (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const state = useAppStore.getState();
+          useAppStore.setState({
+            dailyNotes: state.dailyNotes.filter(n => n.date !== (payload.old as any).date),
+          });
+        } else {
+          const mapped = mapDailyNote(payload.new);
+          const state = useAppStore.getState();
+          const exists = state.dailyNotes.find(n => n.date === mapped.date);
+          useAppStore.setState({
+            dailyNotes: exists
+              ? state.dailyNotes.map(n => n.date === mapped.date ? mapped : n)
+              : [...state.dailyNotes, mapped],
+          });
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_settings' }, () => {
+        // Reload settings fully to avoid partial mapping
+        loadAll();
+      })
+      // For cycles/simulados with sub-tables, do a full reload for consistency
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'study_cycles' }, () => loadAll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cycle_blocks' }, () => loadAll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cycle_disciplines' }, () => loadAll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'simulados' }, () => loadAll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'simulado_disciplines' }, () => loadAll())
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [user, loadAll]);
 
   useEffect(() => {
     loadAll();
