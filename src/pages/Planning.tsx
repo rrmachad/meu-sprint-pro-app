@@ -770,7 +770,7 @@ function CycleView({
                   <div className="flex items-center gap-2">
                     <CalendarDays className="h-3.5 w-3.5 text-primary" />
                     <span className="font-medium">{dayName}</span>
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-[10px] rounded-full border-border/40">
                       {dayBlocks.length} blocos • {Math.floor(dayMinutes / 60)}h{String(dayMinutes % 60).padStart(2, '0')}min
                     </Badge>
                   </div>
