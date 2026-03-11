@@ -562,34 +562,40 @@ export default function Indicators() {
 
             <div className="grid gap-3">
               {disciplineStats.map((d, i) => (
-                <Card key={i} className="glass border-border/30 hover:border-primary/30 transition-all duration-300">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full shadow-soft" style={{ background: d.color }} />
-                        <span className="text-sm font-semibold">{d.fullName}</span>
+                <motion.div
+                  key={i}
+                  whileHover={{ scale: 1.015, y: -2 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                >
+                  <Card className="glass border-border/30 hover:border-primary/40 hover:shadow-neon transition-all duration-300 group">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-full shadow-soft group-hover:glow-neon transition-shadow duration-300" style={{ background: d.color }} />
+                          <span className="text-sm font-semibold group-hover:text-primary transition-colors duration-300">{d.fullName}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground font-mono group-hover:text-foreground transition-colors duration-300">{d.hours}h</span>
                       </div>
-                      <span className="text-xs text-muted-foreground font-mono">{d.hours}h</span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground">
-                      <div>
-                        <span className="block text-foreground font-extrabold">{d.hitRate}%</span>
-                        Taxa de acerto
+                      <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground">
+                        <div>
+                          <span className="block text-foreground font-extrabold">{d.hitRate}%</span>
+                          Taxa de acerto
+                        </div>
+                        <div>
+                          <span className="block text-foreground font-extrabold">{d.questions}</span>
+                          Questões
+                        </div>
+                        <div>
+                          <span className="block text-foreground font-extrabold">{d.topicProgress}%</span>
+                          Edital concluído
+                        </div>
                       </div>
-                      <div>
-                        <span className="block text-foreground font-extrabold">{d.questions}</span>
-                        Questões
+                      <div className="h-1.5 mt-3 rounded-full bg-secondary overflow-hidden">
+                        <div className="h-full rounded-full gradient-neon group-hover:shadow-neon transition-shadow duration-300" style={{ width: `${d.topicProgress}%` }} />
                       </div>
-                      <div>
-                        <span className="block text-foreground font-extrabold">{d.topicProgress}%</span>
-                        Edital concluído
-                      </div>
-                    </div>
-                    <div className="h-1.5 mt-3 rounded-full bg-secondary overflow-hidden">
-                      <div className="h-full rounded-full gradient-neon" style={{ width: `${d.topicProgress}%` }} />
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))}
             </div>
           </TabsContent>

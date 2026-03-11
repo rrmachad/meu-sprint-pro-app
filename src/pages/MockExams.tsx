@@ -444,7 +444,7 @@ export default function MockExams() {
                                 <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
                                   <div className="h-full rounded-full gradient-neon" style={{ width: `${dpct}%` }} />
                                 </div>
-                              </div>
+                              </motion.div>
                             );
                           })}
                         </CollapsibleContent>
