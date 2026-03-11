@@ -958,20 +958,20 @@ export default function Planning() {
 
       {/* Active cycle summary */}
       {activeCycle && (
-        <Card className="bg-primary/5 border-primary/20">
+        <Card className="glass border-primary/20 bg-gradient-to-r from-neon-green/10 to-neon-green/5">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <CalendarDays className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-xl gradient-neon flex items-center justify-center shadow-neon">
+                <CalendarDays className="h-5 w-5 text-neon-green-foreground" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold">Ciclo ativo: {activeCycle.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground font-mono">
                   {activeCycle.weeklyHours}h/semana • {activeCycle.blocks.length} blocos •{' '}
                   {activeCycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')}
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setGenerateOpen(true)}>
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-border/40 hover:border-primary/40" onClick={() => setGenerateOpen(true)}>
                 <RotateCcw className="h-3.5 w-3.5" /> Regenerar
               </Button>
             </div>
