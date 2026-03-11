@@ -1029,8 +1029,8 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
   };
 
   return (
-    <AccordionItem value={discipline.id} className="border rounded-lg overflow-hidden bg-card">
-      <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+    <AccordionItem value={discipline.id} className="border border-border/30 rounded-xl overflow-hidden glass hover:border-primary/20 transition-all duration-300">
+      <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/20">
         <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
