@@ -854,8 +854,9 @@ function BackupTab() {
             variant="outline"
             className="gap-2 glass border-border/30 hover:border-primary/40 hover:glow-neon rounded-xl"
             onClick={() => {
-              useAppStore.getState().resetOnboarding();
-              toast.success('Onboarding reiniciado! Você será redirecionado.');
+              localStorage.removeItem('meu-sprint-pro-onboarding-done');
+              toast.success('Onboarding reiniciado! Recarregue a página para ver.');
+              setTimeout(() => window.location.reload(), 1200);
             }}
           >
             <Play className="h-4 w-4 text-primary" />
