@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Settings, Building2, BookOpen, RotateCcw, Target,
   Download, Upload, Plus, Trash2, Edit2,
-  HelpCircle, AlertTriangle, Bell, Shield, Zap,
+  HelpCircle, AlertTriangle, Bell, Shield, Zap, Play,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
