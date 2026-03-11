@@ -321,10 +321,12 @@ function GenerateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass border-border/30">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <div className="h-8 w-8 rounded-xl gradient-neon flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-neon-green-foreground" />
+            </div>
             Gerar Cronograma Automático
           </DialogTitle>
           <DialogDescription>
