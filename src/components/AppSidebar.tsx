@@ -67,7 +67,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-extrabold text-sidebar-foreground tracking-tight uppercase">
-                Sprint Pro
+                Meu Sprint Pro
               </span>
               <span className="text-[10px] text-neon-green/70 font-semibold tracking-wider uppercase">
                 Performance Mental
