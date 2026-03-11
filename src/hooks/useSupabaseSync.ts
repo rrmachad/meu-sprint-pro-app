@@ -160,11 +160,12 @@ export function useSupabaseSync() {
       simulados: mappedSimulados,
       dailyNotes: (notes || []).map(mapDailyNote),
     });
+    setSyncing(false);
   }, [user]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
 
-  return { reload: loadAll };
+  return { reload: loadAll, syncing };
 }
