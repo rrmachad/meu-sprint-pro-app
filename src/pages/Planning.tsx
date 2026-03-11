@@ -545,8 +545,8 @@ function GenerateDialog({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleGenerate} className="gap-2" disabled={scores.length === 0}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">Cancelar</Button>
+          <Button onClick={handleGenerate} className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold" disabled={scores.length === 0}>
             <Sparkles className="h-4 w-4" />
             Gerar Cronograma
           </Button>
