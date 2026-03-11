@@ -48,9 +48,10 @@ function mapDailyNote(row: any): DailyNote {
 export function useSupabaseSync() {
   const { user } = useAuth();
   const store = useAppStore;
+  const [syncing, setSyncing] = useState(true);
 
   const loadAll = useCallback(async () => {
-    if (!user) return;
+    if (!user) { setSyncing(false); return; }
     const uid = user.id;
 
     const [
