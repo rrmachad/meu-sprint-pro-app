@@ -933,11 +933,13 @@ export default function Planning() {
   );
 
   return (
-    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
+    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold flex items-center gap-2 tracking-tight">
+            <div className="h-8 w-8 rounded-xl gradient-neon flex items-center justify-center">
+              <CalendarDays className="h-4 w-4 text-neon-green-foreground" />
+            </div>
             Planejamento & Ciclos
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -946,7 +948,7 @@ export default function Planning() {
         </div>
         <Button
           onClick={() => setGenerateOpen(true)}
-          className="gap-2"
+          className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90"
           disabled={!hasDisciplinesWithTopics && disciplines.length === 0}
         >
           <Sparkles className="h-4 w-4" />
