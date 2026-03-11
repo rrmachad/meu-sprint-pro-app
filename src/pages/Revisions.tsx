@@ -159,13 +159,13 @@ export default function Revisions() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-bold uppercase tracking-wider">Calendário de Revisões</CardTitle>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <span className="text-sm font-semibold min-w-[140px] text-center capitalize">
+                  <span className="text-sm font-semibold min-w-[140px] text-center capitalize font-mono">
                     {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
                   </span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
