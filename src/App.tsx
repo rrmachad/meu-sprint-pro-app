@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from 'next-themes';
 import { AppLayout } from '@/components/AppLayout';
 import { SetupWizard } from '@/components/SetupWizard';
+import { MobileOnboarding } from '@/components/MobileOnboarding';
 import { useAppStore } from '@/store/useAppStore';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
