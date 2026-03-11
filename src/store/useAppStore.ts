@@ -267,6 +267,10 @@ export const useAppStore = create<AppState & AppActions>()(
       set((state) => ({ settings: { ...state.settings, onboardingCompleted: true } }));
       persistSettings();
     },
+    resetOnboarding: () => {
+      set((state) => ({ settings: { ...state.settings, onboardingCompleted: false } }));
+      persistSettings();
+    },
     markModuleHint: (module) => {
       set((state) => ({
         settings: { ...state.settings, moduleHints: { ...state.settings.moduleHints, [module]: true } },

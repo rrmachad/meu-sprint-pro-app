@@ -839,7 +839,31 @@ function BackupTab() {
         </CardContent>
       </Card>
 
-      <Card className="glass border-destructive/20 rounded-xl bg-gradient-to-br from-destructive/5 to-transparent">
+      <Card className="glass border-border/30 rounded-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <div className="p-1.5 rounded-lg gradient-neon">
+              <Play className="h-4 w-4 text-primary-foreground" />
+            </div>
+            Onboarding
+          </CardTitle>
+          <CardDescription>Reveja a apresentação inicial do Meu Sprint Pro.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            className="gap-2 glass border-border/30 hover:border-primary/40 hover:glow-neon rounded-xl"
+            onClick={() => {
+              useAppStore.getState().resetOnboarding();
+              toast.success('Onboarding reiniciado! Você será redirecionado.');
+            }}
+          >
+            <Play className="h-4 w-4 text-primary" />
+            Re-exibir Onboarding
+          </Button>
+        </CardContent>
+      </Card>
+
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg text-destructive">
             <div className="p-1.5 rounded-lg bg-destructive/20">
