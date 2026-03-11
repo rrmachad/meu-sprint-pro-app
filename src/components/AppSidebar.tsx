@@ -134,6 +134,7 @@ export function AppSidebar() {
             <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
           )}
         </button>
+        <LogoutButton collapsed={collapsed} />
         {!collapsed && (
           <div className="rounded-xl bg-sidebar-accent/30 border border-sidebar-border/30 p-3 text-center space-y-1">
             <div className="flex items-center justify-center gap-1.5 text-sidebar-foreground/40">
