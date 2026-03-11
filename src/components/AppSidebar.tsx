@@ -40,7 +40,7 @@ function LogoutButton({ collapsed }: { collapsed: boolean }) {
 }
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const streak = useAppStore((s) => s.streak);
