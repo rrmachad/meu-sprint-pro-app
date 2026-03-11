@@ -234,14 +234,16 @@ export default function Revisions() {
                   <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma revisão nesta data</p>
                 ) : (
                   selectedRevisions.map((r) => (
-                    <div
+                    <motion.div
                       key={r.id}
-                      className={`flex items-center justify-between rounded-xl p-3 border ${
+                      whileHover={{ scale: 1.01, x: 2 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      className={`flex items-center justify-between rounded-xl p-3 border transition-all ${
                         r.completed
-                          ? 'border-success/20 bg-success/5'
+                          ? 'border-neon-green/20 bg-neon-green/5'
                           : r.isOverdue
                           ? 'border-destructive/20 bg-destructive/5'
-                          : 'border-primary/20 bg-primary/5'
+                          : 'border-electric-blue/20 bg-electric-blue/5'
                       }`}
                     >
                       <div className="min-w-0">
