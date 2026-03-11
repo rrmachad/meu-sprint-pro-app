@@ -259,6 +259,21 @@ export function useSupabaseSync() {
     };
   }, [user, loadAll]);
 
+  // Toast on connection status changes
+  const prevStatusRef = useRef<string>('connecting');
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = connectionStatus;
+
+    if (connectionStatus === 'disconnected' && prev !== 'disconnected') {
+      toast.error('Conexão perdida. Tentando reconectar...', { id: 'realtime-status', duration: Infinity });
+    } else if (connectionStatus === 'connected' && prev === 'disconnected') {
+      toast.dismiss('realtime-status');
+      toast.success('Reconectado com sucesso!', { duration: 3000 });
+      loadAll(); // re-sync data after reconnection
+    }
+  }, [connectionStatus, loadAll]);
+
   useEffect(() => {
     loadAll();
   }, [loadAll]);
