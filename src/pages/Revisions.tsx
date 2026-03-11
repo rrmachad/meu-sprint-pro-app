@@ -252,14 +252,14 @@ export default function Revisions() {
                             <Badge variant="outline" className="text-[10px] px-1.5 py-0 rounded-full border-border/40">{r.mark}</Badge>
                             {r.completed && <span className="text-[10px] text-neon-green font-bold">✓ Concluída</span>}
                             {r.isOverdue && <span className="text-[10px] text-destructive font-bold">Atrasada</span>}
+                          </div>
                         </div>
-                      </div>
-                      {!r.completed && (
-                        <Button size="sm" variant="outline" className="shrink-0 ml-2 text-xs" onClick={() => completeRevision(r.id)}>
-                          Concluir
-                        </Button>
-                      )}
-                    </div>
+                        {!r.completed && (
+                          <Button size="sm" variant="outline" className="shrink-0 ml-2 text-xs rounded-xl border-border/40 hover:border-primary/40" onClick={() => completeRevision(r.id)}>
+                            Concluir
+                          </Button>
+                        )}
+                      </motion.div>
                   ))
                 )}
               </CardContent>
