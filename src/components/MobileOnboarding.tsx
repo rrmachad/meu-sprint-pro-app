@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Target, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAppStore } from '@/store/useAppStore';
 
 const slides = [
   {
