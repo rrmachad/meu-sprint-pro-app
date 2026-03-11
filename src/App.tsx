@@ -30,12 +30,17 @@ const queryClient = new QueryClient();
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
   const setupCompleted = useAppStore((s) => s.settings.setupCompleted);
+  const onboardingCompleted = useAppStore((s) => s.settings.onboardingCompleted);
 
   // Sync data from Supabase when logged in
   const { syncing } = useSupabaseSync();
 
   if (loading || syncing) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
+
+  if (!onboardingCompleted) {
+    return <MobileOnboarding />;
+  }
 
   if (!setupCompleted) {
     return <SetupWizard />;
