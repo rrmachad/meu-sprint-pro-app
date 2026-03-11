@@ -765,7 +765,7 @@ function CycleView({
             const dayMinutes = dayBlocks.reduce((a, b) => a + b.durationMinutes, 0);
 
             return (
-              <AccordionItem key={dayIdx} value={`day-${dayIdx}`} className="border rounded-lg px-3">
+              <AccordionItem key={dayIdx} value={`day-${dayIdx}`} className="border border-border/30 rounded-xl px-3 glass">
                 <AccordionTrigger className="py-2 text-sm hover:no-underline">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="h-3.5 w-3.5 text-primary" />
