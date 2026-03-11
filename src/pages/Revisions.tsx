@@ -94,31 +94,24 @@ export default function Revisions() {
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
       <motion.div variants={itemVariants}>
-        <h1 className="text-2xl font-bold">Revisões</h1>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <div className="h-8 w-8 rounded-xl gradient-blue flex items-center justify-center">
+            <CalendarCheck className="h-4 w-4 text-electric-blue-foreground" />
+          </div>
+          Revisões
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">Gerencie suas revisões espaçadas</p>
       </motion.div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Pendentes', value: stats.pending, icon: Clock, color: 'hsl(217, 91%, 60%)' },
-          { label: 'Para Hoje', value: stats.today, icon: CalendarCheck, color: 'hsl(24, 95%, 53%)' },
-          { label: 'Atrasadas', value: stats.overdue, icon: AlertTriangle, color: 'hsl(0, 84%, 60%)' },
-          { label: 'Concluídas', value: stats.completed, icon: CheckCircle2, color: 'hsl(142, 71%, 45%)' },
+          { label: 'Pendentes', value: stats.pending, icon: Clock, gradient: 'from-electric-blue/15 to-electric-blue/5', iconBg: 'gradient-blue', iconColor: 'text-electric-blue-foreground' },
+          { label: 'Para Hoje', value: stats.today, icon: CalendarCheck, gradient: 'from-sporty-orange/15 to-sporty-orange/5', iconBg: 'gradient-orange', iconColor: 'text-sporty-orange-foreground' },
+          { label: 'Atrasadas', value: stats.overdue, icon: AlertTriangle, gradient: 'from-destructive/15 to-destructive/5', iconBg: 'bg-destructive', iconColor: 'text-destructive-foreground' },
+          { label: 'Concluídas', value: stats.completed, icon: CheckCircle2, gradient: 'from-neon-green/15 to-neon-green/5', iconBg: 'gradient-neon', iconColor: 'text-neon-green-foreground' },
         ].map((s) => (
-          <motion.div key={s.label} variants={itemVariants}>
-            <Card className="glass card-hover">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style={{ background: `${s.color}20` }}>
-                  <s.icon className="h-5 w-5" style={{ color: s.color }} />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                  <p className="text-xl font-bold">{s.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+          <RevisionStatCard key={s.label} {...s} />
         ))}
       </div>
 
