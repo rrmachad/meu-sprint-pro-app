@@ -802,7 +802,7 @@ function CycleView({
           })}
         </Accordion>
 
-        <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs" onClick={addBlock}>
+        <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs rounded-xl border-border/40 hover:border-primary/40" onClick={addBlock}>
           <Plus className="h-3.5 w-3.5" />
           Adicionar Bloco
         </Button>
