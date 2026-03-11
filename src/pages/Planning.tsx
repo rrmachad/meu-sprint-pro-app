@@ -809,7 +809,7 @@ function CycleView({
       </CardContent>
     </Card>
     </motion.div>
-}
+  );
 
 // ========== SORTABLE BLOCK ==========
 function SortableBlock({
