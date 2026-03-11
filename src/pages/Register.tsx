@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { Zap } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -41,50 +42,61 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-lg">
-        <h1 className="mb-6 text-center text-3xl font-extrabold text-foreground">Cadastre-se</h1>
-        <p className="mb-6 text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">É novo no Meu Sprint Pro?</span><br />
-          Cadastre sua conta gratuita agora mesmo.
-        </p>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="flex items-center gap-4">
-            <Label htmlFor="nome" className="w-28 shrink-0 text-right text-sm text-muted-foreground">Nome</Label>
-            <Input id="nome" value={form.nome} onChange={(e) => handleChange('nome', e.target.value)} placeholder="João" />
+    <div className="flex min-h-screen items-center justify-center bg-background gradient-mesh p-5">
+      <div className="w-full max-w-md rounded-2xl border border-border/40 bg-card/80 backdrop-blur-xl p-8 md:p-10 shadow-elevated space-y-6">
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl gradient-neon shadow-neon">
+            <Zap className="h-7 w-7 text-neon-green-foreground" />
           </div>
-          <div className="flex items-center gap-4">
-            <Label htmlFor="sobrenome" className="w-28 shrink-0 text-right text-sm text-muted-foreground">Sobrenome</Label>
-            <Input id="sobrenome" value={form.sobrenome} onChange={(e) => handleChange('sobrenome', e.target.value)} placeholder="Silva" />
+          <div className="text-center">
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Cadastre-se</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              <span className="font-semibold text-foreground">É novo no Meu Sprint Pro?</span><br />
+              Cadastre sua conta gratuita agora mesmo.
+            </p>
           </div>
-          <div className="flex items-center gap-4">
-            <Label htmlFor="email" className="w-28 shrink-0 text-right text-sm text-muted-foreground">E-mail</Label>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="nome" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nome</Label>
+              <Input id="nome" value={form.nome} onChange={(e) => handleChange('nome', e.target.value)} placeholder="João" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sobrenome" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sobrenome</Label>
+              <Input id="sobrenome" value={form.sobrenome} onChange={(e) => handleChange('sobrenome', e.target.value)} placeholder="Silva" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">E-mail</Label>
             <Input id="email" type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="joao@gmail.com" />
           </div>
-          <div className="flex items-center gap-4">
-            <Label htmlFor="senha" className="w-28 shrink-0 text-right text-sm text-muted-foreground">Senha</Label>
+          <div className="space-y-2">
+            <Label htmlFor="senha" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Senha</Label>
             <Input id="senha" type="password" value={form.senha} onChange={(e) => handleChange('senha', e.target.value)} placeholder="••••••" />
           </div>
-          <div className="space-y-3 pl-32">
-            <div className="flex items-start gap-2">
-              <Checkbox id="novidades" checked={receberNovidades} onCheckedChange={(v) => setReceberNovidades(v === true)} />
-              <Label htmlFor="novidades" className="text-sm leading-snug text-muted-foreground">Desejo receber novidades e dicas de estudo</Label>
+          <div className="space-y-3 pt-1">
+            <div className="flex items-start gap-3">
+              <Checkbox id="novidades" checked={receberNovidades} onCheckedChange={(v) => setReceberNovidades(v === true)} className="mt-0.5" />
+              <Label htmlFor="novidades" className="text-sm leading-snug text-muted-foreground cursor-pointer">Desejo receber novidades e dicas de estudo</Label>
             </div>
-            <div className="flex items-start gap-2">
-              <Checkbox id="termos" checked={aceitarTermos} onCheckedChange={(v) => setAceitarTermos(v === true)} />
-              <Label htmlFor="termos" className="text-sm leading-snug text-muted-foreground">
-                Aceito os <span className="cursor-pointer text-primary underline">termos de uso</span> e as{' '}
-                <span className="cursor-pointer text-primary underline">políticas de privacidade</span>
+            <div className="flex items-start gap-3">
+              <Checkbox id="termos" checked={aceitarTermos} onCheckedChange={(v) => setAceitarTermos(v === true)} className="mt-0.5" />
+              <Label htmlFor="termos" className="text-sm leading-snug text-muted-foreground cursor-pointer">
+                Aceito os <span className="cursor-pointer text-primary underline underline-offset-4">termos de uso</span> e as{' '}
+                <span className="cursor-pointer text-primary underline underline-offset-4">políticas de privacidade</span>
               </Label>
             </div>
           </div>
-          <div className="flex justify-center gap-4 pt-4">
-            <Button type="button" variant="outline" onClick={() => navigate('/login')}>CANCELAR</Button>
-            <Button type="submit" disabled={loading}>{loading ? 'Criando...' : 'CRIAR CONTA'}</Button>
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" className="flex-1" onClick={() => navigate('/login')}>CANCELAR</Button>
+            <Button type="submit" className="flex-1" disabled={loading}>{loading ? 'Criando...' : 'CRIAR CONTA'}</Button>
           </div>
         </form>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Já tem conta? <Link to="/login" className="text-primary underline">Entrar</Link>
+        <p className="text-center text-sm text-muted-foreground">
+          Já tem conta? <Link to="/login" className="text-primary underline underline-offset-4 font-semibold">Entrar</Link>
         </p>
       </div>
     </div>

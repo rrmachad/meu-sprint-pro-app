@@ -31,7 +31,7 @@ function LogoutButton({ collapsed }: { collapsed: boolean }) {
   return (
     <button
       onClick={signOut}
-      className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm text-destructive/70 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
+      className="flex items-center gap-3 w-full rounded-xl px-3 py-3 min-h-[44px] text-sm text-destructive/70 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
     >
       <LogOut className="h-4 w-4 shrink-0" />
       {!collapsed && <span>Sair</span>}
@@ -112,7 +112,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === '/'}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[44px] text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       activeClassName="bg-neon-green/10 text-neon-green font-semibold glow-neon"
                     >
                       <div className="relative shrink-0">
@@ -136,7 +136,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-3 space-y-2">
         <button
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          className="flex items-center gap-3 w-full rounded-xl px-3 py-3 min-h-[44px] text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
         >
           {theme === 'dark' ? (
             <Sun className="h-4 w-4 shrink-0" />

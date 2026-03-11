@@ -27,14 +27,14 @@ export function AppLayout() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center gap-3 border-b border-border/30 bg-card/40 backdrop-blur-xl px-4 shrink-0 sticky top-0 z-30">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
+          <header className="h-14 md:h-16 flex items-center gap-3 border-b border-border/30 bg-card/40 backdrop-blur-xl px-4 md:px-6 shrink-0 sticky top-0 z-30">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors h-11 w-11 flex items-center justify-center" />
             <div className="h-5 w-px bg-border/40" />
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-semibold text-foreground truncate">
+              <span className="text-sm md:text-base font-semibold text-foreground truncate">
                 {greeting()}, <span className="text-neon-green">{candidateName || 'Atleta'}</span>
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[10px] md:text-xs text-muted-foreground">
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
               </span>
             </div>
@@ -62,7 +62,7 @@ export function AppLayout() {
               )}
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-6 gradient-mesh">
+          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 gradient-mesh">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
