@@ -1,9 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Settings, Building2, BookOpen, RotateCcw, Target,
-  Download, Upload, Plus, Trash2, Edit2, Check, X,
-  HelpCircle, AlertTriangle, Bell,
+  Download, Upload, Plus, Trash2, Edit2,
+  HelpCircle, AlertTriangle, Bell, Shield, Zap,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,12 @@ import type { Discipline, DisciplineCategory, ProvaPhase, RevisionMark } from '@
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.35, staggerChildren: 0.08 } },
+};
+
+const itemVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
 };
 
 const CATEGORIES: { label: string; value: DisciplineCategory }[] = [
@@ -42,10 +47,10 @@ const CATEGORIES: { label: string; value: DisciplineCategory }[] = [
 ];
 
 const CATEGORY_COLORS: Record<DisciplineCategory, string> = {
-  exatas: 'bg-primary/20 text-primary',
-  humanas: 'bg-accent/20 text-accent',
-  juridicas: 'bg-warning/20 text-warning',
-  mista: 'bg-success/20 text-success',
+  exatas: 'bg-primary/20 text-primary border-primary/30',
+  humanas: 'bg-electric-blue/20 text-electric-blue border-electric-blue/30',
+  juridicas: 'bg-warning/20 text-warning border-warning/30',
+  mista: 'bg-sporty-orange/20 text-sporty-orange border-sporty-orange/30',
 };
 
 const REVISION_MARKS: { label: string; value: RevisionMark; description: string }[] = [
@@ -94,11 +99,13 @@ function ContestTab() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <motion.div variants={itemVariants} className="space-y-6">
+      <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="h-5 w-5 text-primary" />
+            <div className="p-1.5 rounded-lg gradient-neon">
+              <Building2 className="h-4 w-4 text-primary-foreground" />
+            </div>
             Dados do Concurso
           </CardTitle>
           <CardDescription>Informações gerais sobre o concurso que você está estudando.</CardDescription>
@@ -106,46 +113,50 @@ function ContestTab() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="candidateName">Seu Nome</Label>
+              <Label htmlFor="candidateName" className="text-xs uppercase tracking-wider text-muted-foreground">Seu Nome</Label>
               <Input
                 id="candidateName"
                 value={settings.contest.candidateName}
                 onChange={(e) => update('candidateName', e.target.value)}
                 placeholder="Ex: Maria Silva"
+                className="glass border-border/30 focus:border-primary/50 focus:glow-neon"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contestName">Nome do Concurso</Label>
+              <Label htmlFor="contestName" className="text-xs uppercase tracking-wider text-muted-foreground">Nome do Concurso</Label>
               <Input
                 id="contestName"
                 value={settings.contest.name}
                 onChange={(e) => update('name', e.target.value)}
                 placeholder="Ex: Auditor Fiscal da Receita Federal"
+                className="glass border-border/30 focus:border-primary/50"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="organ">Órgão</Label>
+              <Label htmlFor="organ" className="text-xs uppercase tracking-wider text-muted-foreground">Órgão</Label>
               <Input
                 id="organ"
                 value={settings.contest.organ}
                 onChange={(e) => update('organ', e.target.value)}
                 placeholder="Ex: Receita Federal do Brasil"
+                className="glass border-border/30 focus:border-primary/50"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="examDate">Data Prevista da Prova</Label>
+              <Label htmlFor="examDate" className="text-xs uppercase tracking-wider text-muted-foreground">Data Prevista da Prova</Label>
               <Input
                 id="examDate"
                 type="date"
                 value={settings.contest.examDate}
                 onChange={(e) => update('examDate', e.target.value)}
+                className="glass border-border/30 focus:border-primary/50"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vacancies">Número de Vagas</Label>
+              <Label htmlFor="vacancies" className="text-xs uppercase tracking-wider text-muted-foreground">Número de Vagas</Label>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline" size="icon" className="h-9 w-9"
+                  variant="outline" size="icon" className="h-9 w-9 glass border-border/30 hover:border-primary/50 hover:glow-neon"
                   onClick={() => update('vacancies', Math.max(0, settings.contest.vacancies - 1))}
                 >-</Button>
                 <Input
@@ -154,10 +165,10 @@ function ContestTab() {
                   value={settings.contest.vacancies}
                   onChange={(e) => update('vacancies', Math.max(0, Number(e.target.value)))}
                   min={0}
-                  className="w-20 text-center"
+                  className="w-20 text-center glass border-border/30"
                 />
                 <Button
-                  variant="outline" size="icon" className="h-9 w-9"
+                  variant="outline" size="icon" className="h-9 w-9 glass border-border/30 hover:border-primary/50 hover:glow-neon"
                   onClick={() => update('vacancies', settings.contest.vacancies + 1)}
                 >+</Button>
               </div>
@@ -167,41 +178,48 @@ function ContestTab() {
       </Card>
 
       {/* Fases da Prova */}
-      <Card>
+      <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Target className="h-5 w-5 text-primary" />
+                <div className="p-1.5 rounded-lg gradient-blue">
+                  <Target className="h-4 w-4 text-primary-foreground" />
+                </div>
                 Fases da Prova
               </CardTitle>
               <CardDescription>Configure as fases (P1, P2, P3…) e seus percentuais mínimos.</CardDescription>
             </div>
-            <Button onClick={addPhase} size="sm" className="gap-1">
+            <Button onClick={addPhase} size="sm" className="gap-1 gradient-neon text-primary-foreground hover:opacity-90">
               <Plus className="h-4 w-4" /> Adicionar Fase
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {phases.map((phase, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border">
+            <motion.div
+              key={i}
+              whileHover={{ scale: 1.01, y: -1 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="flex items-center gap-3 p-3 rounded-xl glass border-border/30 hover:border-primary/30 hover:shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)] group"
+            >
               <div className="space-y-1 flex-1">
-                <Label className="text-xs text-muted-foreground">Nome da Fase</Label>
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Nome da Fase</Label>
                 <Input
                   value={phase.name}
                   onChange={(e) => updatePhase(i, 'name', e.target.value)}
-                  className="h-8 text-sm"
+                  className="h-8 text-sm glass border-border/30"
                   placeholder="Ex: P1"
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Mínimo (%)</Label>
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Mínimo (%)</Label>
                 <Input
                   type="number"
                   value={phase.minPercent}
                   onChange={(e) => updatePhase(i, 'minPercent', Number(e.target.value))}
                   min={0} max={100}
-                  className="h-8 w-20 text-sm"
+                  className="h-8 w-20 text-sm glass border-border/30"
                 />
               </div>
               {phases.length > 1 && (
@@ -214,24 +232,24 @@ function ContestTab() {
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
-            </div>
+            </motion.div>
           ))}
 
-          <Separator />
+          <Separator className="bg-border/30" />
 
           <div className="space-y-2">
-            <Label>Mínimo Geral (%)</Label>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Mínimo Geral (%)</Label>
             <Input
               type="number"
               value={totalMinPercent}
               onChange={(e) => update('totalMinPercent', Number(e.target.value))}
               min={0} max={100}
-              className="w-24"
+              className="w-24 glass border-border/30"
             />
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
 
@@ -259,37 +277,21 @@ function DisciplinesTab() {
     setEditingId(null);
   };
 
-  const openNew = () => {
-    resetForm();
-    setDialogOpen(true);
-  };
+  const openNew = () => { resetForm(); setDialogOpen(true); };
 
   const openEdit = (d: Discipline) => {
-    setForm({
-      name: d.name,
-      category: d.category,
-      weight: d.weight,
-      prova: d.prova,
-      defaultQuestions: d.defaultQuestions,
-    });
+    setForm({ name: d.name, category: d.category, weight: d.weight, prova: d.prova, defaultQuestions: d.defaultQuestions });
     setEditingId(d.id);
     setDialogOpen(true);
   };
 
   const handleSave = () => {
-    if (!form.name.trim()) {
-      toast.error('Informe o nome da disciplina.');
-      return;
-    }
+    if (!form.name.trim()) { toast.error('Informe o nome da disciplina.'); return; }
     if (editingId) {
       updateDiscipline(editingId, form);
       toast.success('Disciplina atualizada!');
     } else {
-      const disc: Discipline = {
-        id: crypto.randomUUID(),
-        ...form,
-        order: disciplines.length,
-      };
+      const disc: Discipline = { id: crypto.randomUUID(), ...form, order: disciplines.length };
       addDiscipline(disc);
       toast.success('Disciplina adicionada!');
     }
@@ -297,24 +299,23 @@ function DisciplinesTab() {
     resetForm();
   };
 
-  const handleDelete = (id: string) => {
-    removeDiscipline(id);
-    toast.success('Disciplina removida!');
-  };
+  const handleDelete = (id: string) => { removeDiscipline(id); toast.success('Disciplina removida!'); };
 
   return (
-    <div className="space-y-4">
-      <Card>
+    <motion.div variants={itemVariants} className="space-y-4">
+      <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <BookOpen className="h-5 w-5 text-primary" />
+                <div className="p-1.5 rounded-lg gradient-orange">
+                  <BookOpen className="h-4 w-4 text-primary-foreground" />
+                </div>
                 Disciplinas
               </CardTitle>
               <CardDescription>{disciplines.length} disciplina{disciplines.length !== 1 ? 's' : ''} cadastrada{disciplines.length !== 1 ? 's' : ''}</CardDescription>
             </div>
-            <Button onClick={openNew} size="sm" className="gap-1">
+            <Button onClick={openNew} size="sm" className="gap-1 gradient-neon text-primary-foreground hover:opacity-90">
               <Plus className="h-4 w-4" /> Adicionar
             </Button>
           </div>
@@ -322,28 +323,34 @@ function DisciplinesTab() {
         <CardContent>
           {disciplines.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <BookOpen className="h-12 w-12 text-muted-foreground/30 mb-3" />
+              <div className="p-4 rounded-2xl glass border-border/20 mb-4">
+                <BookOpen className="h-10 w-10 text-muted-foreground/40" />
+              </div>
               <p className="text-sm text-muted-foreground mb-3">
                 Você ainda não tem disciplinas cadastradas.
               </p>
-              <Button onClick={openNew} variant="outline" className="gap-1">
+              <Button onClick={openNew} variant="outline" className="gap-1 glass border-primary/30 hover:glow-neon">
                 <Plus className="h-4 w-4" /> Cadastrar Primeira Disciplina
               </Button>
             </div>
           ) : (
             <div className="space-y-2">
-              {disciplines.map((d) => (
-                <div
+              {disciplines.map((d, i) => (
+                <motion.div
                   key={d.id}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  whileHover={{ scale: 1.01, y: -1 }}
+                  className="flex items-center gap-3 rounded-xl glass border-border/30 p-3 hover:border-primary/30 hover:shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)] group"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm truncate">{d.name}</span>
-                      <Badge variant="secondary" className={`text-[10px] ${CATEGORY_COLORS[d.category]}`}>
+                      <span className="font-medium text-sm truncate group-hover:text-primary transition-colors">{d.name}</span>
+                      <Badge variant="secondary" className={`text-[10px] border ${CATEGORY_COLORS[d.category]}`}>
                         {CATEGORIES.find((c) => c.value === d.category)?.label}
                       </Badge>
-                      <Badge variant="outline" className="text-[10px]">
+                      <Badge variant="outline" className="text-[10px] border-border/40">
                         {d.prova}
                       </Badge>
                     </div>
@@ -353,7 +360,7 @@ function DisciplinesTab() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(d)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary" onClick={() => openEdit(d)}>
                       <Edit2 className="h-3.5 w-3.5" />
                     </Button>
                     <AlertDialog>
@@ -362,7 +369,7 @@ function DisciplinesTab() {
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="glass-strong border-border/30 rounded-xl">
                         <AlertDialogHeader>
                           <AlertDialogTitle>Remover disciplina?</AlertDialogTitle>
                           <AlertDialogDescription>
@@ -370,7 +377,7 @@ function DisciplinesTab() {
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogCancel className="glass border-border/30">Cancelar</AlertDialogCancel>
                           <AlertDialogAction onClick={() => handleDelete(d.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                             Remover
                           </AlertDialogAction>
@@ -378,7 +385,7 @@ function DisciplinesTab() {
                       </AlertDialogContent>
                     </AlertDialog>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
@@ -387,29 +394,35 @@ function DisciplinesTab() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md glass-strong border-border/30 rounded-xl">
           <DialogHeader>
-            <DialogTitle>{editingId ? 'Editar Disciplina' : 'Nova Disciplina'}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg gradient-neon">
+                <BookOpen className="h-4 w-4 text-primary-foreground" />
+              </div>
+              {editingId ? 'Editar Disciplina' : 'Nova Disciplina'}
+            </DialogTitle>
             <DialogDescription>
               {editingId ? 'Atualize as informações da disciplina.' : 'Preencha os dados da nova disciplina.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Nome da Disciplina</Label>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Nome da Disciplina</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Ex: Direito Administrativo"
                 autoFocus
+                className="glass border-border/30 focus:border-primary/50"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Categoria</Label>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Categoria</Label>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as DisciplineCategory })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="glass border-border/30"><SelectValue /></SelectTrigger>
+                  <SelectContent className="glass-strong border-border/30">
                     {CATEGORIES.map((c) => (
                       <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                     ))}
@@ -417,16 +430,14 @@ function DisciplinesTab() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Prova/Fase</Label>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Prova/Fase</Label>
                 <Select value={form.prova} onValueChange={(v) => setForm({ ...form, prova: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="glass border-border/30"><SelectValue /></SelectTrigger>
+                  <SelectContent className="glass-strong border-border/30">
                     {phases.map((p) => (
                       <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
                     ))}
-                    {phases.length > 1 && (
-                      <SelectItem value="todas">Todas</SelectItem>
-                    )}
+                    {phases.length > 1 && <SelectItem value="todas">Todas</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -434,61 +445,57 @@ function DisciplinesTab() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-1">
-                  <Label>Peso no Edital (%)</Label>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Peso (%)</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="glass-strong border-border/30">
                       <p className="text-xs max-w-48">Percentual de questões desta disciplina no edital.</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-9 w-9"
+                  <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30"
                     onClick={() => setForm({ ...form, weight: Math.max(0, form.weight - 1) })}>-</Button>
-                  <Input
-                    type="number" value={form.weight} min={0} max={100}
+                  <Input type="number" value={form.weight} min={0} max={100}
                     onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-                    className="w-16 text-center"
-                  />
-                  <Button variant="outline" size="icon" className="h-9 w-9"
+                    className="w-16 text-center glass border-border/30" />
+                  <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30"
                     onClick={() => setForm({ ...form, weight: Math.min(100, form.weight + 1) })}>+</Button>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-1">
-                  <Label>Questões (Simulado)</Label>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Questões</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent className="glass-strong border-border/30">
                       <p className="text-xs max-w-48">Quantidade padrão de questões nos simulados.</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-9 w-9"
+                  <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30"
                     onClick={() => setForm({ ...form, defaultQuestions: Math.max(1, form.defaultQuestions - 1) })}>-</Button>
-                  <Input
-                    type="number" value={form.defaultQuestions} min={1}
+                  <Input type="number" value={form.defaultQuestions} min={1}
                     onChange={(e) => setForm({ ...form, defaultQuestions: Number(e.target.value) })}
-                    className="w-16 text-center"
-                  />
-                  <Button variant="outline" size="icon" className="h-9 w-9"
+                    className="w-16 text-center glass border-border/30" />
+                  <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30"
                     onClick={() => setForm({ ...form, defaultQuestions: form.defaultQuestions + 1 })}>+</Button>
                 </div>
               </div>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>{editingId ? 'Salvar Alterações' : 'Adicionar'}</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="glass border-border/30">Cancelar</Button>
+            <Button onClick={handleSave} className="gradient-neon text-primary-foreground hover:opacity-90">{editingId ? 'Salvar Alterações' : 'Adicionar'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }
 
@@ -504,57 +511,60 @@ function RevisionsTab() {
 
   const toggleMark = (mark: RevisionMark) => {
     const current = settings.revision.marks;
-    const next = current.includes(mark)
-      ? current.filter((m) => m !== mark)
-      : [...current, mark];
+    const next = current.includes(mark) ? current.filter((m) => m !== mark) : [...current, mark];
     updateSettings({ revision: { ...settings.revision, marks: next } });
     toast.success('Salvo com sucesso!');
   };
 
+  const MARK_GRADIENTS = ['from-primary/15 to-primary/5', 'from-electric-blue/15 to-electric-blue/5', 'from-sporty-orange/15 to-sporty-orange/5', 'from-warning/15 to-warning/5'];
+
   return (
-    <div className="space-y-6">
-      <Card>
+    <motion.div variants={itemVariants} className="space-y-6">
+      <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <RotateCcw className="h-5 w-5 text-primary" />
+                <div className="p-1.5 rounded-lg gradient-primary">
+                  <RotateCcw className="h-4 w-4 text-primary-foreground" />
+                </div>
                 Revisões Espaçadas
               </CardTitle>
-              <CardDescription>
-                Configure os marcos de revisão para consolidar o aprendizado.
-              </CardDescription>
+              <CardDescription>Configure os marcos de revisão para consolidar o aprendizado.</CardDescription>
             </div>
-            <Switch
-              checked={settings.revision.enabled}
-              onCheckedChange={toggleEnabled}
-            />
+            <Switch checked={settings.revision.enabled} onCheckedChange={toggleEnabled} />
           </div>
         </CardHeader>
         <CardContent>
-          <div className={`space-y-3 ${!settings.revision.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
-            {REVISION_MARKS.map((rm) => (
-              <div key={rm.value} className="flex items-center justify-between rounded-lg border border-border p-3">
+          <div className={`space-y-3 ${!settings.revision.enabled ? 'opacity-40 pointer-events-none' : ''}`}>
+            {REVISION_MARKS.map((rm, i) => (
+              <motion.div
+                key={rm.value}
+                whileHover={{ scale: 1.01 }}
+                className={`flex items-center justify-between rounded-xl glass border-border/30 p-4 bg-gradient-to-r ${MARK_GRADIENTS[i]} hover:border-primary/30 group`}
+              >
                 <div>
-                  <p className="text-sm font-medium">{rm.label}</p>
+                  <p className="text-sm font-semibold group-hover:text-primary transition-colors">{rm.label}</p>
                   <p className="text-xs text-muted-foreground">{rm.description}</p>
                 </div>
                 <Checkbox
                   checked={settings.revision.marks.includes(rm.value)}
                   onCheckedChange={() => toggleMark(rm.value)}
+                  className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
-              </div>
+              </motion.div>
             ))}
           </div>
           {settings.revision.enabled && (
-            <p className="text-xs text-muted-foreground mt-3">
-              {settings.revision.marks.length} marco{settings.revision.marks.length !== 1 ? 's' : ''} ativo{settings.revision.marks.length !== 1 ? 's' : ''}. 
-              Disciplinas com revisão pendente aparecerão destacadas em laranja no painel inicial.
+            <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
+              <Zap className="h-3 w-3 text-primary" />
+              {settings.revision.marks.length} marco{settings.revision.marks.length !== 1 ? 's' : ''} ativo{settings.revision.marks.length !== 1 ? 's' : ''}.
+              Disciplinas com revisão pendente aparecerão destacadas no painel inicial.
             </p>
           )}
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
 
@@ -579,9 +589,7 @@ function GoalsTab() {
   };
 
   const toggleDay = (day: number) => {
-    const next = settings.studyDays.includes(day)
-      ? settings.studyDays.filter((d) => d !== day)
-      : [...settings.studyDays, day];
+    const next = settings.studyDays.includes(day) ? settings.studyDays.filter((d) => d !== day) : [...settings.studyDays, day];
     updateSettings({ studyDays: next });
     toast.success('Salvo com sucesso!');
   };
@@ -594,10 +602,7 @@ function GoalsTab() {
   const handleToggleNotifications = async (enabled: boolean) => {
     if (enabled && 'Notification' in window) {
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        toast.error('Permissão de notificações negada pelo navegador.');
-        return;
-      }
+      if (permission !== 'granted') { toast.error('Permissão de notificações negada pelo navegador.'); return; }
     }
     updateSettings({ notificationsEnabled: enabled });
     toast.success(enabled ? 'Notificações ativadas!' : 'Notificações desativadas!');
@@ -612,46 +617,45 @@ function GoalsTab() {
   ];
 
   return (
-    <div className="space-y-6">
+    <motion.div variants={itemVariants} className="space-y-6">
       {/* Notifications Card */}
-      <Card>
+      <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Bell className="h-5 w-5 text-primary" />
+                <div className="p-1.5 rounded-lg gradient-orange">
+                  <Bell className="h-4 w-4 text-primary-foreground" />
+                </div>
                 Notificações e Lembretes
               </CardTitle>
-              <CardDescription>
-                Receba lembretes antes dos horários de estudo programados no ciclo.
-              </CardDescription>
+              <CardDescription>Receba lembretes antes dos horários de estudo programados no ciclo.</CardDescription>
             </div>
-            <Switch
-              checked={settings.notificationsEnabled ?? false}
-              onCheckedChange={handleToggleNotifications}
-            />
+            <Switch checked={settings.notificationsEnabled ?? false} onCheckedChange={handleToggleNotifications} />
           </div>
         </CardHeader>
         <CardContent>
-          <div className={`space-y-4 ${!settings.notificationsEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`space-y-4 ${!settings.notificationsEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
             <div className="space-y-2">
-              <Label>Avisar com antecedência de</Label>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Avisar com antecedência de</Label>
               <div className="flex flex-wrap gap-2">
                 {REMINDER_OPTIONS.map((opt) => (
-                  <button
+                  <motion.button
                     key={opt.value}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => {
                       updateSettings({ reminderMinutesBefore: opt.value });
                       toast.success(`Lembrete ajustado para ${opt.label} antes!`);
                     }}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border-2 transition-all ${
+                    className={`px-4 py-2 text-xs font-semibold rounded-xl border-2 transition-all ${
                       (settings.reminderMinutesBefore ?? 5) === opt.value
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/50'
+                        ? 'border-primary bg-primary/15 text-primary glow-neon'
+                        : 'border-border/40 text-muted-foreground hover:border-primary/50 glass'
                     }`}
                   >
                     {opt.label}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -662,10 +666,12 @@ function GoalsTab() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Target className="h-5 w-5 text-primary" />
+            <div className="p-1.5 rounded-lg gradient-blue">
+              <Target className="h-4 w-4 text-primary-foreground" />
+            </div>
             Metas de Estudo
           </CardTitle>
           <CardDescription>Defina suas metas diárias e semanais.</CardDescription>
@@ -673,35 +679,31 @@ function GoalsTab() {
         <CardContent className="space-y-6">
           {/* Weekly hours */}
           <div className="space-y-2">
-            <Label>Carga Horária Semanal</Label>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Carga Horária Semanal</Label>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" className="h-9 w-9"
+              <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30 hover:border-primary/50"
                 onClick={() => updateWeeklyHours(Math.max(1, settings.weeklyHours - 5))}>-</Button>
-              <Input
-                type="number" value={settings.weeklyHours} min={1} max={120}
+              <Input type="number" value={settings.weeklyHours} min={1} max={120}
                 onChange={(e) => updateWeeklyHours(Number(e.target.value))}
-                className="w-20 text-center font-bold"
-              />
-              <Button variant="outline" size="icon" className="h-9 w-9"
+                className="w-20 text-center font-bold glass border-border/30" />
+              <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30 hover:border-primary/50"
                 onClick={() => updateWeeklyHours(Math.min(120, settings.weeklyHours + 5))}>+</Button>
               <span className="text-sm text-muted-foreground">horas/semana</span>
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-border/30" />
 
           {/* Daily questions */}
           <div className="space-y-2">
-            <Label>Meta Diária de Questões</Label>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Meta Diária de Questões</Label>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" className="h-9 w-9"
+              <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30 hover:border-primary/50"
                 onClick={() => updateGoal('dailyQuestions', Math.max(1, settings.goals.dailyQuestions - 5))}>-</Button>
-              <Input
-                type="number" value={settings.goals.dailyQuestions} min={1}
+              <Input type="number" value={settings.goals.dailyQuestions} min={1}
                 onChange={(e) => updateGoal('dailyQuestions', Number(e.target.value))}
-                className="w-20 text-center font-bold"
-              />
-              <Button variant="outline" size="icon" className="h-9 w-9"
+                className="w-20 text-center font-bold glass border-border/30" />
+              <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30 hover:border-primary/50"
                 onClick={() => updateGoal('dailyQuestions', settings.goals.dailyQuestions + 5)}>+</Button>
               <span className="text-sm text-muted-foreground">questões/dia</span>
             </div>
@@ -709,42 +711,43 @@ function GoalsTab() {
 
           {/* Daily pages */}
           <div className="space-y-2">
-            <Label>Meta Diária de Páginas Lidas</Label>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Meta Diária de Páginas Lidas</Label>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" className="h-9 w-9"
+              <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30 hover:border-primary/50"
                 onClick={() => updateGoal('dailyPages', Math.max(1, settings.goals.dailyPages - 5))}>-</Button>
-              <Input
-                type="number" value={settings.goals.dailyPages} min={1}
+              <Input type="number" value={settings.goals.dailyPages} min={1}
                 onChange={(e) => updateGoal('dailyPages', Number(e.target.value))}
-                className="w-20 text-center font-bold"
-              />
-              <Button variant="outline" size="icon" className="h-9 w-9"
+                className="w-20 text-center font-bold glass border-border/30" />
+              <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30 hover:border-primary/50"
                 onClick={() => updateGoal('dailyPages', settings.goals.dailyPages + 5)}>+</Button>
               <span className="text-sm text-muted-foreground">páginas/dia</span>
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-border/30" />
 
           {/* Study days */}
           <div className="space-y-3">
-            <Label>Dias de Estudo</Label>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Dias de Estudo</Label>
             <div className="flex flex-wrap gap-2">
               {DAYS.map((day) => (
-                <button
+                <motion.button
                   key={day.value}
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
                   onClick={() => toggleDay(day.value)}
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl border-2 text-sm font-medium transition-all ${
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl border-2 text-sm font-semibold transition-all ${
                     settings.studyDays.includes(day.value)
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:border-primary/50'
+                      ? 'border-primary bg-primary/15 text-primary glow-neon'
+                      : 'border-border/40 text-muted-foreground hover:border-primary/50 glass'
                   }`}
                 >
                   {day.label}
-                </button>
+                </motion.button>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Zap className="h-3 w-3 text-primary" />
               {settings.studyDays.length} dias selecionados
               {settings.studyDays.length > 0 && settings.weeklyHours > 0 && (
                 <> — média de {(settings.weeklyHours / settings.studyDays.length).toFixed(1)}h por dia</>
@@ -753,7 +756,7 @@ function GoalsTab() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
 
@@ -785,7 +788,7 @@ function BackupTab() {
     reader.onload = (ev) => {
       try {
         const json = ev.target?.result as string;
-        JSON.parse(json); // validate
+        JSON.parse(json);
         importData(json);
         toast.success('Dados importados com sucesso!');
       } catch {
@@ -796,53 +799,52 @@ function BackupTab() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleReset = () => {
-    resetAll();
-    toast.success('Todos os dados foram apagados.');
-  };
+  const handleReset = () => { resetAll(); toast.success('Todos os dados foram apagados.'); };
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <motion.div variants={itemVariants} className="space-y-6">
+      <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Download className="h-5 w-5 text-primary" />
+            <div className="p-1.5 rounded-lg gradient-blue">
+              <Download className="h-4 w-4 text-primary-foreground" />
+            </div>
             Exportar e Importar Dados
           </CardTitle>
           <CardDescription>Faça backup dos seus dados ou restaure de um backup anterior.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button onClick={handleExport} variant="outline" className="h-20 flex-col gap-2">
-              <Download className="h-5 w-5 text-primary" />
-              <span className="text-sm">Exportar Backup (JSON)</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-20 flex-col gap-2"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="h-5 w-5 text-primary" />
-              <span className="text-sm">Importar Backup (JSON)</span>
-            </Button>
+            <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}>
+              <Button onClick={handleExport} variant="outline" className="w-full h-24 flex-col gap-2 glass border-border/30 hover:border-primary/40 hover:glow-neon rounded-xl">
+                <Download className="h-6 w-6 text-primary" />
+                <span className="text-sm font-semibold">Exportar Backup</span>
+                <span className="text-[10px] text-muted-foreground">Formato JSON</span>
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}>
+              <Button variant="outline" className="w-full h-24 flex-col gap-2 glass border-border/30 hover:border-electric-blue/40 hover:glow-blue rounded-xl"
+                onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-6 w-6 text-electric-blue" />
+                <span className="text-sm font-semibold">Importar Backup</span>
+                <span className="text-[10px] text-muted-foreground">Formato JSON</span>
+              </Button>
+            </motion.div>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImport}
-            className="hidden"
-          />
-          <p className="text-xs text-muted-foreground">
-            Os dados são salvos automaticamente no seu navegador. Use o backup para transferir entre dispositivos ou como segurança.
+          <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Shield className="h-3 w-3 text-primary" />
+            Os dados são salvos automaticamente. Use o backup para transferir entre dispositivos ou como segurança.
           </p>
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/30">
+      <Card className="glass border-destructive/20 rounded-xl bg-gradient-to-br from-destructive/5 to-transparent">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg text-destructive">
-            <AlertTriangle className="h-5 w-5" />
+            <div className="p-1.5 rounded-lg bg-destructive/20">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </div>
             Zona de Perigo
           </CardTitle>
           <CardDescription>Ações irreversíveis. Tenha cuidado!</CardDescription>
@@ -855,15 +857,18 @@ function BackupTab() {
                 Apagar Todos os Dados
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="glass-strong border-border/30 rounded-xl">
               <AlertDialogHeader>
-                <AlertDialogTitle>Apagar todos os dados?</AlertDialogTitle>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Apagar todos os dados?
+                </AlertDialogTitle>
                 <AlertDialogDescription>
                   Tem certeza? Todos os seus dados serão permanentemente apagados, incluindo disciplinas, registros de estudo, ciclos, simulados e configurações. Essa ação não pode ser desfeita. Recomendamos fazer um backup antes.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel className="glass border-border/30">Cancelar</AlertDialogCancel>
                 <AlertDialogAction onClick={handleReset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                   Sim, Apagar Tudo
                 </AlertDialogAction>
@@ -872,7 +877,7 @@ function BackupTab() {
           </AlertDialog>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
 
@@ -880,31 +885,33 @@ function BackupTab() {
 export default function SettingsPage() {
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Settings className="h-6 w-6 text-primary" />
-          Configurações
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gerencie seu concurso, disciplinas, metas e preferências.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 rounded-xl gradient-neon glow-neon">
+          <Settings className="h-6 w-6 text-primary-foreground" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie seu concurso, disciplinas, metas e preferências.
+          </p>
+        </div>
       </div>
 
       <Tabs defaultValue="concurso" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-1">
-          <TabsTrigger value="concurso" className="gap-1.5 text-xs">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-1 glass border-border/30 p-1 rounded-xl">
+          <TabsTrigger value="concurso" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <Building2 className="h-3.5 w-3.5" /> Concurso
           </TabsTrigger>
-          <TabsTrigger value="disciplinas" className="gap-1.5 text-xs">
+          <TabsTrigger value="disciplinas" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <BookOpen className="h-3.5 w-3.5" /> Disciplinas
           </TabsTrigger>
-          <TabsTrigger value="revisoes" className="gap-1.5 text-xs">
+          <TabsTrigger value="revisoes" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <RotateCcw className="h-3.5 w-3.5" /> Revisões
           </TabsTrigger>
-          <TabsTrigger value="metas" className="gap-1.5 text-xs">
+          <TabsTrigger value="metas" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <Target className="h-3.5 w-3.5" /> Metas
           </TabsTrigger>
-          <TabsTrigger value="backup" className="gap-1.5 text-xs">
+          <TabsTrigger value="backup" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <Download className="h-3.5 w-3.5" /> Backup
           </TabsTrigger>
         </TabsList>
