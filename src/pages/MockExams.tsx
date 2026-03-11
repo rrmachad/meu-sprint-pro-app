@@ -407,7 +407,11 @@ export default function MockExams() {
                 const pct = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
                 return (
                   <Collapsible key={s.id}>
-                    <Card className="glass border-border/30 hover:border-primary/30 transition-all duration-300">
+                    <motion.div
+                      whileHover={{ scale: 1.01, y: -1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    >
+                    <Card className="glass border-border/30 hover:border-primary/40 hover:shadow-neon transition-all duration-300 group">
                       <CardContent className="py-4">
                         <div className="flex items-center justify-between">
                           <CollapsibleTrigger className="flex items-center gap-2 text-left group flex-1">
