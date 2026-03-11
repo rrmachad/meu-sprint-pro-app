@@ -173,7 +173,7 @@ function persistCycle(c: StudyCycle) {
     id: c.id, user_id: uid, name: c.name, weekly_hours: c.weeklyHours,
     study_days: c.studyDays, active: c.active,
   }).then(async ({ error }) => {
-    if (error) { console.error('persist cycle:', error); return; }
+    if (error) { showDbError('Ciclo', error); return; }
     // Sync blocks
     await supabase.from('cycle_blocks').delete().eq('cycle_id', c.id);
     if (c.blocks.length > 0) {
