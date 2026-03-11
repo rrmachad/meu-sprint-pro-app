@@ -246,12 +246,12 @@ export default function Revisions() {
                           : 'border-electric-blue/20 bg-electric-blue/5'
                       }`}
                     >
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{r.disciplineName}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">{r.mark}</Badge>
-                          {r.completed && <span className="text-[10px] text-success font-medium">✓ Concluída</span>}
-                          {r.isOverdue && <span className="text-[10px] text-destructive font-medium">Atrasada</span>}
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">{r.disciplineName}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 rounded-full border-border/40">{r.mark}</Badge>
+                            {r.completed && <span className="text-[10px] text-neon-green font-bold">✓ Concluída</span>}
+                            {r.isOverdue && <span className="text-[10px] text-destructive font-bold">Atrasada</span>}
                         </div>
                       </div>
                       {!r.completed && (
