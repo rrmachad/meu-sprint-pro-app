@@ -12,6 +12,7 @@ import {
   SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuth } from '@/hooks/useAuth';
 import { Progress } from '@/components/ui/progress';
 
 const navItems = [
