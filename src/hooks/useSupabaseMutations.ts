@@ -12,7 +12,7 @@ export function useSupabaseMutations() {
   const uid = user?.id;
 
   // Helper for error handling
-  const handle = async (promise: Promise<any>, successMsg?: string) => {
+  const handle = async (promise: PromiseLike<{ error: any }>) => {
     const { error } = await promise;
     if (error) {
       console.error(error);
