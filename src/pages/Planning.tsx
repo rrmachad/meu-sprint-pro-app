@@ -393,7 +393,7 @@ function GenerateDialog({
               </div>
 
               {showConfig && (
-                <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3 max-h-[250px] overflow-y-auto">
+                <div className="rounded-xl border border-border/30 glass p-3 space-y-3 max-h-[250px] overflow-y-auto">
                   {discsWithTopics.map((d) => {
                     const config = discConfigs.find((c) => c.disciplineId === d.id);
                     return (
