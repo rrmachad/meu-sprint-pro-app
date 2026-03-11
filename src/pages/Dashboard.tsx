@@ -86,8 +86,46 @@ function StatCard({ stat }: StatCardProps) {
     </motion.div>
   );
 }
+function AnimatedSprintRow({ icon: Icon, iconColor, label, current, goal, formatCurrent, formatGoal, barClass, percent }: {
+  icon: React.ComponentType<{ className?: string }>;
+  iconColor: string;
+  label: string;
+  current: number;
+  goal: number;
+  formatCurrent: (v: number) => string;
+  formatGoal: string;
+  barClass: string;
+  percent: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const animatedCurrent = useCountUp(isInView ? current : 0, 1200);
+  const animatedPercent = useCountUp(isInView ? percent : 0, 1400);
 
-export default function Dashboard() {
+  return (
+    <div ref={ref} className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold flex items-center gap-2">
+          <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
+          {label}
+        </span>
+        <span className="text-xs font-mono text-muted-foreground tabular-nums">
+          {formatCurrent(animatedCurrent)} / {formatGoal}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-secondary overflow-hidden">
+        <motion.div
+          className={`h-full rounded-full ${barClass}`}
+          initial={{ width: 0 }}
+          animate={isInView ? { width: `${percent}%` } : { width: 0 }}
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </div>
+    </div>
+  );
+}
+
+
   const studyRecords = useAppStore((s) => s.studyRecords);
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
