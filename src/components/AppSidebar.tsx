@@ -31,7 +31,7 @@ function LogoutButton({ collapsed }: { collapsed: boolean }) {
   return (
     <button
       onClick={signOut}
-      className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm text-destructive/70 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
+      className="flex items-center gap-3 w-full rounded-xl px-3 py-3 min-h-[44px] text-sm text-destructive/70 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
     >
       <LogOut className="h-4 w-4 shrink-0" />
       {!collapsed && <span>Sair</span>}
