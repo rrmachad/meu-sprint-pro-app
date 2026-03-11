@@ -40,7 +40,7 @@ function LogoutButton({ collapsed }: { collapsed: boolean }) {
 }
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const streak = useAppStore((s) => s.streak);
@@ -112,6 +112,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === '/'}
+                      onClick={() => setOpenMobile(false)}
                       className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[44px] text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       activeClassName="bg-neon-green/10 text-neon-green font-semibold glow-neon"
                     >
