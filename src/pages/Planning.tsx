@@ -359,10 +359,10 @@ function GenerateDialog({
                 <button
                   key={i}
                   onClick={() => toggleDay(i)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors border ${
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all border ${
                     studyDays.includes(i)
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-muted/30 text-muted-foreground border-border hover:bg-muted'
+                      ? 'bg-primary text-primary-foreground border-primary shadow-neon'
+                      : 'bg-muted/30 text-muted-foreground border-border/40 hover:bg-muted hover:border-border'
                   }`}
                 >
                   {name}
