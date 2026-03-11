@@ -1305,7 +1305,7 @@ function ExportPdfDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+          <div className="rounded-xl border border-border/30 glass p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Disciplinas</span>
               <span className="font-medium">{disciplines.length}</span>
