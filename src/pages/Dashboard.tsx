@@ -372,69 +372,37 @@ export default function Dashboard() {
                 const goalH = Math.floor(dailyGoalSeconds / 3600);
                 const goalM = Math.round((dailyGoalSeconds % 3600) / 60);
                 return (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <Clock className="h-3.5 w-3.5 text-electric-blue" />
-                        Horas
-                      </span>
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {formatTime(todaySeconds)} / {goalH}h{goalM > 0 ? ` ${goalM}m` : ''}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full rounded-full gradient-blue transition-all duration-500"
-                        style={{ width: `${hoursPercent}%` }}
-                      />
-                    </div>
-                  </div>
+                  <AnimatedSprintRow
+                    icon={Clock} iconColor="text-electric-blue" label="Horas"
+                    current={todaySeconds} goal={dailyGoalSeconds}
+                    formatCurrent={(v) => formatTime(v)}
+                    formatGoal={`${goalH}h${goalM > 0 ? ` ${goalM}m` : ''}`}
+                    barClass="gradient-blue" percent={hoursPercent}
+                  />
                 );
               })()}
-
               {goals.dailyQuestions > 0 && (() => {
                 const questPercent = Math.min(100, Math.round((todayQuestions / goals.dailyQuestions) * 100));
                 return (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <Crosshair className="h-3.5 w-3.5 text-sporty-orange" />
-                        Questões
-                      </span>
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {todayQuestions} / {goals.dailyQuestions}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full rounded-full gradient-orange transition-all duration-500"
-                        style={{ width: `${questPercent}%` }}
-                      />
-                    </div>
-                  </div>
+                  <AnimatedSprintRow
+                    icon={Crosshair} iconColor="text-sporty-orange" label="Questões"
+                    current={todayQuestions} goal={goals.dailyQuestions}
+                    formatCurrent={(v) => v.toString()}
+                    formatGoal={goals.dailyQuestions.toString()}
+                    barClass="gradient-orange" percent={questPercent}
+                  />
                 );
               })()}
-
               {goals.dailyPages > 0 && (() => {
                 const pagesPercent = Math.min(100, Math.round((todayPages / goals.dailyPages) * 100));
                 return (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold flex items-center gap-2">
-                        <FileText className="h-3.5 w-3.5 text-neon-green" />
-                        Páginas
-                      </span>
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {todayPages} / {goals.dailyPages}
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full rounded-full gradient-neon transition-all duration-500"
-                        style={{ width: `${pagesPercent}%` }}
-                      />
-                    </div>
-                  </div>
+                  <AnimatedSprintRow
+                    icon={FileText} iconColor="text-neon-green" label="Páginas"
+                    current={todayPages} goal={goals.dailyPages}
+                    formatCurrent={(v) => v.toString()}
+                    formatGoal={goals.dailyPages.toString()}
+                    barClass="gradient-neon" percent={pagesPercent}
+                  />
                 );
               })()}
             </CardContent>
