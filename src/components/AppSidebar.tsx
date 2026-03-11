@@ -1,6 +1,6 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
-  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon, Bell, RotateCcw,
+  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon, Bell, RotateCcw, LogOut,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
