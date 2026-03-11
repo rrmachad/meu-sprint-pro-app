@@ -34,6 +34,59 @@ const COLORS = [
   'hsl(170 60% 45%)',
 ];
 
+interface StatCardProps {
+  stat: {
+    label: string;
+    numericValue: number;
+    formatFn: (v: number) => string;
+    subtitle?: string;
+    icon: React.ComponentType<{ className?: string }>;
+    gradient: string;
+    iconBg: string;
+    iconColor: string;
+    glowClass: string;
+  };
+}
+
+function StatCard({ stat }: StatCardProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const animatedValue = useCountUp(isInView ? stat.numericValue : 0, 1400);
+
+  return (
+    <motion.div ref={ref} variants={itemVariants}>
+      <Card className={`glass border-border/30 bg-gradient-to-br ${stat.gradient} ${stat.glowClass} transition-all duration-300`}>
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+              <motion.p
+                className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground tabular-nums"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={isInView ? { scale: 1, opacity: 1 } : {}}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+              >
+                {stat.formatFn(animatedValue)}
+              </motion.p>
+              {stat.subtitle && (
+                <p className="text-xs text-muted-foreground">{stat.subtitle}</p>
+              )}
+            </div>
+            <motion.div
+              className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.iconBg} shadow-soft`}
+              initial={{ rotate: -20, scale: 0 }}
+              animate={isInView ? { rotate: 0, scale: 1 } : {}}
+              transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.15 }}
+            >
+              <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+            </motion.div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 export default function Dashboard() {
   const studyRecords = useAppStore((s) => s.studyRecords);
   const disciplines = useAppStore((s) => s.disciplines);
