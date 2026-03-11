@@ -242,7 +242,13 @@ export function useSupabaseSync() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cycle_disciplines' }, () => loadAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'simulados' }, () => loadAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'simulado_disciplines' }, () => loadAll())
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setConnectionStatus('connected');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          setConnectionStatus('disconnected');
+        }
+      });
 
     channelRef.current = channel;
 
