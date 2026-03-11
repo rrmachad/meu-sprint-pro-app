@@ -21,6 +21,8 @@ const Revisions = lazy(() => import('./pages/Revisions'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Register = lazy(() => import('./pages/Register'));
 const Login = lazy(() => import('./pages/Login'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 const queryClient = new QueryClient();
 
