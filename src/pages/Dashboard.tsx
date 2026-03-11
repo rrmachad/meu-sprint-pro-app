@@ -125,7 +125,7 @@ function AnimatedSprintRow({ icon: Icon, iconColor, label, current, goal, format
   );
 }
 
-
+export default function Dashboard() {
   const studyRecords = useAppStore((s) => s.studyRecords);
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
