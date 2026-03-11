@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -257,6 +258,21 @@ export function useSupabaseSync() {
       channelRef.current = null;
     };
   }, [user, loadAll]);
+
+  // Toast on connection status changes
+  const prevStatusRef = useRef<string>('connecting');
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = connectionStatus;
+
+    if (connectionStatus === 'disconnected' && prev !== 'disconnected') {
+      toast.error('Conexão perdida. Tentando reconectar...', { id: 'realtime-status', duration: Infinity });
+    } else if (connectionStatus === 'connected' && prev === 'disconnected') {
+      toast.dismiss('realtime-status');
+      toast.success('Reconectado com sucesso!', { duration: 3000 });
+      loadAll(); // re-sync data after reconnection
+    }
+  }, [connectionStatus, loadAll]);
 
   useEffect(() => {
     loadAll();
