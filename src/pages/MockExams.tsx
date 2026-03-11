@@ -434,7 +434,7 @@ export default function MockExams() {
                           {s.disciplines.map((d) => {
                             const dpct = d.questions > 0 ? Math.round((d.correct / d.questions) * 100) : 0;
                             return (
-                              <div key={d.disciplineId} className="space-y-1">
+                              <motion.div key={d.disciplineId} className="space-y-1" whileHover={{ x: 4 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
                                 <div className="flex justify-between text-sm">
                                   <span className="font-medium">{discName(d.disciplineId)}</span>
                                   <span className="text-muted-foreground font-mono text-xs">
