@@ -1,6 +1,7 @@
-import { useMemo, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useMemo, useEffect, useRef, useState } from 'react';
+import { motion, useInView } from 'framer-motion';
 import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity } from 'lucide-react';
+import { useCountUp } from '@/hooks/useCountUp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
