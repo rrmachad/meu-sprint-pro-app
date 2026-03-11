@@ -792,7 +792,7 @@ function BackupTab() {
         importData(json);
         toast.success('Dados importados com sucesso!');
       } catch {
-        toast.error('Arquivo inválido. Verifique se é um backup válido do ConcurseiroElite.');
+        toast.error('Arquivo inválido. Verifique se é um backup válido do Meu Sprint Pro.');
       }
     };
     reader.readAsText(file);

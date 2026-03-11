@@ -180,7 +180,7 @@ export function SetupWizard() {
               <div className="absolute -inset-0.5 rounded-xl bg-primary/20 blur-sm -z-10" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground tracking-tight">ConcurseiroElite</h1>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Meu Sprint Pro</h1>
               <p className="text-xs text-muted-foreground">Configuração Inicial</p>
             </div>
           </div>
