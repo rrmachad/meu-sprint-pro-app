@@ -163,7 +163,7 @@ function persistSettings() {
     notifications_enabled: settings.notificationsEnabled,
     reminder_minutes_before: settings.reminderMinutesBefore,
     streak, last_study_date: lastStudyDate,
-  }, { onConflict: 'user_id' }).then(({ error }) => error && console.error('persist settings:', error));
+  }, { onConflict: 'user_id' }).then(({ error }) => error && showDbError('Configurações', error));
 }
 
 function persistCycle(c: StudyCycle) {
