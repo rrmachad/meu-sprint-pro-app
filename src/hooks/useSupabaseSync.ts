@@ -76,6 +76,7 @@ export function useSupabaseSync() {
   const { user } = useAuth();
   const store = useAppStore;
   const [syncing, setSyncing] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   const loadAll = useCallback(async () => {
