@@ -196,6 +196,8 @@ export function useSupabaseSync() {
   useEffect(() => {
     if (!user) return;
 
+    setConnectionStatus('connecting');
+
     const channel = supabase
       .channel(`sync-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'disciplines' }, (payload) => {
