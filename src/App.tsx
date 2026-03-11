@@ -1,12 +1,15 @@
 import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from 'next-themes';
 import { AppLayout } from '@/components/AppLayout';
 import { SetupWizard } from '@/components/SetupWizard';
 import { useAppStore } from '@/store/useAppStore';
+import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Indicators = lazy(() => import('./pages/Indicators'));
@@ -17,11 +20,19 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const Revisions = lazy(() => import('./pages/Revisions'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Register = lazy(() => import('./pages/Register'));
+const Login = lazy(() => import('./pages/Login'));
 
 const queryClient = new QueryClient();
 
-function AppContent() {
+function ProtectedRoutes() {
+  const { user, loading } = useAuth();
   const setupCompleted = useAppStore((s) => s.settings.setupCompleted);
+
+  // Sync data from Supabase when logged in
+  useSupabaseSync();
+
+  if (loading) return <Loading />;
+  if (!user) return <Navigate to="/login" replace />;
 
   if (!setupCompleted) {
     return <SetupWizard />;
@@ -38,8 +49,21 @@ function AppContent() {
         <Route path="/revisoes" element={<Revisions />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
       </Route>
-      <Route path="/cadastro" element={<Register />} />
       <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  if (loading) return <Loading />;
+
+  return (
+    <Routes>
+      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/cadastro" element={user ? <Navigate to="/" replace /> : <Register />} />
+      <Route path="/*" element={<ProtectedRoutes />} />
     </Routes>
   );
 }
@@ -50,8 +74,6 @@ const Loading = () => (
   </div>
 );
 
-import { ThemeProvider } from 'next-themes';
-
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
@@ -59,9 +81,11 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Suspense fallback={<Loading />}>
-            <AppContent />
-          </Suspense>
+          <AuthProvider>
+            <Suspense fallback={<Loading />}>
+              <AppRoutes />
+            </Suspense>
+          </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

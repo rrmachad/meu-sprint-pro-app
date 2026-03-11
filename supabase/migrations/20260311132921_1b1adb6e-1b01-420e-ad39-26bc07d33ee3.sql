@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS daily_notes_user_date_idx ON public.daily_notes (user_id, date);
