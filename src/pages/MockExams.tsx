@@ -407,7 +407,11 @@ export default function MockExams() {
                 const pct = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
                 return (
                   <Collapsible key={s.id}>
-                    <Card className="glass border-border/30 hover:border-primary/30 transition-all duration-300">
+                    <motion.div
+                      whileHover={{ scale: 1.01, y: -1 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    >
+                    <Card className="glass border-border/30 hover:border-primary/40 hover:shadow-neon transition-all duration-300 group">
                       <CardContent className="py-4">
                         <div className="flex items-center justify-between">
                           <CollapsibleTrigger className="flex items-center gap-2 text-left group flex-1">
@@ -430,7 +434,7 @@ export default function MockExams() {
                           {s.disciplines.map((d) => {
                             const dpct = d.questions > 0 ? Math.round((d.correct / d.questions) * 100) : 0;
                             return (
-                              <div key={d.disciplineId} className="space-y-1">
+                              <motion.div key={d.disciplineId} className="space-y-1" whileHover={{ x: 4 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
                                 <div className="flex justify-between text-sm">
                                   <span className="font-medium">{discName(d.disciplineId)}</span>
                                   <span className="text-muted-foreground font-mono text-xs">
@@ -440,12 +444,13 @@ export default function MockExams() {
                                 <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
                                   <div className="h-full rounded-full gradient-neon" style={{ width: `${dpct}%` }} />
                                 </div>
-                              </div>
+                              </motion.div>
                             );
                           })}
                         </CollapsibleContent>
                       </CardContent>
                     </Card>
+                    </motion.div>
                   </Collapsible>
                 );
               })}
