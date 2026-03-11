@@ -191,9 +191,9 @@ export default function Revisions() {
                     <button
                       key={dateStr}
                       onClick={() => setSelectedDate(isSelected ? null : dateStr)}
-                      className={`relative flex flex-col items-center justify-center rounded-lg p-1.5 min-h-[48px] text-xs transition-all ${
+                      className={`relative flex flex-col items-center justify-center rounded-xl p-1.5 min-h-[48px] text-xs transition-all ${
                         !inMonth ? 'opacity-30' : ''
-                      } ${isSelected ? 'bg-primary/15 ring-1 ring-primary' : 'hover:bg-muted/50'} ${
+                      } ${isSelected ? 'bg-primary/15 ring-1 ring-primary shadow-neon' : 'hover:bg-muted/50'} ${
                         todayDay ? 'font-bold' : ''
                       }`}
                     >
