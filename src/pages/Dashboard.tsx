@@ -427,61 +427,31 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               {goals.weeklyHours > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-electric-blue" />
-                      Horas
-                    </span>
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {weeklyTotals.horas}h / {goals.weeklyHours}h
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                    <div
-                      className="h-full rounded-full gradient-blue transition-all duration-500"
-                      style={{ width: `${weeklyHoursPercent}%` }}
-                    />
-                  </div>
-                </div>
+                <AnimatedSprintRow
+                  icon={Clock} iconColor="text-electric-blue" label="Horas"
+                  current={Math.round(weeklyTotals.horas * 10)} goal={goals.weeklyHours * 10}
+                  formatCurrent={(v) => `${(v / 10).toFixed(1)}h`}
+                  formatGoal={`${goals.weeklyHours}h`}
+                  barClass="gradient-blue" percent={weeklyHoursPercent}
+                />
               )}
               {goals.dailyQuestions > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold flex items-center gap-2">
-                      <Crosshair className="h-3.5 w-3.5 text-sporty-orange" />
-                      Questões
-                    </span>
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {weeklyTotals.questoes} / {weeklyQuestionsGoal}
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                    <div
-                      className="h-full rounded-full gradient-orange transition-all duration-500"
-                      style={{ width: `${weeklyQuestionsPercent}%` }}
-                    />
-                  </div>
-                </div>
+                <AnimatedSprintRow
+                  icon={Crosshair} iconColor="text-sporty-orange" label="Questões"
+                  current={weeklyTotals.questoes} goal={weeklyQuestionsGoal}
+                  formatCurrent={(v) => v.toString()}
+                  formatGoal={weeklyQuestionsGoal.toString()}
+                  barClass="gradient-orange" percent={weeklyQuestionsPercent}
+                />
               )}
               {goals.dailyPages > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold flex items-center gap-2">
-                      <FileText className="h-3.5 w-3.5 text-neon-green" />
-                      Páginas
-                    </span>
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {weeklyTotals.paginas} / {weeklyPagesGoal}
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                    <div
-                      className="h-full rounded-full gradient-neon transition-all duration-500"
-                      style={{ width: `${weeklyPagesPercent}%` }}
-                    />
-                  </div>
-                </div>
+                <AnimatedSprintRow
+                  icon={FileText} iconColor="text-neon-green" label="Páginas"
+                  current={weeklyTotals.paginas} goal={weeklyPagesGoal}
+                  formatCurrent={(v) => v.toString()}
+                  formatGoal={weeklyPagesGoal.toString()}
+                  barClass="gradient-neon" percent={weeklyPagesPercent}
+                />
               )}
             </CardContent>
           </Card>
