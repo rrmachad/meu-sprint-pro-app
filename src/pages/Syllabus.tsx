@@ -522,10 +522,12 @@ function ImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetState(); onOpenChange(v); }}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass border-border/30">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <div className="h-8 w-8 rounded-xl gradient-neon flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-neon-green-foreground" />
+            </div>
             Importação Inteligente do Edital
           </DialogTitle>
           <DialogDescription>
@@ -1027,15 +1029,15 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
   };
 
   return (
-    <AccordionItem value={discipline.id} className="border rounded-lg overflow-hidden bg-card">
-      <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/30">
+    <AccordionItem value={discipline.id} className="border border-border/30 rounded-xl overflow-hidden glass hover:border-primary/20 transition-all duration-300">
+      <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/20">
         <div className="flex items-center gap-3 flex-1 min-w-0 text-left">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-sm">{discipline.name}</span>
-              <Badge variant="outline" className="text-[10px]">{discipline.prova}</Badge>
+              <Badge variant="outline" className="text-[10px] rounded-full border-border/40">{discipline.prova}</Badge>
               {discipline.cannotZero && (
-                <Badge variant="destructive" className="text-[10px]">Não pode zerar</Badge>
+                <Badge variant="destructive" className="text-[10px] rounded-full">Não pode zerar</Badge>
               )}
             </div>
             {total > 0 && (
@@ -1289,10 +1291,12 @@ function ExportPdfDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md glass border-border/30">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5 text-primary" />
+            <div className="h-8 w-8 rounded-xl gradient-neon flex items-center justify-center">
+              <Download className="h-4 w-4 text-neon-green-foreground" />
+            </div>
             Exportar Edital em PDF
           </DialogTitle>
           <DialogDescription>
@@ -1301,7 +1305,7 @@ function ExportPdfDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+          <div className="rounded-xl border border-border/30 glass p-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Disciplinas</span>
               <span className="font-medium">{disciplines.length}</span>
@@ -1429,12 +1433,14 @@ export default function Syllabus() {
   const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
 
   return (
-    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
+    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ClipboardList className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold flex items-center gap-2 tracking-tight">
+            <div className="h-8 w-8 rounded-xl gradient-orange flex items-center justify-center">
+              <ClipboardList className="h-4 w-4 text-sporty-orange-foreground" />
+            </div>
             Edital Verticalizado
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -1442,12 +1448,12 @@ export default function Syllabus() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setImportOpen(true)} className="gap-2">
+          <Button onClick={() => setImportOpen(true)} className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90">
             <Sparkles className="h-4 w-4" />
             Importar Edital
           </Button>
           {totalTopics > 0 && (
-            <Button variant="outline" onClick={() => setExportOpen(true)} className="gap-2">
+            <Button variant="outline" onClick={() => setExportOpen(true)} className="gap-2 rounded-xl border-border/40 hover:border-primary/40">
               <Download className="h-4 w-4" />
               Exportar PDF
             </Button>
@@ -1484,7 +1490,7 @@ export default function Syllabus() {
 
       {/* Filters */}
       {disciplines.length > 0 && totalTopics > 0 && (
-        <Card>
+        <Card className="glass border-border/30">
           <CardContent className="py-3">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -1558,16 +1564,18 @@ export default function Syllabus() {
 
       {/* Global Progress */}
       {totalTopics > 0 && (
-        <Card>
+        <Card className="glass border-border/30 bg-gradient-to-r from-neon-green/10 to-neon-green/5">
           <CardContent className="py-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Percent className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Progresso Geral</span>
+                <Percent className="h-4 w-4 text-neon-green" />
+                <span className="text-sm font-bold uppercase tracking-wider">Progresso Geral</span>
               </div>
-              <span className="text-sm font-bold text-primary">{globalPercent}%</span>
+              <span className="text-sm font-extrabold text-neon-green">{globalPercent}%</span>
             </div>
-            <Progress value={globalPercent} className="h-2.5" />
+            <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+              <div className="h-full rounded-full gradient-neon transition-all duration-700" style={{ width: `${globalPercent}%` }} />
+            </div>
             <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
               <span>{completedTopics} de {totalTopics} tópicos concluídos</span>
               <span>{totalTopics - completedTopics} restantes</span>
@@ -1578,24 +1586,26 @@ export default function Syllabus() {
 
       {/* Disciplines */}
       {disciplines.length === 0 ? (
-        <Card className="border-dashed">
+        <Card className="border-dashed glass border-border/30">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <ClipboardList className="h-12 w-12 text-muted-foreground/40 mb-4" />
+            <div className="w-16 h-16 rounded-2xl gradient-orange flex items-center justify-center mb-4">
+              <ClipboardList className="h-8 w-8 text-sporty-orange-foreground" />
+            </div>
             <h3 className="text-lg font-semibold mb-1">Nenhuma disciplina cadastrada</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Cadastre suas disciplinas nas Configurações para começar a organizar o edital.
             </p>
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="rounded-xl border-border/40 hover:border-primary/40">
               <a href="/configuracoes">Ir para Configurações</a>
             </Button>
           </CardContent>
         </Card>
       ) : filteredDisciplines.filter((d) => hasVisibleTopics(d.id)).length === 0 && activeFilterCount > 0 ? (
-        <Card className="border-dashed">
+        <Card className="border-dashed glass border-border/30">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground mb-2">Nenhum resultado para os filtros selecionados.</p>
-            <Button variant="outline" size="sm" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}>
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}>
               Limpar filtros
             </Button>
           </CardContent>

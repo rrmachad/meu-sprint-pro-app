@@ -321,10 +321,12 @@ function GenerateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto glass border-border/30">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <div className="h-8 w-8 rounded-xl gradient-neon flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-neon-green-foreground" />
+            </div>
             Gerar Cronograma Automático
           </DialogTitle>
           <DialogDescription>
@@ -337,7 +339,7 @@ function GenerateDialog({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Horas semanais de estudo</Label>
-              <Badge variant="secondary" className="text-xs">{weeklyHours}h/semana</Badge>
+              <Badge variant="secondary" className="text-xs rounded-full">{weeklyHours}h/semana</Badge>
             </div>
             <Slider
               value={[weeklyHours]}
@@ -357,10 +359,10 @@ function GenerateDialog({
                 <button
                   key={i}
                   onClick={() => toggleDay(i)}
-                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors border ${
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all border ${
                     studyDays.includes(i)
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-muted/30 text-muted-foreground border-border hover:bg-muted'
+                      ? 'bg-primary text-primary-foreground border-primary shadow-neon'
+                      : 'bg-muted/30 text-muted-foreground border-border/40 hover:bg-muted hover:border-border'
                   }`}
                 >
                   {name}
@@ -391,7 +393,7 @@ function GenerateDialog({
               </div>
 
               {showConfig && (
-                <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3 max-h-[250px] overflow-y-auto">
+                <div className="rounded-xl border border-border/30 glass p-3 space-y-3 max-h-[250px] overflow-y-auto">
                   {discsWithTopics.map((d) => {
                     const config = discConfigs.find((c) => c.disciplineId === d.id);
                     return (
@@ -467,7 +469,7 @@ function GenerateDialog({
           {scores.length > 0 && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Prioridade calculada</Label>
-              <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+              <div className="max-h-[200px] overflow-y-auto rounded-xl border border-border/30 glass p-3 space-y-2">
                 <TooltipProvider delayDuration={200}>
                 {scores.map((s, i) => (
                   <Tooltip key={s.disciplineId}>
@@ -543,8 +545,8 @@ function GenerateDialog({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleGenerate} className="gap-2" disabled={scores.length === 0}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">Cancelar</Button>
+          <Button onClick={handleGenerate} className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold" disabled={scores.length === 0}>
             <Sparkles className="h-4 w-4" />
             Gerar Cronograma
           </Button>
@@ -709,16 +711,20 @@ function CycleView({
   };
 
   return (
-    <Card className={cycle.active ? 'border-primary/50' : ''}>
+    <motion.div
+      whileHover={{ scale: 1.005, y: -1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+    >
+    <Card className={`glass border-border/30 hover:border-primary/30 hover:shadow-neon transition-all duration-300 ${cycle.active ? 'border-primary/50' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base">{cycle.name}</CardTitle>
-            {cycle.active && <Badge className="text-[10px]">Ativo</Badge>}
+            {cycle.active && <Badge className="text-[10px] rounded-full bg-primary/20 text-primary border-primary/30">Ativo</Badge>}
           </div>
           <div className="flex items-center gap-1">
             {!cycle.active && (
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={onActivate}>
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1 rounded-xl border-border/40 hover:border-primary/40" onClick={onActivate}>
                 <Check className="h-3 w-3" /> Ativar
               </Button>
             )}
@@ -730,7 +736,7 @@ function CycleView({
             </Button>
           </div>
         </div>
-        <CardDescription className="text-xs">
+        <CardDescription className="text-xs font-mono">
           {cycle.weeklyHours}h/semana • {cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
         </CardDescription>
       </CardHeader>
@@ -759,12 +765,12 @@ function CycleView({
             const dayMinutes = dayBlocks.reduce((a, b) => a + b.durationMinutes, 0);
 
             return (
-              <AccordionItem key={dayIdx} value={`day-${dayIdx}`} className="border rounded-lg px-3">
+              <AccordionItem key={dayIdx} value={`day-${dayIdx}`} className="border border-border/30 rounded-xl px-3 glass">
                 <AccordionTrigger className="py-2 text-sm hover:no-underline">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="h-3.5 w-3.5 text-primary" />
                     <span className="font-medium">{dayName}</span>
-                    <Badge variant="outline" className="text-[10px]">
+                    <Badge variant="outline" className="text-[10px] rounded-full border-border/40">
                       {dayBlocks.length} blocos • {Math.floor(dayMinutes / 60)}h{String(dayMinutes % 60).padStart(2, '0')}min
                     </Badge>
                   </div>
@@ -796,12 +802,13 @@ function CycleView({
           })}
         </Accordion>
 
-        <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs" onClick={addBlock}>
+        <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs rounded-xl border-border/40 hover:border-primary/40" onClick={addBlock}>
           <Plus className="h-3.5 w-3.5" />
           Adicionar Bloco
         </Button>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }
 
@@ -836,7 +843,7 @@ function SortableBlock({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="rounded-md bg-muted/40 px-3 py-2">
+    <div ref={setNodeRef} style={style} className="rounded-xl bg-muted/20 glass border border-border/20 px-3 py-2 hover:border-primary/20 transition-all">
       {isEditing ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -927,11 +934,13 @@ export default function Planning() {
   );
 
   return (
-    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
+    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold flex items-center gap-2 tracking-tight">
+            <div className="h-8 w-8 rounded-xl gradient-neon flex items-center justify-center">
+              <CalendarDays className="h-4 w-4 text-neon-green-foreground" />
+            </div>
             Planejamento & Ciclos
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -940,7 +949,7 @@ export default function Planning() {
         </div>
         <Button
           onClick={() => setGenerateOpen(true)}
-          className="gap-2"
+          className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90"
           disabled={!hasDisciplinesWithTopics && disciplines.length === 0}
         >
           <Sparkles className="h-4 w-4" />
@@ -950,20 +959,20 @@ export default function Planning() {
 
       {/* Active cycle summary */}
       {activeCycle && (
-        <Card className="bg-primary/5 border-primary/20">
+        <Card className="glass border-primary/20 bg-gradient-to-r from-neon-green/10 to-neon-green/5">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <CalendarDays className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-xl gradient-neon flex items-center justify-center shadow-neon">
+                <CalendarDays className="h-5 w-5 text-neon-green-foreground" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold">Ciclo ativo: {activeCycle.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground font-mono">
                   {activeCycle.weeklyHours}h/semana • {activeCycle.blocks.length} blocos •{' '}
                   {activeCycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')}
                 </p>
               </div>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setGenerateOpen(true)}>
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-border/40 hover:border-primary/40" onClick={() => setGenerateOpen(true)}>
                 <RotateCcw className="h-3.5 w-3.5" /> Regenerar
               </Button>
             </div>
@@ -989,9 +998,11 @@ export default function Planning() {
             ))}
         </div>
       ) : (
-        <Card className="border-dashed">
+        <Card className="border-dashed glass border-border/30">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <CalendarDays className="h-12 w-12 text-muted-foreground/40 mb-4" />
+            <div className="w-16 h-16 rounded-2xl gradient-neon flex items-center justify-center mb-4 shadow-neon">
+              <CalendarDays className="h-8 w-8 text-neon-green-foreground" />
+            </div>
             <h3 className="text-lg font-semibold mb-1">Nenhum cronograma criado</h3>
             <p className="text-sm text-muted-foreground max-w-md mb-4">
               {hasDisciplinesWithTopics
@@ -1000,11 +1011,11 @@ export default function Planning() {
               }
             </p>
             {hasDisciplinesWithTopics ? (
-              <Button onClick={() => setGenerateOpen(true)} className="gap-2">
+              <Button onClick={() => setGenerateOpen(true)} className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold">
                 <Sparkles className="h-4 w-4" /> Gerar Cronograma
               </Button>
             ) : (
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="rounded-xl border-border/40 hover:border-primary/40">
                 <a href="/edital">Ir para Edital Verticalizado</a>
               </Button>
             )}
