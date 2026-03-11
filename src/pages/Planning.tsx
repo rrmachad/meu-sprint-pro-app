@@ -711,16 +711,20 @@ function CycleView({
   };
 
   return (
-    <Card className={cycle.active ? 'border-primary/50' : ''}>
+    <motion.div
+      whileHover={{ scale: 1.005, y: -1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+    >
+    <Card className={`glass border-border/30 hover:border-primary/30 hover:shadow-neon transition-all duration-300 ${cycle.active ? 'border-primary/50' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base">{cycle.name}</CardTitle>
-            {cycle.active && <Badge className="text-[10px]">Ativo</Badge>}
+            {cycle.active && <Badge className="text-[10px] rounded-full bg-primary/20 text-primary border-primary/30">Ativo</Badge>}
           </div>
           <div className="flex items-center gap-1">
             {!cycle.active && (
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={onActivate}>
+              <Button variant="outline" size="sm" className="h-7 text-xs gap-1 rounded-xl border-border/40 hover:border-primary/40" onClick={onActivate}>
                 <Check className="h-3 w-3" /> Ativar
               </Button>
             )}
@@ -732,7 +736,7 @@ function CycleView({
             </Button>
           </div>
         </div>
-        <CardDescription className="text-xs">
+        <CardDescription className="text-xs font-mono">
           {cycle.weeklyHours}h/semana • {cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
         </CardDescription>
       </CardHeader>
