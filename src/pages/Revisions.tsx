@@ -29,6 +29,42 @@ const itemVariants = {
 
 const WEEKDAYS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
+function RevisionStatCard({ label, value, icon: Icon, gradient, iconBg, iconColor }: {
+  label: string; value: number; icon: React.ComponentType<{ className?: string }>;
+  gradient: string; iconBg: string; iconColor: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const animatedValue = useCountUp(isInView ? value : 0, 1200);
+
+  return (
+    <motion.div ref={ref} variants={itemVariants} whileHover={{ scale: 1.02, y: -2 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
+      <Card className={`glass border-border/30 bg-gradient-to-br ${gradient} hover:border-primary/30 hover:shadow-neon transition-all duration-300`}>
+        <CardContent className="p-4 flex items-center gap-3">
+          <motion.div
+            className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${iconBg}`}
+            initial={{ rotate: -20, scale: 0.8 }}
+            animate={isInView ? { rotate: 0, scale: 1 } : {}}
+            transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+          >
+            <Icon className={`h-5 w-5 ${iconColor}`} />
+          </motion.div>
+          <div>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{label}</p>
+            <motion.p className="text-xl font-extrabold tabular-nums"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={isInView ? { scale: 1, opacity: 1 } : {}}
+              transition={{ duration: 0.4, delay: 0.1 }}
+            >
+              {animatedValue}
+            </motion.p>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 export default function Revisions() {
   const revisions = useAppStore((s) => s.revisions);
   const disciplines = useAppStore((s) => s.disciplines);
