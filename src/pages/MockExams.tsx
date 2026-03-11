@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Plus, Trash2, TrendingUp, BarChart3, Download, ChevronDown } from 'lucide-react';
+import { FileText, Plus, Trash2, TrendingUp, BarChart3, Download, ChevronDown, Target } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store/useAppStore';
 import type { Simulado, SimuladoDiscipline } from '@/types';
 import { format, parseISO } from 'date-fns';
@@ -23,21 +24,34 @@ import {
 } from 'recharts';
 import { toast } from 'sonner';
 
-const pageVariants = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+const containerVariants = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.06 } },
+};
+const itemVariants = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
 const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--accent))',
-  '#f59e0b',
-  '#10b981',
-  '#8b5cf6',
+  'hsl(var(--neon-green))',
+  'hsl(var(--electric-blue))',
+  'hsl(var(--sporty-orange))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
   '#ec4899',
   '#06b6d4',
   '#f97316',
 ];
+
+const tooltipStyle = {
+  background: 'hsl(var(--card))',
+  border: '1px solid hsl(var(--border))',
+  borderRadius: 12,
+  fontSize: 12,
+  color: 'hsl(var(--foreground))',
+  boxShadow: '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
+};
 
 export default function MockExams() {
   const { simulados, disciplines, addSimulado, removeSimulado } = useAppStore();
@@ -54,7 +68,6 @@ export default function MockExams() {
 
   const discName = (id: string) => disciplines.find((d) => d.id === id)?.name ?? id;
 
-  // ---- Form helpers ----
   const addDiscToSimulado = () => {
     if (!selectedDiscId || newDisciplines.find((d) => d.disciplineId === selectedDiscId)) return;
     setNewDisciplines((prev) => [
@@ -77,7 +90,6 @@ export default function MockExams() {
       toast.error('Preencha a data e adicione ao menos uma disciplina');
       return;
     }
-    // auto-calculate wrong
     const discs = newDisciplines.map((d) => ({
       ...d,
       wrong: Math.max(0, d.questions - d.correct - d.blank),
@@ -158,31 +170,30 @@ export default function MockExams() {
       const margin = 10;
       let y = margin;
 
-      // Title
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, pw, 25, 'F');
+      doc.setTextColor(74, 222, 128);
       doc.setFontSize(16);
-      doc.text('Relatório de Simulados', margin, y + 6);
-      y += 14;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Sprint Pro — Relatório de Simulados', margin, y + 10);
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
-      doc.text(`Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`, margin, y);
-      y += 10;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm")}`, margin, y + 18);
+      y = 35;
 
-      // Capture each chart
       const charts = chartsRef.current.querySelectorAll<HTMLElement>('[data-pdf-chart]');
       for (const el of Array.from(charts)) {
         const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#0f1729', useCORS: true, logging: false });
         const imgData = canvas.toDataURL('image/png');
         const imgW = pw - margin * 2;
         const imgH = (canvas.height * imgW) / canvas.width;
-
-        if (y + imgH > ph - margin) {
-          doc.addPage();
-          y = margin;
-        }
+        if (y + imgH > ph - margin) { doc.addPage(); y = margin; }
         doc.addImage(imgData, 'PNG', margin, y, imgW, Math.min(imgH, 130));
         y += Math.min(imgH, 130) + 8;
       }
 
-      doc.save('simulados-comparativo.pdf');
+      doc.save('sprint-pro-simulados.pdf');
       toast.success('PDF exportado!');
     } catch (e) {
       console.error(e);
@@ -191,228 +202,256 @@ export default function MockExams() {
   };
 
   return (
-    <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold">Simulados</h1>
+    <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
+      <motion.div variants={itemVariants} className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Simulados</h1>
         <div className="flex gap-2">
           {hasData && (
-            <Button size="sm" variant="outline" onClick={exportPdf}>
-              <Download className="h-4 w-4 mr-1" /> Exportar PDF
+            <Button size="sm" variant="outline" onClick={exportPdf} className="rounded-xl border-border/40 hover:border-primary/40 gap-1.5">
+              <Download className="h-3.5 w-3.5" /> Exportar PDF
             </Button>
           )}
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Novo Simulado</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Registrar Simulado</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Data</Label>
-                  <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
-                </div>
-                <div>
-                  <Label>Banca</Label>
-                  <Input placeholder="Ex: CESPE" value={newBanca} onChange={(e) => setNewBanca(e.target.value)} />
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Select value={selectedDiscId} onValueChange={setSelectedDiscId}>
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="Disciplina" /></SelectTrigger>
-                  <SelectContent>
-                    {disciplines.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm" onClick={addDiscToSimulado}>Adicionar</Button>
-              </div>
-
-              {newDisciplines.map((d, idx) => (
-                <Card key={idx} className="p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">{discName(d.disciplineId)}</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeDiscFromForm(idx)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="rounded-xl gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="h-4 w-4" /> Novo Simulado
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto glass border-border/30">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-bold">Registrar Simulado</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-semibold uppercase tracking-wider">Data</Label>
+                    <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="rounded-xl" />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <Label className="text-xs">Questões</Label>
-                      <Input type="number" min={0} value={d.questions} onChange={(e) => updateDiscField(idx, 'questions', +e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Acertos</Label>
-                      <Input type="number" min={0} value={d.correct} onChange={(e) => updateDiscField(idx, 'correct', +e.target.value)} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Em branco</Label>
-                      <Input type="number" min={0} value={d.blank} onChange={(e) => updateDiscField(idx, 'blank', +e.target.value)} />
-                    </div>
+                  <div>
+                    <Label className="text-xs font-semibold uppercase tracking-wider">Banca</Label>
+                    <Input placeholder="Ex: CESPE" value={newBanca} onChange={(e) => setNewBanca(e.target.value)} className="rounded-xl" />
                   </div>
-                </Card>
-              ))}
+                </div>
 
-              <Button className="w-full" onClick={handleSave}>Salvar Simulado</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                <div className="flex gap-2">
+                  <Select value={selectedDiscId} onValueChange={setSelectedDiscId}>
+                    <SelectTrigger className="flex-1 rounded-xl"><SelectValue placeholder="Disciplina" /></SelectTrigger>
+                    <SelectContent>
+                      {disciplines.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={addDiscToSimulado} className="rounded-xl">Adicionar</Button>
+                </div>
+
+                {newDisciplines.map((d, idx) => (
+                  <Card key={idx} className="glass border-border/30 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold">{discName(d.disciplineId)}</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => removeDiscFromForm(idx)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider">Questões</Label>
+                        <Input type="number" min={0} value={d.questions} onChange={(e) => updateDiscField(idx, 'questions', +e.target.value)} className="rounded-xl" />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider">Acertos</Label>
+                        <Input type="number" min={0} value={d.correct} onChange={(e) => updateDiscField(idx, 'correct', +e.target.value)} className="rounded-xl" />
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase tracking-wider">Em branco</Label>
+                        <Input type="number" min={0} value={d.blank} onChange={(e) => updateDiscField(idx, 'blank', +e.target.value)} className="rounded-xl" />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+
+                <Button className="w-full rounded-xl bg-primary text-primary-foreground font-bold" onClick={handleSave}>Salvar Simulado</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-      </div>
+      </motion.div>
 
       {!hasData ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground/40 mb-4" />
-            <h3 className="text-lg font-semibold mb-1">Nenhum simulado realizado</h3>
-            <p className="text-sm text-muted-foreground">Crie seu primeiro simulado para acompanhar sua evolução.</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants}>
+          <Card className="border-dashed glass border-border/30">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-2xl gradient-orange flex items-center justify-center mb-4">
+                <FileText className="h-8 w-8 text-sporty-orange-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-1">Nenhum simulado realizado</h3>
+              <p className="text-sm text-muted-foreground">Crie seu primeiro simulado para acompanhar sua evolução.</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       ) : (
-        <div ref={chartsRef}>
-        <Tabs defaultValue="evolucao" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="evolucao"><TrendingUp className="h-4 w-4 mr-1" /> Evolução</TabsTrigger>
-            <TabsTrigger value="disciplinas"><BarChart3 className="h-4 w-4 mr-1" /> Por Disciplina</TabsTrigger>
-            <TabsTrigger value="lista"><FileText className="h-4 w-4 mr-1" /> Histórico</TabsTrigger>
-          </TabsList>
+        <motion.div variants={itemVariants} ref={chartsRef}>
+          <Tabs defaultValue="evolucao" className="space-y-4">
+            <TabsList className="glass border-border/30">
+              <TabsTrigger value="evolucao"><TrendingUp className="h-4 w-4 mr-1" /> Evolução</TabsTrigger>
+              <TabsTrigger value="disciplinas"><BarChart3 className="h-4 w-4 mr-1" /> Por Disciplina</TabsTrigger>
+              <TabsTrigger value="lista"><FileText className="h-4 w-4 mr-1" /> Histórico</TabsTrigger>
+            </TabsList>
 
-          {/* Evolution chart */}
-          <TabsContent value="evolucao" className="space-y-4">
-            <Card data-pdf-chart>
-              <CardHeader><CardTitle className="text-base">Aproveitamento Geral (%)</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={evolutionData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                    <Line type="monotone" dataKey="aproveitamento" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} name="% Acerto" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card data-pdf-chart>
-              <CardHeader><CardTitle className="text-base">Volume de Questões e Acertos</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={evolutionData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                    <Legend />
-                    <Bar dataKey="questoes" fill="hsl(var(--muted-foreground))" name="Total" />
-                    <Bar dataKey="acertos" fill="hsl(var(--primary))" name="Acertos" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {radarData.length > 2 && (
-              <Card data-pdf-chart>
-                <CardHeader><CardTitle className="text-base">Radar – Último Simulado</CardTitle></CardHeader>
+            {/* Evolution chart */}
+            <TabsContent value="evolucao" className="space-y-4">
+              <Card className="glass border-border/30" data-pdf-chart>
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <TrendingUp className="h-4 w-4 text-neon-green" />
+                    Aproveitamento Geral (%)
+                  </CardTitle>
+                </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <RadarChart data={radarData}>
-                      <PolarGrid stroke="hsl(var(--border))" />
-                      <PolarAngleAxis dataKey="subject" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                      <PolarRadiusAxis domain={[0, 100]} tick={false} />
-                      <Radar dataKey="pct" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} name="% Acerto" />
-                    </RadarChart>
+                    <LineChart data={evolutionData}>
+                      <defs>
+                        <linearGradient id="glowLine" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--neon-green))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--neon-green))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Line type="monotone" dataKey="aproveitamento" stroke="hsl(var(--neon-green))" strokeWidth={2.5} dot={{ r: 4, fill: 'hsl(var(--neon-green))' }} name="% Acerto" />
+                    </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
-            )}
-          </TabsContent>
 
-          {/* Per discipline evolution */}
-          <TabsContent value="disciplinas">
-            <Card data-pdf-chart>
-              <CardHeader><CardTitle className="text-base">Evolução por Disciplina (%)</CardTitle></CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={perDiscEvolution}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
-                    <Legend />
-                    {allDiscIds.map((did, i) => (
-                      <Line
-                        key={did}
-                        type="monotone"
-                        dataKey={did}
-                        name={discName(did).substring(0, 20)}
-                        stroke={COLORS[i % COLORS.length]}
-                        strokeWidth={2}
-                        dot={{ r: 3 }}
-                        connectNulls
-                      />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              <Card className="glass border-border/30" data-pdf-chart>
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <Target className="h-4 w-4 text-sporty-orange" />
+                    Volume de Questões e Acertos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={evolutionData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend />
+                      <Bar dataKey="questoes" fill="hsl(var(--muted-foreground))" name="Total" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="acertos" fill="hsl(var(--neon-green))" name="Acertos" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-          {/* History list */}
-          <TabsContent value="lista" className="space-y-3">
-            {sorted.map((s) => {
-              const totalQ = s.disciplines.reduce((a, d) => a + d.questions, 0);
-              const totalC = s.disciplines.reduce((a, d) => a + d.correct, 0);
-              const pct = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
-              return (
-                <Collapsible key={s.id}>
-                  <Card>
-                    <CardContent className="py-4">
-                      <div className="flex items-center justify-between">
-                        <CollapsibleTrigger className="flex items-center gap-2 text-left group flex-1">
-                          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
-                          <div>
-                            <p className="font-semibold">
-                              {format(parseISO(s.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                              {s.banca && <span className="ml-2 text-xs text-muted-foreground">({s.banca})</span>}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {totalQ} questões · {totalC} acertos · <span className="font-medium text-primary">{pct}%</span>
-                            </p>
-                          </div>
-                        </CollapsibleTrigger>
-                        <Button variant="ghost" size="icon" onClick={() => { removeSimulado(s.id); toast.info('Simulado removido'); }}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <CollapsibleContent className="mt-3 space-y-2 border-t border-border pt-3">
-                        {s.disciplines.map((d) => {
-                          const dpct = d.questions > 0 ? Math.round((d.correct / d.questions) * 100) : 0;
-                          return (
-                            <div key={d.disciplineId} className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span>{discName(d.disciplineId)}</span>
-                                <span className="text-muted-foreground">
-                                  {d.correct}/{d.questions} ({dpct}%)
-                                </span>
-                              </div>
-                              <Progress value={dpct} className="h-2" />
+              {radarData.length > 2 && (
+                <Card className="glass border-border/30" data-pdf-chart>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold uppercase tracking-wider">Radar – Último Simulado</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RadarChart data={radarData}>
+                        <PolarGrid stroke="hsl(var(--border))" />
+                        <PolarAngleAxis dataKey="subject" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                        <PolarRadiusAxis domain={[0, 100]} tick={false} />
+                        <Radar dataKey="pct" stroke="hsl(var(--neon-green))" fill="hsl(var(--neon-green))" fillOpacity={0.2} name="% Acerto" />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            {/* Per discipline evolution */}
+            <TabsContent value="disciplinas">
+              <Card className="glass border-border/30" data-pdf-chart>
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider">Evolução por Disciplina (%)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <LineChart data={perDiscEvolution}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend />
+                      {allDiscIds.map((did, i) => (
+                        <Line
+                          key={did}
+                          type="monotone"
+                          dataKey={did}
+                          name={discName(did).substring(0, 20)}
+                          stroke={COLORS[i % COLORS.length]}
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                          connectNulls
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* History list */}
+            <TabsContent value="lista" className="space-y-3">
+              {sorted.map((s) => {
+                const totalQ = s.disciplines.reduce((a, d) => a + d.questions, 0);
+                const totalC = s.disciplines.reduce((a, d) => a + d.correct, 0);
+                const pct = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
+                return (
+                  <Collapsible key={s.id}>
+                    <Card className="glass border-border/30 hover:border-primary/30 transition-all duration-300">
+                      <CardContent className="py-4">
+                        <div className="flex items-center justify-between">
+                          <CollapsibleTrigger className="flex items-center gap-2 text-left group flex-1">
+                            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+                            <div>
+                              <p className="font-semibold">
+                                {format(parseISO(s.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                                {s.banca && <Badge variant="outline" className="ml-2 text-[10px] rounded-full border-border/40">{s.banca}</Badge>}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {totalQ} questões · {totalC} acertos · <span className="font-bold text-neon-green">{pct}%</span>
+                              </p>
                             </div>
-                          );
-                        })}
-                      </CollapsibleContent>
-                    </CardContent>
-                  </Card>
-                </Collapsible>
-              );
-            })}
-          </TabsContent>
-        </Tabs>
-        </div>
+                          </CollapsibleTrigger>
+                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => { removeSimulado(s.id); toast.info('Simulado removido'); }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <CollapsibleContent className="mt-3 space-y-2 border-t border-border/30 pt-3">
+                          {s.disciplines.map((d) => {
+                            const dpct = d.questions > 0 ? Math.round((d.correct / d.questions) * 100) : 0;
+                            return (
+                              <div key={d.disciplineId} className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span className="font-medium">{discName(d.disciplineId)}</span>
+                                  <span className="text-muted-foreground font-mono text-xs">
+                                    {d.correct}/{d.questions} (<span className="text-neon-green font-bold">{dpct}%</span>)
+                                  </span>
+                                </div>
+                                <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                                  <div className="h-full rounded-full gradient-neon" style={{ width: `${dpct}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </CollapsibleContent>
+                      </CardContent>
+                    </Card>
+                  </Collapsible>
+                );
+              })}
+            </TabsContent>
+          </Tabs>
+        </motion.div>
       )}
     </motion.div>
   );

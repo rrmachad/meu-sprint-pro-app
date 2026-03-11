@@ -2,13 +2,14 @@ import { useMemo, useCallback, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3, TrendingUp, Clock, CheckCircle2, BookOpen,
-  Target, Brain, CalendarDays, Download,
+  Target, Brain, CalendarDays, Download, Timer, Crosshair, Activity,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
+import { useCountUp } from '@/hooks/useCountUp';
 import { toast } from 'sonner';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -18,6 +19,7 @@ import {
 } from 'recharts';
 import { format, subDays, subMonths, parseISO, startOfWeek, endOfWeek, isWithinInterval, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useInView } from 'framer-motion';
 
 type PeriodFilter = '7d' | '30d' | '90d' | 'all';
 const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
@@ -28,12 +30,12 @@ const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
 ];
 
 const COLORS = [
-  'hsl(217, 91%, 60%)',  // primary
-  'hsl(24, 95%, 53%)',   // accent
-  'hsl(142, 71%, 45%)',  // success
-  'hsl(280, 67%, 55%)',  // chart-4
-  'hsl(199, 89%, 48%)',  // chart-5
-  'hsl(38, 92%, 50%)',   // warning
+  'hsl(var(--neon-green))',
+  'hsl(var(--electric-blue))',
+  'hsl(var(--sporty-orange))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(38, 92%, 50%)',
   'hsl(350, 80%, 55%)',
   'hsl(170, 70%, 45%)',
 ];
@@ -46,6 +48,60 @@ const itemVariants = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
+
+const tooltipStyle = {
+  background: 'hsl(var(--card))',
+  border: '1px solid hsl(var(--border))',
+  borderRadius: 12,
+  fontSize: 12,
+  color: 'hsl(var(--foreground))',
+  boxShadow: '0 8px 30px -7px hsl(var(--foreground) / 0.1)',
+};
+
+// ─── Animated Stat Card ───
+function IndicatorStatCard({ icon: Icon, label, numericValue, formatFn, sub, gradient, iconBg, iconColor }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  numericValue: number;
+  formatFn: (v: number) => string;
+  sub?: string;
+  gradient: string;
+  iconBg: string;
+  iconColor: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const animatedValue = useCountUp(isInView ? numericValue : 0, 1400);
+
+  return (
+    <motion.div ref={ref} variants={itemVariants}>
+      <Card className={`glass border-border/30 bg-gradient-to-br ${gradient} transition-all duration-300 hover:border-primary/30`}>
+        <CardContent className="p-4 flex items-center gap-4">
+          <motion.div
+            className={`flex h-11 w-11 items-center justify-center rounded-xl shrink-0 ${iconBg} shadow-soft`}
+            initial={{ rotate: -20, scale: 0 }}
+            animate={isInView ? { rotate: 0, scale: 1 } : {}}
+            transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.15 }}
+          >
+            <Icon className={`h-5 w-5 ${iconColor}`} />
+          </motion.div>
+          <div className="min-w-0">
+            <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-widest">{label}</p>
+            <motion.p
+              className="text-xl font-extrabold tracking-tight tabular-nums"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={isInView ? { scale: 1, opacity: 1 } : {}}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            >
+              {formatFn(animatedValue)}
+            </motion.p>
+            {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
 
 export default function Indicators() {
   const disciplines = useAppStore((s) => s.disciplines);
@@ -75,7 +131,6 @@ export default function Indicators() {
     const hitRate = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
     const uniqueDays = new Set(studyRecords.map((r) => r.date)).size;
     const avgHoursPerDay = uniqueDays > 0 ? totalHours / uniqueDays : 0;
-
     return { totalHours, totalQuestions, totalCorrect, totalPages, hitRate, uniqueDays, avgHoursPerDay };
   }, [studyRecords]);
 
@@ -113,7 +168,6 @@ export default function Indicators() {
       const discTopics = topics.filter((t) => t.disciplineId === disc.id);
       const completedTopics = discTopics.filter((t) => t.completed).length;
       const topicProgress = discTopics.length > 0 ? (completedTopics / discTopics.length) * 100 : 0;
-
       return {
         name: disc.name.length > 14 ? disc.name.slice(0, 12) + '…' : disc.name,
         fullName: disc.name,
@@ -146,15 +200,12 @@ export default function Indicators() {
     const thisWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
     const lastWeekStart = subDays(thisWeekStart, 7);
     const lastWeekEnd = subDays(thisWeekStart, 1);
-
     const thisWeekHours = studyRecords
       .filter((r) => { const d = parseISO(r.date); return isWithinInterval(d, { start: thisWeekStart, end: thisWeekEnd }); })
       .reduce((a, r) => a + r.durationSeconds / 3600, 0);
-
     const lastWeekHours = studyRecords
       .filter((r) => { const d = parseISO(r.date); return isWithinInterval(d, { start: lastWeekStart, end: lastWeekEnd }); })
       .reduce((a, r) => a + r.durationSeconds / 3600, 0);
-
     const change = lastWeekHours > 0 ? ((thisWeekHours - lastWeekHours) / lastWeekHours) * 100 : 0;
     return { thisWeek: Math.round(thisWeekHours * 10) / 10, lastWeek: Math.round(lastWeekHours * 10) / 10, change: Math.round(change) };
   }, [studyRecords]);
@@ -201,20 +252,20 @@ export default function Indicators() {
       };
 
       // Header
-      doc.setFillColor(26, 42, 108);
+      doc.setFillColor(15, 23, 42);
       doc.rect(0, 0, pw, 35, 'F');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(74, 222, 128);
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('Relatório de Desempenho', pw / 2, 15, { align: 'center' });
+      doc.text('Sprint Pro — Relatório de Desempenho', pw / 2, 15, { align: 'center' });
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.text(`Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, pw / 2, 23, { align: 'center' });
       doc.text(`${stats.uniqueDays} dias de estudo registrados`, pw / 2, 29, { align: 'center' });
       y = 45;
 
-      // Summary
-      addLine('Resumo Geral', 14, true, [26, 42, 108]);
+      addLine('Resumo Geral', 14, true, [74, 222, 128]);
       y += 2;
       const summaryItems = [
         [`Total de Horas: ${stats.totalHours.toFixed(1)}h`, `Média: ${stats.avgHoursPerDay.toFixed(1)}h/dia`],
@@ -232,37 +283,25 @@ export default function Indicators() {
       y += 2;
       addSeparator();
 
-      // ── Capture charts as images ──
       if (chartsRef.current) {
         const chartCards = chartsRef.current.querySelectorAll<HTMLElement>('[data-pdf-chart]');
         for (const chartEl of chartCards) {
           const title = chartEl.getAttribute('data-pdf-chart') || 'Gráfico';
-          
-          // Check if we need a new page
           if (y > 120) { doc.addPage(); y = 20; }
-          
-          addLine(title, 12, true, [26, 42, 108]);
+          addLine(title, 12, true, [74, 222, 128]);
           y += 2;
-
-          const canvas = await html2canvas(chartEl, {
-            scale: 2,
-            backgroundColor: '#0f1729',
-            logging: false,
-            useCORS: true,
-          });
+          const canvas = await html2canvas(chartEl, { scale: 2, backgroundColor: '#0f1729', logging: false, useCORS: true });
           const imgData = canvas.toDataURL('image/png');
           const imgWidth = pw - margin * 2;
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          const finalHeight = Math.min(imgHeight, 120); // cap height
-
+          const finalHeight = Math.min(imgHeight, 120);
           doc.addImage(imgData, 'PNG', margin, y, imgWidth, finalHeight);
           y += finalHeight + 6;
         }
         addSeparator();
       }
 
-      // Per discipline table
-      addLine('Desempenho por Disciplina', 14, true, [26, 42, 108]);
+      addLine('Desempenho por Disciplina', 14, true, [74, 222, 128]);
       y += 2;
       doc.setFillColor(240, 240, 245);
       doc.rect(margin, y - 4, pw - margin * 2, 7, 'F');
@@ -290,8 +329,7 @@ export default function Indicators() {
       y += 4;
       addSeparator();
 
-      // Last 7 days
-      addLine('Histórico — Últimos 7 dias', 14, true, [26, 42, 108]);
+      addLine('Histórico — Últimos 7 dias', 14, true, [74, 222, 128]);
       y += 2;
       const recent7 = last30Days.slice(-7);
       doc.setFillColor(240, 240, 245);
@@ -316,23 +354,21 @@ export default function Indicators() {
       y += 4;
       addSeparator();
 
-      // Goals
-      addLine('Metas Semanais', 14, true, [26, 42, 108]);
+      addLine('Metas Semanais', 14, true, [74, 222, 128]);
       y += 2;
       const goalPct = goals.weeklyHours > 0 ? Math.min(100, Math.round((weeklyComparison.thisWeek / goals.weeklyHours) * 100)) : 0;
       addLine(`Horas: ${weeklyComparison.thisWeek}h / ${goals.weeklyHours}h (${goalPct}%)`, 10);
 
-      // Footer
       const totalPages = doc.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
         doc.setFontSize(7);
         doc.setTextColor(150, 150, 150);
-        doc.text('ConcurseiroElite — Relatório de Desempenho', margin, 290);
+        doc.text('Sprint Pro — Relatório de Desempenho', margin, 290);
         doc.text(`Página ${i}/${totalPages}`, pw - margin, 290, { align: 'right' });
       }
 
-      doc.save(`relatorio-desempenho-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+      doc.save(`sprint-pro-indicadores-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
       toast.success('PDF exportado com sucesso!');
     } catch (err) {
       console.error(err);
@@ -342,11 +378,13 @@ export default function Indicators() {
 
   if (!hasData) {
     return (
-      <motion.div variants={itemVariants} initial="initial" animate="animate" className="space-y-6">
-        <h1 className="text-2xl font-bold">Indicadores</h1>
-        <Card className="border-dashed glass">
+      <motion.div variants={itemVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
+        <h1 className="text-2xl font-bold tracking-tight">Indicadores</h1>
+        <Card className="border-dashed glass border-border/30">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <BarChart3 className="h-12 w-12 text-muted-foreground/40 mb-4" />
+            <div className="w-16 h-16 rounded-2xl gradient-neon flex items-center justify-center mb-4">
+              <BarChart3 className="h-8 w-8 text-neon-green-foreground" />
+            </div>
             <h3 className="text-lg font-semibold mb-1">Seus indicadores aparecerão aqui</h3>
             <p className="text-sm text-muted-foreground">Registre estudos para ver gráficos e análises detalhadas.</p>
           </CardContent>
@@ -355,29 +393,12 @@ export default function Indicators() {
     );
   }
 
-  const StatCard = ({ icon: Icon, label, value, sub, color }: { icon: any; label: string; value: string; sub?: string; color: string }) => (
-    <motion.div variants={itemVariants}>
-      <Card className="glass card-hover stat-card">
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className={`flex h-11 w-11 items-center justify-center rounded-xl shrink-0`} style={{ background: `linear-gradient(135deg, ${color}, ${color}88)` }}>
-            <Icon className="h-5 w-5 text-white" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs text-muted-foreground font-medium">{label}</p>
-            <p className="text-xl font-bold tracking-tight">{value}</p>
-            {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-
   return (
-    <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6">
+    <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Indicadores</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Indicadores</h1>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center bg-muted/50 rounded-xl p-0.5 gap-0.5">
+          <div className="flex items-center glass rounded-xl p-0.5 gap-0.5 border-border/30">
             {PERIOD_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -392,8 +413,8 @@ export default function Indicators() {
               </button>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline">{stats.uniqueDays} dias</span>
-          <Button size="sm" variant="outline" className="gap-1.5 rounded-xl text-xs" onClick={exportPdf}>
+          <span className="text-xs text-muted-foreground hidden sm:inline font-mono">{stats.uniqueDays} dias</span>
+          <Button size="sm" variant="outline" className="gap-1.5 rounded-xl text-xs border-border/40 hover:border-primary/40" onClick={exportPdf}>
             <Download className="h-3.5 w-3.5" />
             Exportar PDF
           </Button>
@@ -402,22 +423,44 @@ export default function Indicators() {
 
       {/* ─── Stat Cards ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Clock} label="Total de Horas" value={`${stats.totalHours.toFixed(1)}h`} sub={`Média ${stats.avgHoursPerDay.toFixed(1)}h/dia`} color="hsl(217, 91%, 60%)" />
-        <StatCard icon={Target} label="Questões" value={String(stats.totalQuestions)} sub={`${stats.totalCorrect} acertos`} color="hsl(24, 95%, 53%)" />
-        <StatCard icon={Brain} label="Taxa de Acerto" value={`${stats.hitRate.toFixed(1)}%`} sub={`${stats.totalCorrect}/${stats.totalQuestions}`} color="hsl(142, 71%, 45%)" />
-        <StatCard
-          icon={TrendingUp}
-          label="Semana Atual"
-          value={`${weeklyComparison.thisWeek}h`}
-          sub={weeklyComparison.change !== 0 ? `${weeklyComparison.change > 0 ? '+' : ''}${weeklyComparison.change}% vs semana anterior` : 'Sem comparação'}
-          color="hsl(280, 67%, 55%)"
+        <IndicatorStatCard
+          icon={Timer} label="Total de Horas"
+          numericValue={Math.round(stats.totalHours * 10)}
+          formatFn={(v) => `${(v / 10).toFixed(1)}h`}
+          sub={`Média ${stats.avgHoursPerDay.toFixed(1)}h/dia`}
+          gradient="from-electric-blue/15 to-electric-blue/5"
+          iconBg="gradient-blue" iconColor="text-electric-blue-foreground"
+        />
+        <IndicatorStatCard
+          icon={Crosshair} label="Questões"
+          numericValue={stats.totalQuestions}
+          formatFn={(v) => v.toString()}
+          sub={`${stats.totalCorrect} acertos`}
+          gradient="from-sporty-orange/15 to-sporty-orange/5"
+          iconBg="gradient-orange" iconColor="text-sporty-orange-foreground"
+        />
+        <IndicatorStatCard
+          icon={Brain} label="Taxa de Acerto"
+          numericValue={Math.round(stats.hitRate * 10)}
+          formatFn={(v) => `${(v / 10).toFixed(1)}%`}
+          sub={`${stats.totalCorrect}/${stats.totalQuestions}`}
+          gradient="from-neon-green/15 to-neon-green/5"
+          iconBg="gradient-neon" iconColor="text-neon-green-foreground"
+        />
+        <IndicatorStatCard
+          icon={TrendingUp} label="Semana Atual"
+          numericValue={Math.round(weeklyComparison.thisWeek * 10)}
+          formatFn={(v) => `${(v / 10).toFixed(1)}h`}
+          sub={weeklyComparison.change !== 0 ? `${weeklyComparison.change > 0 ? '+' : ''}${weeklyComparison.change}% vs anterior` : 'Sem comparação'}
+          gradient="from-chart-4/15 to-chart-5/5"
+          iconBg="bg-chart-4" iconColor="text-primary-foreground"
         />
       </div>
 
       {/* ─── Tabs ─── */}
       <motion.div variants={itemVariants} ref={chartsRef}>
         <Tabs defaultValue="evolucao" className="space-y-4">
-          <TabsList className="glass">
+          <TabsList className="glass border-border/30">
             <TabsTrigger value="evolucao">Evolução</TabsTrigger>
             <TabsTrigger value="disciplinas">Disciplinas</TabsTrigger>
             <TabsTrigger value="radar">Visão Geral</TabsTrigger>
@@ -425,10 +468,10 @@ export default function Indicators() {
 
           {/* ── Evolução ── */}
           <TabsContent value="evolucao" className="space-y-4">
-            <Card className="glass" data-pdf-chart="Horas de Estudo — Últimos 30 dias">
+            <Card className="glass border-border/30" data-pdf-chart="Horas de Estudo — Últimos 30 dias">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-primary" />
+                <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                  <CalendarDays className="h-4 w-4 text-electric-blue" />
                   Horas de Estudo — Últimos 30 dias
                 </CardTitle>
               </CardHeader>
@@ -436,60 +479,57 @@ export default function Indicators() {
                 <ResponsiveContainer width="100%" height={260}>
                   <AreaChart data={last30Days}>
                     <defs>
-                      <linearGradient id="gradHours" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0} />
+                      <linearGradient id="gradHoursInd" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--electric-blue))" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(var(--electric-blue))" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(224, 15%, 20%)" />
-                    <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(215, 20%, 45%)" interval={4} />
-                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(215, 20%, 45%)" />
-                    <ReTooltip
-                      contentStyle={{ background: 'hsl(228, 25%, 12%)', border: '1px solid hsl(224, 15%, 20%)', borderRadius: 12, fontSize: 12 }}
-                      labelStyle={{ color: 'hsl(210, 40%, 90%)' }}
-                    />
-                    <Area type="monotone" dataKey="hours" stroke="hsl(217, 91%, 60%)" fill="url(#gradHours)" strokeWidth={2} name="Horas" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" interval={4} />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <ReTooltip contentStyle={tooltipStyle} />
+                    <Area type="monotone" dataKey="hours" stroke="hsl(var(--electric-blue))" fill="url(#gradHoursInd)" strokeWidth={2} name="Horas" />
                   </AreaChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <Card className="glass" data-pdf-chart="Questões por Dia">
+              <Card className="glass border-border/30" data-pdf-chart="Questões por Dia">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Target className="h-4 w-4 text-accent" />
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <Crosshair className="h-4 w-4 text-sporty-orange" />
                     Questões por Dia
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={last30Days}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(224, 15%, 20%)" />
-                      <XAxis dataKey="label" tick={{ fontSize: 9 }} stroke="hsl(215, 20%, 45%)" interval={6} />
-                      <YAxis tick={{ fontSize: 10 }} stroke="hsl(215, 20%, 45%)" />
-                      <ReTooltip contentStyle={{ background: 'hsl(228, 25%, 12%)', border: '1px solid hsl(224, 15%, 20%)', borderRadius: 12, fontSize: 12 }} />
-                      <Bar dataKey="questions" fill="hsl(24, 95%, 53%)" radius={[4, 4, 0, 0]} name="Questões" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 9 }} stroke="hsl(var(--muted-foreground))" interval={6} />
+                      <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                      <ReTooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="questions" fill="hsl(var(--sporty-orange))" radius={[4, 4, 0, 0]} name="Questões" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card className="glass" data-pdf-chart="Taxa de Acerto (%)">
+              <Card className="glass border-border/30" data-pdf-chart="Taxa de Acerto (%)">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Brain className="h-4 w-4 text-success" />
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <Brain className="h-4 w-4 text-neon-green" />
                     Taxa de Acerto (%)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
                     <LineChart data={last30Days}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(224, 15%, 20%)" />
-                      <XAxis dataKey="label" tick={{ fontSize: 9 }} stroke="hsl(215, 20%, 45%)" interval={6} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="hsl(215, 20%, 45%)" />
-                      <ReTooltip contentStyle={{ background: 'hsl(228, 25%, 12%)', border: '1px solid hsl(224, 15%, 20%)', borderRadius: 12, fontSize: 12 }} />
-                      <Line type="monotone" dataKey="hitRate" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={false} name="Acerto %" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="label" tick={{ fontSize: 9 }} stroke="hsl(var(--muted-foreground))" interval={6} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                      <ReTooltip contentStyle={tooltipStyle} />
+                      <Line type="monotone" dataKey="hitRate" stroke="hsl(var(--neon-green))" strokeWidth={2} dot={false} name="Acerto %" />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -499,17 +539,17 @@ export default function Indicators() {
 
           {/* ── Disciplinas ── */}
           <TabsContent value="disciplinas" className="space-y-4">
-            <Card className="glass" data-pdf-chart="Horas por Disciplina">
+            <Card className="glass border-border/30" data-pdf-chart="Horas por Disciplina">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Horas por Disciplina</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">Horas por Disciplina</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={Math.max(200, disciplineStats.length * 36)}>
                   <BarChart data={disciplineStats} layout="vertical" margin={{ left: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(224, 15%, 20%)" />
-                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(215, 20%, 45%)" />
-                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} stroke="hsl(215, 20%, 45%)" />
-                    <ReTooltip contentStyle={{ background: 'hsl(228, 25%, 12%)', border: '1px solid hsl(224, 15%, 20%)', borderRadius: 12, fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <ReTooltip contentStyle={tooltipStyle} />
                     <Bar dataKey="hours" name="Horas" radius={[0, 6, 6, 0]}>
                       {disciplineStats.map((d, i) => (
                         <Cell key={i} fill={d.color} />
@@ -522,30 +562,32 @@ export default function Indicators() {
 
             <div className="grid gap-3">
               {disciplineStats.map((d, i) => (
-                <Card key={i} className="glass card-hover">
+                <Card key={i} className="glass border-border/30 hover:border-primary/30 transition-all duration-300">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-3 w-3 rounded-full" style={{ background: d.color }} />
+                        <div className="h-3 w-3 rounded-full shadow-soft" style={{ background: d.color }} />
                         <span className="text-sm font-semibold">{d.fullName}</span>
                       </div>
                       <span className="text-xs text-muted-foreground font-mono">{d.hours}h</span>
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-xs text-muted-foreground">
                       <div>
-                        <span className="block text-foreground font-semibold">{d.hitRate}%</span>
+                        <span className="block text-foreground font-extrabold">{d.hitRate}%</span>
                         Taxa de acerto
                       </div>
                       <div>
-                        <span className="block text-foreground font-semibold">{d.questions}</span>
+                        <span className="block text-foreground font-extrabold">{d.questions}</span>
                         Questões
                       </div>
                       <div>
-                        <span className="block text-foreground font-semibold">{d.topicProgress}%</span>
+                        <span className="block text-foreground font-extrabold">{d.topicProgress}%</span>
                         Edital concluído
                       </div>
                     </div>
-                    <Progress value={d.topicProgress} className="h-1 mt-3" />
+                    <div className="h-1.5 mt-3 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-full rounded-full gradient-neon" style={{ width: `${d.topicProgress}%` }} />
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -555,27 +597,27 @@ export default function Indicators() {
           {/* ── Radar / Visão Geral ── */}
           <TabsContent value="radar" className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
-              <Card className="glass" data-pdf-chart="Desempenho Multidimensional">
+              <Card className="glass border-border/30" data-pdf-chart="Desempenho Multidimensional">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Desempenho Multidimensional</CardTitle>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider">Desempenho Multidimensional</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
                     <RadarChart data={radarData}>
-                      <PolarGrid stroke="hsl(224, 15%, 20%)" />
-                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, fill: 'hsl(215, 20%, 55%)' }} />
-                      <PolarRadiusAxis tick={{ fontSize: 8 }} stroke="hsl(215, 20%, 35%)" />
-                      <Radar name="Acerto %" dataKey="hitRate" stroke="hsl(142, 71%, 45%)" fill="hsl(142, 71%, 45%)" fillOpacity={0.15} />
-                      <Radar name="Edital %" dataKey="topics" stroke="hsl(217, 91%, 60%)" fill="hsl(217, 91%, 60%)" fillOpacity={0.15} />
-                      <ReTooltip contentStyle={{ background: 'hsl(228, 25%, 12%)', border: '1px solid hsl(224, 15%, 20%)', borderRadius: 12, fontSize: 12 }} />
+                      <PolarGrid stroke="hsl(var(--border))" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} />
+                      <PolarRadiusAxis tick={{ fontSize: 8 }} stroke="hsl(var(--border))" />
+                      <Radar name="Acerto %" dataKey="hitRate" stroke="hsl(var(--neon-green))" fill="hsl(var(--neon-green))" fillOpacity={0.15} />
+                      <Radar name="Edital %" dataKey="topics" stroke="hsl(var(--electric-blue))" fill="hsl(var(--electric-blue))" fillOpacity={0.15} />
+                      <ReTooltip contentStyle={tooltipStyle} />
                     </RadarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card className="glass" data-pdf-chart="Distribuição por Atividade">
+              <Card className="glass border-border/30" data-pdf-chart="Distribuição por Atividade">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Distribuição por Atividade</CardTitle>
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider">Distribuição por Atividade</CardTitle>
                 </CardHeader>
                 <CardContent className="flex items-center justify-center">
                   {activityDistribution.length > 0 ? (
@@ -595,7 +637,7 @@ export default function Indicators() {
                             <Cell key={i} fill={d.color} />
                           ))}
                         </Pie>
-                        <ReTooltip contentStyle={{ background: 'hsl(228, 25%, 12%)', border: '1px solid hsl(224, 15%, 20%)', borderRadius: 12, fontSize: 12 }} />
+                        <ReTooltip contentStyle={tooltipStyle} />
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
@@ -606,20 +648,22 @@ export default function Indicators() {
             </div>
 
             {/* Metas */}
-            <Card className="glass">
+            <Card className="glass border-border/30">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
+                <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                  <CheckCircle2 className="h-4 w-4 text-neon-green" />
                   Progresso Semanal vs Metas
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span>Horas ({weeklyComparison.thisWeek}h / {goals.weeklyHours}h)</span>
-                    <span className="font-mono">{Math.min(100, Math.round((weeklyComparison.thisWeek / goals.weeklyHours) * 100))}%</span>
+                    <span className="font-semibold">Horas ({weeklyComparison.thisWeek}h / {goals.weeklyHours}h)</span>
+                    <span className="font-mono text-muted-foreground">{Math.min(100, Math.round((weeklyComparison.thisWeek / goals.weeklyHours) * 100))}%</span>
                   </div>
-                  <Progress value={Math.min(100, (weeklyComparison.thisWeek / goals.weeklyHours) * 100)} className="h-2" />
+                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                    <div className="h-full rounded-full gradient-neon transition-all duration-500" style={{ width: `${Math.min(100, (weeklyComparison.thisWeek / goals.weeklyHours) * 100)}%` }} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
