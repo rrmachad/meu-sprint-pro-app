@@ -291,7 +291,7 @@ export default function Revisions() {
                       <span className="font-medium truncate block">{r.disciplineName}</span>
                       <span className="text-muted-foreground">{r.mark} · {format(new Date(r.dueDate + 'T12:00:00'), 'dd/MM')}</span>
                     </div>
-                    <Button size="sm" variant="ghost" className="h-6 text-[10px] shrink-0" onClick={() => completeRevision(r.id)}>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] shrink-0 rounded-lg" onClick={() => completeRevision(r.id)}>
                       Concluir
                     </Button>
                   </div>
