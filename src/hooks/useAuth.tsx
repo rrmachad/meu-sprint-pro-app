@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAppStore } from '@/store/useAppStore';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -19,15 +20,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const setUserId = useAppStore.getState().setUserId;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setUserId(session?.user?.id ?? null);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setUserId(session?.user?.id ?? null);
       setLoading(false);
     });
 
