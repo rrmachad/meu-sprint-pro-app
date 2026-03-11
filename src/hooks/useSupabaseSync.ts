@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -48,9 +48,10 @@ function mapDailyNote(row: any): DailyNote {
 export function useSupabaseSync() {
   const { user } = useAuth();
   const store = useAppStore;
+  const [syncing, setSyncing] = useState(true);
 
   const loadAll = useCallback(async () => {
-    if (!user) return;
+    if (!user) { setSyncing(false); return; }
     const uid = user.id;
 
     const [
@@ -159,11 +160,12 @@ export function useSupabaseSync() {
       simulados: mappedSimulados,
       dailyNotes: (notes || []).map(mapDailyNote),
     });
+    setSyncing(false);
   }, [user]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
 
-  return { reload: loadAll };
+  return { reload: loadAll, syncing };
 }

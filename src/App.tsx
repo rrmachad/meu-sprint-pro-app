@@ -31,9 +31,9 @@ function ProtectedRoutes() {
   const setupCompleted = useAppStore((s) => s.settings.setupCompleted);
 
   // Sync data from Supabase when logged in
-  useSupabaseSync();
+  const { syncing } = useSupabaseSync();
 
-  if (loading) return <Loading />;
+  if (loading || syncing) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
 
   if (!setupCompleted) {
