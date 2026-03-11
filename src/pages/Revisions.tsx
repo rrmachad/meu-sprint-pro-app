@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useInView } from 'framer-motion';
+import { useCountUp } from '@/hooks/useCountUp';
 import {
   CalendarCheck, CheckCircle2, AlertTriangle, Clock,
   Filter, ChevronLeft, ChevronRight,
