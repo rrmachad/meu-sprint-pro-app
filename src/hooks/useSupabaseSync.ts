@@ -76,6 +76,7 @@ export function useSupabaseSync() {
   const { user } = useAuth();
   const store = useAppStore;
   const [syncing, setSyncing] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const channelRef = useRef<RealtimeChannel | null>(null);
 
   const loadAll = useCallback(async () => {
@@ -195,6 +196,8 @@ export function useSupabaseSync() {
   useEffect(() => {
     if (!user) return;
 
+    setConnectionStatus('connecting');
+
     const channel = supabase
       .channel(`sync-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'disciplines' }, (payload) => {
@@ -239,7 +242,13 @@ export function useSupabaseSync() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cycle_disciplines' }, () => loadAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'simulados' }, () => loadAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'simulado_disciplines' }, () => loadAll())
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setConnectionStatus('connected');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          setConnectionStatus('disconnected');
+        }
+      });
 
     channelRef.current = channel;
 
@@ -253,5 +262,5 @@ export function useSupabaseSync() {
     loadAll();
   }, [loadAll]);
 
-  return { reload: loadAll, syncing };
+  return { reload: loadAll, syncing, connectionStatus };
 }
