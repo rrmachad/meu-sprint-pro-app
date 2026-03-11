@@ -1,6 +1,6 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
-  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon, Bell, RotateCcw,
+  FileText, Settings, GraduationCap, Flame, Sparkles, Sun, Moon, Bell, RotateCcw, LogOut,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -12,6 +12,7 @@ import {
   SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuth } from '@/hooks/useAuth';
 import { Progress } from '@/components/ui/progress';
 
 const navItems = [
@@ -23,6 +24,19 @@ const navItems = [
   { title: 'Simulados', url: '/simulados', icon: FileText },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
 ];
+
+function LogoutButton({ collapsed }: { collapsed: boolean }) {
+  const { signOut } = useAuth();
+  return (
+    <button
+      onClick={signOut}
+      className="flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm text-destructive/70 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
+    >
+      <LogOut className="h-4 w-4 shrink-0" />
+      {!collapsed && <span>Sair</span>}
+    </button>
+  );
+}
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -133,6 +147,7 @@ export function AppSidebar() {
             <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
           )}
         </button>
+        <LogoutButton collapsed={collapsed} />
         {!collapsed && (
           <div className="rounded-xl bg-sidebar-accent/30 border border-sidebar-border/30 p-3 text-center space-y-1">
             <div className="flex items-center justify-center gap-1.5 text-sidebar-foreground/40">
