@@ -131,7 +131,7 @@ function persistStudyRecord(r: StudyRecord) {
     correct_answers: r.correctAnswers, wrong_answers: r.wrongAnswers,
     blank_answers: r.blankAnswers, pages_read: r.pagesRead,
     topics_completed: r.topicsCompleted, notes: r.notes,
-  }).then(({ error }) => error && console.error('persist study record:', error));
+  }).then(({ error }) => error && showDbError('Registro de estudo', error));
 }
 
 function persistRevision(r: RevisionEntry) {
