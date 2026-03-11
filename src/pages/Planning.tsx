@@ -469,7 +469,7 @@ function GenerateDialog({
           {scores.length > 0 && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Prioridade calculada</Label>
-              <div className="max-h-[200px] overflow-y-auto rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+              <div className="max-h-[200px] overflow-y-auto rounded-xl border border-border/30 glass p-3 space-y-2">
                 <TooltipProvider delayDuration={200}>
                 {scores.map((s, i) => (
                   <Tooltip key={s.disciplineId}>
