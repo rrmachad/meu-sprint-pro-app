@@ -33,6 +33,7 @@ interface AppActions {
   updateSettings: (settings: Partial<AppSettings>) => void;
   completeSetup: () => void;
   completeOnboarding: () => void;
+  resetOnboarding: () => void;
   markModuleHint: (module: string) => void;
 
   // Disciplines
