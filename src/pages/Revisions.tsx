@@ -279,7 +279,7 @@ export default function Revisions() {
           {stats.overdue > 0 && (
             <Card className="glass border-destructive/20">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2 text-destructive">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive uppercase tracking-wider">
                   <AlertTriangle className="h-4 w-4" />
                   Atrasadas ({stats.overdue})
                 </CardTitle>
