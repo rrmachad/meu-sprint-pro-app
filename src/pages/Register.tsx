@@ -45,7 +45,7 @@ const Register = () => {
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-lg">
         <h1 className="mb-6 text-center text-3xl font-extrabold text-foreground">Cadastre-se</h1>
         <p className="mb-6 text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground">É novo no Elite Concurseiro?</span><br />
+          <span className="font-semibold text-foreground">É novo no Meu Sprint Pro?</span><br />
           Cadastre sua conta gratuita agora mesmo.
         </p>
         <form onSubmit={handleSubmit} className="space-y-5">

@@ -67,7 +67,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-extrabold text-sidebar-foreground tracking-tight uppercase">
-                Sprint Pro
+                Meu Sprint Pro
               </span>
               <span className="text-[10px] text-neon-green/70 font-semibold tracking-wider uppercase">
                 Performance Mental
@@ -152,7 +152,7 @@ export function AppSidebar() {
           <div className="rounded-xl bg-sidebar-accent/30 border border-sidebar-border/30 p-3 text-center space-y-1">
             <div className="flex items-center justify-center gap-1.5 text-sidebar-foreground/40">
               <Zap className="h-3 w-3 text-neon-green/50" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider">Sprint Pro v1.0</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider">Meu Sprint Pro v1.0</span>
             </div>
           </div>
         )}
