@@ -156,6 +156,7 @@ export interface AppSettings {
   moduleHints: Record<string, boolean>;
   notificationsEnabled: boolean;
   reminderMinutesBefore: number; // minutes before block to notify
+  revisionReminderHour: number; // 0-23 UTC hour for daily revision email
 }
 
 // ============ DAILY NOTE ============

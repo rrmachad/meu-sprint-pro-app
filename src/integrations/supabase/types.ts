@@ -604,6 +604,7 @@ export type Database = {
           reminder_minutes_before: number | null
           revision_enabled: boolean | null
           revision_marks: string[] | null
+          revision_reminder_hour: number | null
           setup_completed: boolean | null
           streak: number | null
           study_days: number[] | null
@@ -630,6 +631,7 @@ export type Database = {
           reminder_minutes_before?: number | null
           revision_enabled?: boolean | null
           revision_marks?: string[] | null
+          revision_reminder_hour?: number | null
           setup_completed?: boolean | null
           streak?: number | null
           study_days?: number[] | null
@@ -656,6 +658,7 @@ export type Database = {
           reminder_minutes_before?: number | null
           revision_enabled?: boolean | null
           revision_marks?: string[] | null
+          revision_reminder_hour?: number | null
           setup_completed?: boolean | null
           streak?: number | null
           study_days?: number[] | null

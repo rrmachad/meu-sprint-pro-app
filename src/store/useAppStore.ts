@@ -22,6 +22,7 @@ const defaultSettings: AppSettings = {
   moduleHints: {},
   notificationsEnabled: false,
   reminderMinutesBefore: 5,
+  revisionReminderHour: 7,
 };
 
 interface AppActions {
@@ -168,6 +169,7 @@ async function persistSettings() {
     module_hints: settings.moduleHints as any,
     notifications_enabled: settings.notificationsEnabled,
     reminder_minutes_before: settings.reminderMinutesBefore,
+    revision_reminder_hour: settings.revisionReminderHour,
     streak,
     last_study_date: lastStudyDate,
   };

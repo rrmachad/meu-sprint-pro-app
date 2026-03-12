@@ -14,7 +14,9 @@ Deno.serve(async (_req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-  const today = new Date().toISOString().split('T')[0]
+  const now = new Date()
+  const currentHourUTC = now.getUTCHours()
+  const today = now.toISOString().split('T')[0]
 
   // Get all pending revisions for today grouped by user
   const { data: pendingRevisions, error: revError } = await supabase
@@ -52,12 +54,16 @@ Deno.serve(async (_req) => {
 
     const { data: settings } = await supabase
       .from('user_settings')
-      .select('candidate_name, notifications_enabled')
+      .select('candidate_name, notifications_enabled, revision_reminder_hour')
       .eq('user_id', userId)
       .maybeSingle()
 
     // Skip users who disabled notifications
     if (settings && settings.notifications_enabled === false) continue
+
+    // Skip users whose preferred hour doesn't match current UTC hour
+    const preferredHour = settings?.revision_reminder_hour ?? 7
+    if (preferredHour !== currentHourUTC) continue
 
     // Check suppression list
     const { data: suppressed } = await supabase

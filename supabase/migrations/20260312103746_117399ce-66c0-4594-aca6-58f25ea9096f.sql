@@ -1,0 +1,1 @@
+ALTER TABLE public.user_settings ADD COLUMN revision_reminder_hour integer DEFAULT 7;
