@@ -44,6 +44,8 @@ export function StudyTimer() {
   const [activityType, setActivityType] = useState<ActivityType>('estudo');
   const [minimized, setMinimized] = useState(true);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [lastSavedRecordId, setLastSavedRecordId] = useState<string | null>(null);
+  const [editElapsed, setEditElapsed] = useState(0);
   const [saveData, setSaveData] = useState({
     correctAnswers: 0,
     wrongAnswers: 0,
@@ -83,18 +85,7 @@ export function StudyTimer() {
     setIsRunning(false);
   }, [elapsed]);
 
-  const stopTimer = useCallback(() => {
-    if (elapsed < 10) {
-      setIsRunning(false);
-      setElapsed(0);
-      elapsedBeforePause.current = 0;
-      return;
-    }
-    setIsRunning(false);
-    setShowSaveDialog(true);
-  }, [elapsed]);
-
-  const handleSave = useCallback(() => {
+  const autoSaveRecord = useCallback((finalElapsed: number) => {
     const today = new Date().toISOString().split('T')[0];
     const record: StudyRecord = {
       id: crypto.randomUUID(),
@@ -102,19 +93,19 @@ export function StudyTimer() {
       date: today,
       activityType,
       turno: getTurno(),
-      durationSeconds: elapsed,
-      correctAnswers: saveData.correctAnswers,
-      wrongAnswers: saveData.wrongAnswers,
-      blankAnswers: saveData.blankAnswers,
-      pagesRead: saveData.pagesRead,
+      durationSeconds: finalElapsed,
+      correctAnswers: 0,
+      wrongAnswers: 0,
+      blankAnswers: 0,
+      pagesRead: 0,
       topicsCompleted: [],
-      notes: saveData.notes,
+      notes: '',
     };
 
     addStudyRecord(record);
     updateStreak(today);
 
-    // Auto-generate revisions (24h, 7d, 30d, 60d)
+    // Auto-generate revisions
     const revisionSettings = useAppStore.getState().settings.revision;
     if (revisionSettings.enabled) {
       const markDays: Record<string, number> = { '24h': 1, '7d': 7, '30d': 30, '60d': 60 };
@@ -134,20 +125,58 @@ export function StudyTimer() {
     }
 
     const discName = disciplines.find((d) => d.id === selectedDiscipline)?.name || '';
-    const mins = Math.round(elapsed / 60);
-    toast.success(`${mins} min de ${discName} registrados! Revisões agendadas.`);
+    const mins = Math.round(finalElapsed / 60);
+    toast.success(`${mins} min de ${discName} registrados automaticamente!`, {
+      description: 'Clique em "Editar" para adicionar detalhes.',
+      action: {
+        label: 'Editar',
+        onClick: () => {
+          setLastSavedRecordId(record.id);
+          setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
+          setEditElapsed(finalElapsed);
+          setShowSaveDialog(true);
+        },
+      },
+      duration: 8000,
+    });
 
-    // Reset
+    return record.id;
+  }, [selectedDiscipline, activityType, addStudyRecord, updateStreak, disciplines]);
+
+  const stopTimer = useCallback(() => {
+    if (elapsed < 10) {
+      setIsRunning(false);
+      setElapsed(0);
+      elapsedBeforePause.current = 0;
+      return;
+    }
+    setIsRunning(false);
+    autoSaveRecord(elapsed);
     setElapsed(0);
     elapsedBeforePause.current = 0;
+  }, [elapsed, autoSaveRecord]);
+
+  const handleSave = useCallback(() => {
+    if (!lastSavedRecordId) return;
+
+    const { updateStudyRecord } = useAppStore.getState();
+    updateStudyRecord(lastSavedRecordId, {
+      correctAnswers: saveData.correctAnswers,
+      wrongAnswers: saveData.wrongAnswers,
+      blankAnswers: saveData.blankAnswers,
+      pagesRead: saveData.pagesRead,
+      notes: saveData.notes,
+    });
+
+    toast.success('Detalhes da sessão atualizados!');
     setShowSaveDialog(false);
+    setLastSavedRecordId(null);
     setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
-  }, [elapsed, selectedDiscipline, activityType, saveData, addStudyRecord, updateStreak, disciplines]);
+  }, [lastSavedRecordId, saveData]);
 
   const handleDiscard = useCallback(() => {
-    setElapsed(0);
-    elapsedBeforePause.current = 0;
     setShowSaveDialog(false);
+    setLastSavedRecordId(null);
     setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
   }, []);
 
@@ -277,10 +306,10 @@ export function StudyTimer() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Save className="h-5 w-5 text-primary" />
-              Salvar Sessão de Estudo
+              Editar Sessão de Estudo
             </DialogTitle>
             <DialogDescription>
-              {currentDiscName} — {formatTimer(elapsed)} ({Math.round(elapsed / 60)} min)
+              {currentDiscName} — {formatTimer(editElapsed)} ({Math.round(editElapsed / 60)} min)
             </DialogDescription>
           </DialogHeader>
 
@@ -345,10 +374,10 @@ export function StudyTimer() {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleDiscard}>Descartar</Button>
+            <Button variant="outline" onClick={handleDiscard}>Fechar</Button>
             <Button onClick={handleSave} className="gap-2">
               <Save className="h-4 w-4" />
-              Salvar Registro
+              Atualizar Registro
             </Button>
           </DialogFooter>
         </DialogContent>
