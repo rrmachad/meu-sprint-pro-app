@@ -44,6 +44,8 @@ export function StudyTimer() {
   const [activityType, setActivityType] = useState<ActivityType>('estudo');
   const [minimized, setMinimized] = useState(true);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [lastSavedRecordId, setLastSavedRecordId] = useState<string | null>(null);
+  const [editElapsed, setEditElapsed] = useState(0);
   const [saveData, setSaveData] = useState({
     correctAnswers: 0,
     wrongAnswers: 0,
