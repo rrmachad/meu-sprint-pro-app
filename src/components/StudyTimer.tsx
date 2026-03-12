@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, Square, Clock, BookOpen, ChevronDown,
-  ChevronUp, Minimize2, Maximize2, Save,
+  Play, Pause, Square, Clock, BookOpen, Minimize2, Maximize2, Save,
+  Timer, PenLine, ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,19 +32,26 @@ function formatTimer(seconds: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+type EntryMode = 'cronometro' | 'manual';
+
 export function StudyTimer() {
   const disciplines = useAppStore((s) => s.disciplines);
+  const topics = useAppStore((s) => s.topics);
   const cycles = useAppStore((s) => s.cycles);
   const { addStudyRecord, updateStreak } = useAppStore();
 
+  const [entryMode, setEntryMode] = useState<EntryMode>('cronometro');
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [selectedDiscipline, setSelectedDiscipline] = useState('');
+  const [selectedTopic, setSelectedTopic] = useState('');
   const [activityType, setActivityType] = useState<ActivityType>('estudo');
   const [minimized, setMinimized] = useState(true);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [lastSavedRecordId, setLastSavedRecordId] = useState<string | null>(null);
   const [editElapsed, setEditElapsed] = useState(0);
+  const [manualMinutes, setManualMinutes] = useState(0);
+  const [manualHours, setManualHours] = useState(0);
   const [saveData, setSaveData] = useState({
     correctAnswers: 0,
     wrongAnswers: 0,
@@ -57,6 +63,12 @@ export function StudyTimer() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const elapsedBeforePause = useRef<number>(0);
+
+  // Filter topics by selected discipline
+  const filteredTopics = useMemo(() => {
+    if (!selectedDiscipline) return [];
+    return topics.filter((t) => t.disciplineId === selectedDiscipline && !t.completed);
+  }, [topics, selectedDiscipline]);
 
   // Auto-select discipline from active cycle's next block
   useEffect(() => {
@@ -70,9 +82,14 @@ export function StudyTimer() {
     }
   }, [disciplines, cycles, selectedDiscipline]);
 
+  // Reset topic when discipline changes
+  useEffect(() => {
+    setSelectedTopic('');
+  }, [selectedDiscipline]);
+
   const startTimer = useCallback(() => {
     if (!selectedDiscipline) {
-      toast.error('Selecione uma disciplina primeiro.');
+      toast.error('Selecione uma matéria primeiro.');
       return;
     }
     startTimeRef.current = Date.now();
@@ -85,8 +102,9 @@ export function StudyTimer() {
     setIsRunning(false);
   }, [elapsed]);
 
-  const autoSaveRecord = useCallback((finalElapsed: number) => {
+  const createAndSaveRecord = useCallback((finalElapsed: number) => {
     const today = new Date().toISOString().split('T')[0];
+    const topicsCompleted = selectedTopic ? [selectedTopic] : [];
     const record: StudyRecord = {
       id: crypto.randomUUID(),
       disciplineId: selectedDiscipline,
@@ -98,7 +116,7 @@ export function StudyTimer() {
       wrongAnswers: 0,
       blankAnswers: 0,
       pagesRead: 0,
-      topicsCompleted: [],
+      topicsCompleted,
       notes: '',
     };
 
@@ -126,8 +144,8 @@ export function StudyTimer() {
 
     const discName = disciplines.find((d) => d.id === selectedDiscipline)?.name || '';
     const mins = Math.round(finalElapsed / 60);
-    toast.success(`${mins} min de ${discName} registrados automaticamente!`, {
-      description: 'Clique em "Editar" para adicionar detalhes.',
+    toast.success(`${mins} min de ${discName} registrados!`, {
+      description: 'Toque em "Editar" para adicionar detalhes.',
       action: {
         label: 'Editar',
         onClick: () => {
@@ -141,7 +159,7 @@ export function StudyTimer() {
     });
 
     return record.id;
-  }, [selectedDiscipline, activityType, addStudyRecord, updateStreak, disciplines]);
+  }, [selectedDiscipline, selectedTopic, activityType, addStudyRecord, updateStreak, disciplines]);
 
   const stopTimer = useCallback(() => {
     if (elapsed < 10) {
@@ -151,14 +169,28 @@ export function StudyTimer() {
       return;
     }
     setIsRunning(false);
-    autoSaveRecord(elapsed);
+    createAndSaveRecord(elapsed);
     setElapsed(0);
     elapsedBeforePause.current = 0;
-  }, [elapsed, autoSaveRecord]);
+  }, [elapsed, createAndSaveRecord]);
+
+  const handleManualSave = useCallback(() => {
+    const totalSeconds = manualHours * 3600 + manualMinutes * 60;
+    if (totalSeconds < 60) {
+      toast.error('Informe pelo menos 1 minuto de estudo.');
+      return;
+    }
+    if (!selectedDiscipline) {
+      toast.error('Selecione uma matéria primeiro.');
+      return;
+    }
+    createAndSaveRecord(totalSeconds);
+    setManualHours(0);
+    setManualMinutes(0);
+  }, [manualHours, manualMinutes, selectedDiscipline, createAndSaveRecord]);
 
   const handleSave = useCallback(() => {
     if (!lastSavedRecordId) return;
-
     const { updateStudyRecord } = useAppStore.getState();
     updateStudyRecord(lastSavedRecordId, {
       correctAnswers: saveData.correctAnswers,
@@ -167,7 +199,6 @@ export function StudyTimer() {
       pagesRead: saveData.pagesRead,
       notes: saveData.notes,
     });
-
     toast.success('Detalhes da sessão atualizados!');
     setShowSaveDialog(false);
     setLastSavedRecordId(null);
@@ -197,6 +228,7 @@ export function StudyTimer() {
   if (disciplines.length === 0) return null;
 
   const currentDiscName = disciplines.find((d) => d.id === selectedDiscipline)?.name || '';
+  const isBusy = isRunning || elapsed > 0;
 
   return (
     <>
@@ -204,12 +236,12 @@ export function StudyTimer() {
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="fixed bottom-4 right-4 z-50"
+        className="fixed bottom-4 right-4 z-50 w-[min(340px,calc(100vw-2rem))]"
       >
         <div className="rounded-2xl border border-border/50 glass-strong shadow-elevated overflow-hidden">
           {/* Header - always visible */}
           <div
-            className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-2.5 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
             onClick={() => setMinimized(!minimized)}
           >
             <Clock className="h-4 w-4 text-primary shrink-0" />
@@ -217,13 +249,13 @@ export function StudyTimer() {
               {formatTimer(elapsed)}
             </span>
             {isRunning && (
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             )}
             {minimized && currentDiscName && (
-              <span className="text-xs text-muted-foreground truncate max-w-[100px]">{currentDiscName}</span>
+              <span className="text-xs text-muted-foreground truncate max-w-[120px]">{currentDiscName}</span>
             )}
-            <button className="ml-auto text-muted-foreground hover:text-foreground p-0.5">
-              {minimized ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
+            <button className="ml-auto text-muted-foreground hover:text-foreground p-1 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2">
+              {minimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
             </button>
           </div>
 
@@ -237,21 +269,82 @@ export function StudyTimer() {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="px-3 pb-3 space-y-3 border-t border-border pt-3">
-                  {/* Discipline select */}
-                  <Select value={selectedDiscipline} onValueChange={setSelectedDiscipline} disabled={isRunning}>
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Disciplina..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {disciplines.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
+                  {/* Mode toggle - Manual / Cronômetro */}
+                  {!isBusy && (
+                    <div className="flex rounded-xl border border-border overflow-hidden">
+                      <button
+                        onClick={() => setEntryMode('manual')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                          entryMode === 'manual'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted/30 text-muted-foreground hover:bg-muted/60'
+                        }`}
+                      >
+                        <PenLine className="h-4 w-4" />
+                        Manual
+                      </button>
+                      <button
+                        onClick={() => setEntryMode('cronometro')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
+                          entryMode === 'cronometro'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted/30 text-muted-foreground hover:bg-muted/60'
+                        }`}
+                      >
+                        <Timer className="h-4 w-4" />
+                        Cronômetro
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Matéria (Discipline) */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                      <BookOpen className="h-3.5 w-3.5" />
+                      Matéria
+                    </Label>
+                    <Select value={selectedDiscipline} onValueChange={setSelectedDiscipline} disabled={isBusy}>
+                      <SelectTrigger className="h-11 text-sm">
+                        <SelectValue placeholder="Escolha uma matéria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {disciplines.map((d) => (
+                          <SelectItem key={d.id} value={d.id} className="py-2.5">
+                            {d.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Conteúdo (Topic) */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                      <ChevronRight className="h-3.5 w-3.5" />
+                      Conteúdo
+                    </Label>
+                    <Select value={selectedTopic} onValueChange={setSelectedTopic} disabled={isBusy}>
+                      <SelectTrigger className="h-11 text-sm">
+                        <SelectValue placeholder={filteredTopics.length > 0 ? 'Escolha um conteúdo' : 'Nenhum conteúdo pendente'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredTopics.map((t) => (
+                          <SelectItem key={t.id} value={t.id} className="py-2.5">
+                            <span className="line-clamp-1">{t.text}</span>
+                          </SelectItem>
+                        ))}
+                        {filteredTopics.length === 0 && (
+                          <div className="px-3 py-2 text-xs text-muted-foreground">
+                            Cadastre tópicos no Edital
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   {/* Activity type */}
-                  <div className="flex gap-1">
+                  <div className="grid grid-cols-4 gap-1.5">
                     {([
                       { value: 'estudo', label: 'Estudo' },
                       { value: 'revisao', label: 'Revisão' },
@@ -260,36 +353,76 @@ export function StudyTimer() {
                     ] as const).map((opt) => (
                       <button
                         key={opt.value}
-                        onClick={() => !isRunning && setActivityType(opt.value)}
-                        disabled={isRunning}
-                        className={`flex-1 py-1 rounded text-[10px] font-medium transition-colors ${
+                        onClick={() => !isBusy && setActivityType(opt.value)}
+                        disabled={isBusy}
+                        className={`py-2 rounded-lg text-xs font-medium transition-colors min-h-[40px] ${
                           activityType === opt.value
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        } ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        } ${isBusy ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {opt.label}
                       </button>
                     ))}
                   </div>
 
+                  {/* Manual duration entry */}
+                  {entryMode === 'manual' && !isBusy && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground font-medium">Duração do estudo</Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={23}
+                            value={manualHours}
+                            onChange={(e) => setManualHours(Math.max(0, parseInt(e.target.value) || 0))}
+                            className="h-11 text-center text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground shrink-0">h</span>
+                        </div>
+                        <div className="flex-1 flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={59}
+                            value={manualMinutes}
+                            onChange={(e) => setManualMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                            className="h-11 text-center text-sm"
+                          />
+                          <span className="text-xs text-muted-foreground shrink-0">min</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Controls */}
-                  <div className="flex items-center gap-2 justify-center">
-                    {!isRunning ? (
-                      <Button size="sm" className="gap-1.5 flex-1" onClick={startTimer}>
-                        <Play className="h-3.5 w-3.5" />
-                        {elapsed > 0 ? 'Continuar' : 'Iniciar'}
-                      </Button>
+                  <div className="flex items-center gap-2">
+                    {entryMode === 'cronometro' ? (
+                      <>
+                        {!isRunning ? (
+                          <Button size="lg" className="gap-2 flex-1 h-12 text-sm" onClick={startTimer}>
+                            <Play className="h-4 w-4" />
+                            {elapsed > 0 ? 'Continuar' : 'Iniciar'}
+                          </Button>
+                        ) : (
+                          <Button size="lg" variant="outline" className="gap-2 flex-1 h-12 text-sm" onClick={pauseTimer}>
+                            <Pause className="h-4 w-4" />
+                            Pausar
+                          </Button>
+                        )}
+                        {elapsed > 0 && (
+                          <Button size="lg" variant="destructive" className="gap-2 h-12 text-sm" onClick={stopTimer}>
+                            <Square className="h-4 w-4" />
+                            Parar
+                          </Button>
+                        )}
+                      </>
                     ) : (
-                      <Button size="sm" variant="outline" className="gap-1.5 flex-1" onClick={pauseTimer}>
-                        <Pause className="h-3.5 w-3.5" />
-                        Pausar
-                      </Button>
-                    )}
-                    {elapsed > 0 && (
-                      <Button size="sm" variant="destructive" className="gap-1.5" onClick={stopTimer}>
-                        <Square className="h-3.5 w-3.5" />
-                        Parar
+                      <Button size="lg" className="gap-2 flex-1 h-12 text-sm" onClick={handleManualSave}>
+                        <Save className="h-4 w-4" />
+                        Registrar Atividade
                       </Button>
                     )}
                   </div>
@@ -300,7 +433,7 @@ export function StudyTimer() {
         </div>
       </motion.div>
 
-      {/* Save Dialog */}
+      {/* Edit Dialog */}
       <Dialog open={showSaveDialog} onOpenChange={(v) => { if (!v) handleDiscard(); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -316,59 +449,59 @@ export function StudyTimer() {
           <div className="space-y-4">
             {(activityType === 'exercicios' || activityType === 'estudo') && (
               <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label className="text-xs">Acertos</Label>
                   <Input
                     type="number"
                     min={0}
                     value={saveData.correctAnswers}
                     onChange={(e) => setSaveData((p) => ({ ...p, correctAnswers: parseInt(e.target.value) || 0 }))}
-                    className="h-8 text-sm"
+                    className="h-11 text-sm"
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label className="text-xs">Erros</Label>
                   <Input
                     type="number"
                     min={0}
                     value={saveData.wrongAnswers}
                     onChange={(e) => setSaveData((p) => ({ ...p, wrongAnswers: parseInt(e.target.value) || 0 }))}
-                    className="h-8 text-sm"
+                    className="h-11 text-sm"
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <Label className="text-xs">Em branco</Label>
                   <Input
                     type="number"
                     min={0}
                     value={saveData.blankAnswers}
                     onChange={(e) => setSaveData((p) => ({ ...p, blankAnswers: parseInt(e.target.value) || 0 }))}
-                    className="h-8 text-sm"
+                    className="h-11 text-sm"
                   />
                 </div>
               </div>
             )}
 
             {(activityType === 'leitura' || activityType === 'estudo') && (
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <Label className="text-xs">Páginas lidas</Label>
                 <Input
                   type="number"
                   min={0}
                   value={saveData.pagesRead}
                   onChange={(e) => setSaveData((p) => ({ ...p, pagesRead: parseInt(e.target.value) || 0 }))}
-                  className="h-8 text-sm"
+                  className="h-11 text-sm"
                 />
               </div>
             )}
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <Label className="text-xs">Anotações (opcional)</Label>
               <Textarea
                 value={saveData.notes}
                 onChange={(e) => setSaveData((p) => ({ ...p, notes: e.target.value }))}
                 placeholder="O que você estudou..."
-                className="min-h-[60px] text-sm"
+                className="min-h-[70px] text-sm"
               />
             </div>
           </div>
