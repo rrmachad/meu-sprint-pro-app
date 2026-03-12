@@ -50,6 +50,8 @@ export function StudyTimer() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showNewDiscipline, setShowNewDiscipline] = useState(false);
   const [newDisciplineName, setNewDisciplineName] = useState('');
+  const [newTopics, setNewTopics] = useState<string[]>([]);
+  const [newTopicInput, setNewTopicInput] = useState('');
   const [lastSavedRecordId, setLastSavedRecordId] = useState<string | null>(null);
   const [editElapsed, setEditElapsed] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
