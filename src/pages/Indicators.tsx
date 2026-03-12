@@ -340,11 +340,24 @@ export default function Indicators() {
       ? `${format(start, 'dd/MM/yyyy')} a ${format(end, 'dd/MM/yyyy')}`
       : format(start, "MMMM 'de' yyyy", { locale: ptBR });
 
-    const totalSeconds = allStudyRecords
-      .filter((r) => r.date >= format(start, 'yyyy-MM-dd') && r.date <= format(end, 'yyyy-MM-dd'))
-      .reduce((a, r) => a + r.durationSeconds, 0);
+    const startStr = format(start, 'yyyy-MM-dd');
+    const endStr = format(end, 'yyyy-MM-dd');
 
-    return { data, discNames: topDiscs.map((d) => d.name), periodLabel, totalSeconds };
+    const periodRecords = allStudyRecords.filter((r) => r.date >= startStr && r.date <= endStr);
+    const totalSeconds = periodRecords.reduce((a, r) => a + r.durationSeconds, 0);
+
+    // Pie data: hours per discipline in this period
+    const discHoursMap: Record<string, number> = {};
+    periodRecords.forEach((r) => {
+      const disc = disciplines.find((d) => d.id === r.disciplineId);
+      const name = disc?.name || 'Outro';
+      discHoursMap[name] = (discHoursMap[name] || 0) + r.durationSeconds / 3600;
+    });
+    const pieData = Object.entries(discHoursMap)
+      .map(([name, hours], i) => ({ name, value: Math.round(hours * 100) / 100, color: COLORS[i % COLORS.length] }))
+      .sort((a, b) => b.value - a.value);
+
+    return { data, discNames: topDiscs.map((d) => d.name), periodLabel, totalSeconds, pieData };
   }, [allStudyRecords, disciplines, timelineMode, timelineOffset]);
 
   const formatDuration = (seconds: number) => {
@@ -895,6 +908,53 @@ export default function Indicators() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Pie Chart - Tempo de Estudo */}
+            {timelineData.pieData.length > 0 && (
+              <Card className="glass border-border/30" data-pdf-chart="Tempo de Estudo por Matéria">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <Clock className="h-4 w-4 text-electric-blue" />
+                    Tempo de Estudo — {timelineData.periodLabel}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-4 items-center">
+                    <ResponsiveContainer width="100%" height={280}>
+                      <PieChart>
+                        <Pie
+                          data={timelineData.pieData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={110}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name.length > 12 ? name.slice(0, 10) + '…' : name} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}
+                        >
+                          {timelineData.pieData.map((d, i) => (
+                            <Cell key={i} fill={d.color} />
+                          ))}
+                        </Pie>
+                        <ReTooltip contentStyle={tooltipStyle} formatter={(value: number) => `${value.toFixed(1)}h`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="space-y-1.5">
+                      <p className="text-lg font-extrabold">{formatDuration(timelineData.totalSeconds)}</p>
+                      <p className="text-[10px] text-muted-foreground mb-3">Tempo total no período</p>
+                      {timelineData.pieData.map((d, i) => (
+                        <div key={d.name} className="flex items-center justify-between gap-2 text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                            <span className="truncate text-muted-foreground">{d.name}</span>
+                          </div>
+                          <span className="font-mono font-medium text-foreground shrink-0">{d.value.toFixed(1)}h</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* ── Radar / Visão Geral ── */}
