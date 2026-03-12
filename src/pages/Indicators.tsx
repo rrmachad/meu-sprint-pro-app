@@ -1,25 +1,36 @@
 import { useMemo, useCallback, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3, TrendingUp, Clock, CheckCircle2, BookOpen,
   Target, Brain, CalendarDays, Download, Timer, Crosshair, Activity,
+  History, Trash2, Pencil, ChevronLeft, ChevronRight, X, Save,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { useCountUp } from '@/hooks/useCountUp';
 import { toast } from 'sonner';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell,
+  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   AreaChart, Area,
 } from 'recharts';
-import { format, subDays, subMonths, parseISO, startOfWeek, endOfWeek, isWithinInterval, isAfter } from 'date-fns';
+import { format, subDays, subMonths, parseISO, startOfWeek, endOfWeek, isWithinInterval, isAfter, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, eachDayOfInterval, eachWeekOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useInView } from 'framer-motion';
+import type { StudyRecord, ActivityType } from '@/types';
 
 type PeriodFilter = '7d' | '30d' | '90d' | 'all';
 const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
@@ -109,8 +120,18 @@ export default function Indicators() {
   const topics = useAppStore((s) => s.topics);
   const simulados = useAppStore((s) => s.simulados);
   const goals = useAppStore((s) => s.settings.goals);
+  const { updateStudyRecord, removeStudyRecord } = useAppStore();
   const [period, setPeriod] = useState<PeriodFilter>('all');
   const chartsRef = useRef<HTMLDivElement>(null);
+
+  // ─── Histórico state ───
+  const [historyDisciplineFilter, setHistoryDisciplineFilter] = useState<string>('all');
+  const [editingRecord, setEditingRecord] = useState<StudyRecord | null>(null);
+  const [editForm, setEditForm] = useState({ hours: 0, minutes: 0, correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '', activityType: 'estudo' as ActivityType });
+
+  // ─── Linha do Tempo state ───
+  const [timelineMode, setTimelineMode] = useState<'semana' | 'mes'>('semana');
+  const [timelineOffset, setTimelineOffset] = useState(0);
 
   const studyRecords = useMemo(() => {
     if (period === 'all') return allStudyRecords;
@@ -223,6 +244,117 @@ export default function Indicators() {
       color: COLORS[i % COLORS.length],
     }));
   }, [studyRecords]);
+
+  // ─── Histórico: records grouped by date ───
+  const historyGroups = useMemo(() => {
+    const filtered = historyDisciplineFilter === 'all'
+      ? studyRecords
+      : studyRecords.filter((r) => r.disciplineId === historyDisciplineFilter);
+    const grouped: Record<string, StudyRecord[]> = {};
+    filtered.forEach((r) => {
+      if (!grouped[r.date]) grouped[r.date] = [];
+      grouped[r.date].push(r);
+    });
+    return Object.entries(grouped)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, records]) => ({
+        date,
+        records,
+        totalSeconds: records.reduce((a, r) => a + r.durationSeconds, 0),
+      }));
+  }, [studyRecords, historyDisciplineFilter]);
+
+  const openEditRecord = useCallback((record: StudyRecord) => {
+    setEditingRecord(record);
+    setEditForm({
+      hours: Math.floor(record.durationSeconds / 3600),
+      minutes: Math.floor((record.durationSeconds % 3600) / 60),
+      correctAnswers: record.correctAnswers,
+      wrongAnswers: record.wrongAnswers,
+      blankAnswers: record.blankAnswers,
+      pagesRead: record.pagesRead,
+      notes: record.notes,
+      activityType: record.activityType,
+    });
+  }, []);
+
+  const saveEditRecord = useCallback(() => {
+    if (!editingRecord) return;
+    updateStudyRecord(editingRecord.id, {
+      durationSeconds: editForm.hours * 3600 + editForm.minutes * 60,
+      correctAnswers: editForm.correctAnswers,
+      wrongAnswers: editForm.wrongAnswers,
+      blankAnswers: editForm.blankAnswers,
+      pagesRead: editForm.pagesRead,
+      notes: editForm.notes,
+      activityType: editForm.activityType,
+    });
+    toast.success('Registro atualizado!');
+    setEditingRecord(null);
+  }, [editingRecord, editForm, updateStudyRecord]);
+
+  const deleteRecord = useCallback((id: string) => {
+    removeStudyRecord(id);
+    toast.success('Registro excluído.');
+  }, [removeStudyRecord]);
+
+  // ─── Linha do Tempo: stacked bar data ───
+  const timelineData = useMemo(() => {
+    const today = new Date();
+    let start: Date, end: Date, days: Date[];
+
+    if (timelineMode === 'semana') {
+      const baseStart = startOfWeek(today, { weekStartsOn: 1 });
+      start = subWeeks(baseStart, -timelineOffset);
+      end = endOfWeek(start, { weekStartsOn: 1 });
+      days = eachDayOfInterval({ start, end });
+    } else {
+      const baseStart = startOfMonth(today);
+      start = addMonths(baseStart, timelineOffset);
+      end = endOfMonth(start);
+      const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 });
+      days = weeks;
+    }
+
+    const topDiscs = disciplines.slice(0, 8);
+
+    const data = days.map((day) => {
+      const dayStr = format(day, 'yyyy-MM-dd');
+      const label = timelineMode === 'semana'
+        ? format(day, 'EEE', { locale: ptBR })
+        : format(day, 'dd/MM');
+
+      const entry: Record<string, any> = { label, date: dayStr };
+      topDiscs.forEach((disc) => {
+        const dayRecords = allStudyRecords.filter((r) => {
+          if (timelineMode === 'semana') return r.date === dayStr && r.disciplineId === disc.id;
+          const weekEnd = endOfWeek(day, { weekStartsOn: 1 });
+          return r.disciplineId === disc.id && r.date >= dayStr && r.date <= format(weekEnd, 'yyyy-MM-dd');
+        });
+        entry[disc.name] = Math.round(dayRecords.reduce((a, r) => a + r.durationSeconds / 3600, 0) * 10) / 10;
+      });
+      return entry;
+    });
+
+    const periodLabel = timelineMode === 'semana'
+      ? `${format(start, 'dd/MM/yyyy')} a ${format(end, 'dd/MM/yyyy')}`
+      : format(start, "MMMM 'de' yyyy", { locale: ptBR });
+
+    const totalSeconds = allStudyRecords
+      .filter((r) => r.date >= format(start, 'yyyy-MM-dd') && r.date <= format(end, 'yyyy-MM-dd'))
+      .reduce((a, r) => a + r.durationSeconds, 0);
+
+    return { data, discNames: topDiscs.map((d) => d.name), periodLabel, totalSeconds };
+  }, [allStudyRecords, disciplines, timelineMode, timelineOffset]);
+
+  const formatDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
 
   const exportPdf = useCallback(async () => {
     try {
@@ -460,9 +592,11 @@ export default function Indicators() {
       {/* ─── Tabs ─── */}
       <motion.div variants={itemVariants} ref={chartsRef}>
         <Tabs defaultValue="evolucao" className="space-y-4">
-          <TabsList className="glass border-border/30">
+          <TabsList className="glass border-border/30 flex-wrap h-auto">
             <TabsTrigger value="evolucao">Evolução</TabsTrigger>
             <TabsTrigger value="disciplinas">Disciplinas</TabsTrigger>
+            <TabsTrigger value="historico">Histórico</TabsTrigger>
+            <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
             <TabsTrigger value="radar">Visão Geral</TabsTrigger>
           </TabsList>
 
@@ -600,6 +734,169 @@ export default function Indicators() {
             </div>
           </TabsContent>
 
+          {/* ── Histórico ── */}
+          <TabsContent value="historico" className="space-y-4">
+            <Card className="glass border-border/30">
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <History className="h-4 w-4 text-electric-blue" />
+                    Histórico de Estudos
+                  </CardTitle>
+                  <Select value={historyDisciplineFilter} onValueChange={setHistoryDisciplineFilter}>
+                    <SelectTrigger className="w-[200px] h-10 rounded-xl border-border/40">
+                      <SelectValue placeholder="Todas Matérias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas Matérias</SelectItem>
+                      {disciplines.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {historyGroups.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum registro encontrado.</p>
+                ) : (
+                  historyGroups.map((group) => (
+                    <div key={group.date} className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-foreground">
+                          {format(parseISO(group.date), "dd/MM/yyyy", { locale: ptBR })}
+                        </span>
+                        <Badge variant="secondary" className="text-xs font-mono bg-primary/10 text-primary border-0">
+                          {formatDuration(group.totalSeconds)}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">
+                          {group.records.length} {group.records.length === 1 ? 'atividade' : 'atividades'}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 pl-1">
+                        {group.records.map((record) => {
+                          const disc = disciplines.find((d) => d.id === record.disciplineId);
+                          const discIndex = disciplines.indexOf(disc!);
+                          const color = COLORS[discIndex % COLORS.length] || COLORS[0];
+                          const actLabel = record.activityType === 'estudo' ? 'Estudo' : record.activityType === 'revisao' ? 'Revisão' : record.activityType === 'exercicios' ? 'Exercícios' : 'Leitura';
+                          return (
+                            <div
+                              key={record.id}
+                              className="flex items-center gap-3 rounded-xl border border-border/30 bg-muted/30 px-3 py-2.5 group hover:border-primary/30 transition-colors"
+                            >
+                              <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: color }} />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-medium truncate block">
+                                  {disc?.name || 'Desconhecida'}
+                                  {record.topicsCompleted.length > 0 && (
+                                    <span className="text-muted-foreground font-normal"> — {record.topicsCompleted[0]}</span>
+                                  )}
+                                </span>
+                                <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
+                                  <span>{actLabel}</span>
+                                  {record.correctAnswers + record.wrongAnswers > 0 && (
+                                    <span>{record.correctAnswers}/{record.correctAnswers + record.wrongAnswers + record.blankAnswers} questões</span>
+                                  )}
+                                  {record.pagesRead > 0 && <span>{record.pagesRead} págs</span>}
+                                </div>
+                              </div>
+                              <span className="text-xs font-mono text-muted-foreground shrink-0">
+                                {formatDuration(record.durationSeconds)}
+                              </span>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary"
+                                  onClick={() => openEditRecord(record)}
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 rounded-lg hover:bg-destructive/10 hover:text-destructive"
+                                  onClick={() => deleteRecord(record.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Linha do Tempo ── */}
+          <TabsContent value="timeline" className="space-y-4">
+            <Card className="glass border-border/30" data-pdf-chart="Linha do Tempo">
+              <CardHeader className="pb-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <BarChart3 className="h-4 w-4 text-sporty-orange" />
+                    Linha do Tempo
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center glass rounded-xl p-0.5 gap-0.5 border-border/30">
+                      {(['semana', 'mes'] as const).map((m) => (
+                        <button
+                          key={m}
+                          onClick={() => { setTimelineMode(m); setTimelineOffset(0); }}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                            timelineMode === m ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {m === 'semana' ? 'Semana' : 'Mês'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between mb-4">
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => setTimelineOffset((o) => o - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="text-center">
+                    <p className="text-sm font-bold">{timelineData.periodLabel}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{formatDuration(timelineData.totalSeconds)}</p>
+                  </div>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => setTimelineOffset((o) => o + 1)} disabled={timelineOffset >= 0}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={timelineData.data}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <ReTooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                    {timelineData.discNames.map((name, i) => (
+                      <Bar key={name} dataKey={name} stackId="stack" fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+                {timelineData.discNames.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {timelineData.discNames.map((name, i) => (
+                      <div key={name} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <div className="h-2 w-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                        {name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* ── Radar / Visão Geral ── */}
           <TabsContent value="radar" className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
@@ -676,6 +973,73 @@ export default function Indicators() {
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      {/* ─── Edit Record Dialog ─── */}
+      <Dialog open={!!editingRecord} onOpenChange={(open) => !open && setEditingRecord(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Atividade</DialogTitle>
+            <DialogDescription>
+              {editingRecord && disciplines.find((d) => d.id === editingRecord.disciplineId)?.name} — {editingRecord && format(parseISO(editingRecord.date), 'dd/MM/yyyy')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Horas</Label>
+                <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.hours} onChange={(e) => setEditForm((f) => ({ ...f, hours: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Minutos</Label>
+                <Input type="number" min={0} max={59} className="h-11 rounded-xl" value={editForm.minutes} onChange={(e) => setEditForm((f) => ({ ...f, minutes: parseInt(e.target.value) || 0 }))} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Tipo de Atividade</Label>
+              <Select value={editForm.activityType} onValueChange={(v) => setEditForm((f) => ({ ...f, activityType: v as ActivityType }))}>
+                <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="estudo">Estudo</SelectItem>
+                  <SelectItem value="revisao">Revisão</SelectItem>
+                  <SelectItem value="exercicios">Exercícios</SelectItem>
+                  <SelectItem value="leitura">Leitura</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Acertos</Label>
+                <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.correctAnswers} onChange={(e) => setEditForm((f) => ({ ...f, correctAnswers: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Erros</Label>
+                <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.wrongAnswers} onChange={(e) => setEditForm((f) => ({ ...f, wrongAnswers: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Em branco</Label>
+                <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.blankAnswers} onChange={(e) => setEditForm((f) => ({ ...f, blankAnswers: parseInt(e.target.value) || 0 }))} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Páginas lidas</Label>
+              <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.pagesRead} onChange={(e) => setEditForm((f) => ({ ...f, pagesRead: parseInt(e.target.value) || 0 }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Anotações</Label>
+              <Textarea className="rounded-xl min-h-[80px]" placeholder="Faça suas anotações aqui..." value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="destructive" size="sm" className="rounded-xl" onClick={() => { if (editingRecord) { deleteRecord(editingRecord.id); setEditingRecord(null); } }}>
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+            </Button>
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setEditingRecord(null)}>Cancelar</Button>
+            <Button size="sm" className="rounded-xl" onClick={saveEditRecord}>
+              <Save className="h-3.5 w-3.5 mr-1" /> Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
