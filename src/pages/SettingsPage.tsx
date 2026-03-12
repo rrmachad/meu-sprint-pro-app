@@ -659,6 +659,31 @@ function GoalsTab() {
                 ))}
               </div>
             </div>
+            <Separator className="bg-border/30" />
+            <div className="space-y-2">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Horário dos lembretes de revisão por email</Label>
+              <Select
+                value={String(settings.revisionReminderHour ?? 7)}
+                onValueChange={(v) => {
+                  updateSettings({ revisionReminderHour: Number(v) });
+                  toast.success(`Horário de lembrete ajustado para ${v}:00!`);
+                }}
+              >
+                <SelectTrigger className="w-32 glass border-border/30">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 24 }, (_, h) => (
+                    <SelectItem key={h} value={String(h)}>
+                      {String(h).padStart(2, '0')}:00
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Horário (UTC) em que você receberá o email diário com revisões pendentes.
+              </p>
+            </div>
             <p className="text-xs text-muted-foreground">
               Os lembretes serão enviados como notificações do navegador e toasts na aplicação, com base nos blocos de estudo do ciclo ativo.
             </p>

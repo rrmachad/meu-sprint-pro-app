@@ -14,7 +14,9 @@ Deno.serve(async (_req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-  const today = new Date().toISOString().split('T')[0]
+  const now = new Date()
+  const currentHourUTC = now.getUTCHours()
+  const today = now.toISOString().split('T')[0]
 
   // Get all pending revisions for today grouped by user
   const { data: pendingRevisions, error: revError } = await supabase
