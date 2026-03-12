@@ -22,6 +22,7 @@ const defaultSettings: AppSettings = {
   moduleHints: {},
   notificationsEnabled: false,
   reminderMinutesBefore: 5,
+  revisionReminderHour: 7,
 };
 
 interface AppActions {
