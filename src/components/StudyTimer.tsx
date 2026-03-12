@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, Square, Clock, BookOpen, Minimize2, Maximize2, Save,
-  Timer, PenLine, ChevronRight,
+  Play, Pause, Square, Clock, BookOpen, Save,
+  Timer, PenLine, ChevronUp, ChevronDown, ChevronRight, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -46,7 +46,7 @@ export function StudyTimer() {
   const [selectedDiscipline, setSelectedDiscipline] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('');
   const [activityType, setActivityType] = useState<ActivityType>('estudo');
-  const [minimized, setMinimized] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [lastSavedRecordId, setLastSavedRecordId] = useState<string | null>(null);
   const [editElapsed, setEditElapsed] = useState(0);
@@ -64,13 +64,11 @@ export function StudyTimer() {
   const startTimeRef = useRef<number>(0);
   const elapsedBeforePause = useRef<number>(0);
 
-  // Filter topics by selected discipline
   const filteredTopics = useMemo(() => {
     if (!selectedDiscipline) return [];
     return topics.filter((t) => t.disciplineId === selectedDiscipline && !t.completed);
   }, [topics, selectedDiscipline]);
 
-  // Auto-select discipline from active cycle's next block
   useEffect(() => {
     if (!selectedDiscipline && disciplines.length > 0) {
       const activeCycle = cycles.find((c) => c.active);
@@ -82,7 +80,6 @@ export function StudyTimer() {
     }
   }, [disciplines, cycles, selectedDiscipline]);
 
-  // Reset topic when discipline changes
   useEffect(() => {
     setSelectedTopic('');
   }, [selectedDiscipline]);
@@ -94,7 +91,7 @@ export function StudyTimer() {
     }
     startTimeRef.current = Date.now();
     setIsRunning(true);
-    setMinimized(false);
+    setExpanded(true);
   }, [selectedDiscipline]);
 
   const pauseTimer = useCallback(() => {
@@ -123,7 +120,6 @@ export function StudyTimer() {
     addStudyRecord(record);
     updateStreak(today);
 
-    // Auto-generate revisions
     const revisionSettings = useAppStore.getState().settings.revision;
     if (revisionSettings.enabled) {
       const markDays: Record<string, number> = { '24h': 1, '7d': 7, '30d': 30, '60d': 60 };
@@ -211,7 +207,6 @@ export function StudyTimer() {
     setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
   }, []);
 
-  // Timer tick
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
@@ -232,210 +227,260 @@ export function StudyTimer() {
 
   return (
     <>
-      {/* Floating Timer */}
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="fixed bottom-4 right-4 z-50 w-[min(340px,calc(100vw-2rem))]"
-      >
-        <div className="rounded-2xl border border-border/50 glass-strong shadow-elevated overflow-hidden">
-          {/* Header - always visible */}
-          <div
-            className="flex items-center gap-2.5 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setMinimized(!minimized)}
-          >
-            <Clock className="h-4 w-4 text-primary shrink-0" />
-            <span className={`font-mono text-sm font-bold ${isRunning ? 'text-primary' : 'text-foreground'}`}>
-              {formatTimer(elapsed)}
-            </span>
-            {isRunning && (
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            )}
-            {minimized && currentDiscName && (
-              <span className="text-xs text-muted-foreground truncate max-w-[120px]">{currentDiscName}</span>
-            )}
-            <button className="ml-auto text-muted-foreground hover:text-foreground p-1 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2">
-              {minimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
-            </button>
-          </div>
-
-          {/* Expanded */}
-          <AnimatePresence>
-            {!minimized && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
-                  {/* Mode toggle - Manual / Cronômetro */}
-                  {!isBusy && (
-                    <div className="flex rounded-xl border border-border overflow-hidden">
-                      <button
-                        onClick={() => setEntryMode('manual')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
-                          entryMode === 'manual'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted/30 text-muted-foreground hover:bg-muted/60'
-                        }`}
-                      >
-                        <PenLine className="h-4 w-4" />
-                        Manual
-                      </button>
-                      <button
-                        onClick={() => setEntryMode('cronometro')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
-                          entryMode === 'cronometro'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted/30 text-muted-foreground hover:bg-muted/60'
-                        }`}
-                      >
-                        <Timer className="h-4 w-4" />
-                        Cronômetro
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Matéria (Discipline) */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                      <BookOpen className="h-3.5 w-3.5" />
-                      Matéria
-                    </Label>
-                    <Select value={selectedDiscipline} onValueChange={setSelectedDiscipline} disabled={isBusy}>
-                      <SelectTrigger className="h-11 text-sm">
-                        <SelectValue placeholder="Escolha uma matéria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {disciplines.map((d) => (
-                          <SelectItem key={d.id} value={d.id} className="py-2.5">
-                            {d.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+      {/* ─── Fixed Bottom Bar ─── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        {/* Expanded Panel */}
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="overflow-hidden border-t border-border/50 glass-strong backdrop-blur-xl"
+            >
+              <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+                {/* Mode toggle */}
+                {!isBusy && (
+                  <div className="flex rounded-xl border border-border overflow-hidden max-w-xs">
+                    <button
+                      onClick={() => setEntryMode('manual')}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium transition-colors ${
+                        entryMode === 'manual'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted/30 text-muted-foreground hover:bg-muted/60'
+                      }`}
+                    >
+                      <PenLine className="h-3.5 w-3.5" />
+                      Manual
+                    </button>
+                    <button
+                      onClick={() => setEntryMode('cronometro')}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-medium transition-colors ${
+                        entryMode === 'cronometro'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted/30 text-muted-foreground hover:bg-muted/60'
+                      }`}
+                    >
+                      <Timer className="h-3.5 w-3.5" />
+                      Cronômetro
+                    </button>
                   </div>
+                )}
 
-                  {/* Conteúdo (Topic) */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
-                      <ChevronRight className="h-3.5 w-3.5" />
-                      Conteúdo
-                    </Label>
-                    <Select value={selectedTopic} onValueChange={setSelectedTopic} disabled={isBusy}>
-                      <SelectTrigger className="h-11 text-sm">
-                        <SelectValue placeholder={filteredTopics.length > 0 ? 'Escolha um conteúdo' : 'Nenhum conteúdo pendente'} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredTopics.map((t) => (
-                          <SelectItem key={t.id} value={t.id} className="py-2.5">
-                            <span className="line-clamp-1">{t.text}</span>
-                          </SelectItem>
-                        ))}
-                        {filteredTopics.length === 0 && (
-                          <div className="px-3 py-2 text-xs text-muted-foreground">
-                            Cadastre tópicos no Edital
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                {/* Timer display when running */}
+                {isBusy && (
+                  <div className="flex items-center justify-center gap-3">
+                    <span className={`font-mono text-3xl font-extrabold tracking-tight ${isRunning ? 'text-primary' : 'text-foreground'}`}>
+                      {formatTimer(elapsed)}
+                    </span>
+                    {isRunning && <span className="h-3 w-3 rounded-full bg-primary animate-pulse" />}
                   </div>
+                )}
 
-                  {/* Activity type */}
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {([
-                      { value: 'estudo', label: 'Estudo' },
-                      { value: 'revisao', label: 'Revisão' },
-                      { value: 'exercicios', label: 'Exercícios' },
-                      { value: 'leitura', label: 'Leitura' },
-                    ] as const).map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => !isBusy && setActivityType(opt.value)}
-                        disabled={isBusy}
-                        className={`py-2 rounded-lg text-xs font-medium transition-colors min-h-[40px] ${
-                          activityType === opt.value
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        } ${isBusy ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
+                {/* Activity type */}
+                <div className="grid grid-cols-4 gap-1.5 max-w-md">
+                  {([
+                    { value: 'estudo', label: 'Estudo' },
+                    { value: 'revisao', label: 'Revisão' },
+                    { value: 'exercicios', label: 'Exercícios' },
+                    { value: 'leitura', label: 'Leitura' },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => !isBusy && setActivityType(opt.value)}
+                      disabled={isBusy}
+                      className={`py-2 rounded-lg text-xs font-medium transition-colors min-h-[40px] ${
+                        activityType === opt.value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      } ${isBusy ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
 
-                  {/* Manual duration entry */}
-                  {entryMode === 'manual' && !isBusy && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground font-medium">Duração do estudo</Label>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 flex items-center gap-1.5">
-                          <Input
-                            type="number"
-                            min={0}
-                            max={23}
-                            value={manualHours}
-                            onChange={(e) => setManualHours(Math.max(0, parseInt(e.target.value) || 0))}
-                            className="h-11 text-center text-sm"
-                          />
-                          <span className="text-xs text-muted-foreground shrink-0">h</span>
+                {/* Conteúdo (Topic) */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1">
+                    <ChevronRight className="h-3.5 w-3.5" />
+                    Conteúdo
+                  </Label>
+                  <Select value={selectedTopic} onValueChange={setSelectedTopic} disabled={isBusy}>
+                    <SelectTrigger className="h-11 text-sm rounded-xl border-border/50">
+                      <SelectValue placeholder={filteredTopics.length > 0 ? 'Escolha um conteúdo' : 'Nenhum conteúdo pendente'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredTopics.map((t) => (
+                        <SelectItem key={t.id} value={t.id} className="py-2.5">
+                          <span className="line-clamp-1">{t.text}</span>
+                        </SelectItem>
+                      ))}
+                      {filteredTopics.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-muted-foreground">
+                          Cadastre tópicos no Raio-X
                         </div>
-                        <div className="flex-1 flex items-center gap-1.5">
-                          <Input
-                            type="number"
-                            min={0}
-                            max={59}
-                            value={manualMinutes}
-                            onChange={(e) => setManualMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
-                            className="h-11 text-center text-sm"
-                          />
-                          <span className="text-xs text-muted-foreground shrink-0">min</span>
-                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Manual duration entry */}
+                {entryMode === 'manual' && !isBusy && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground font-medium">Duração</Label>
+                    <div className="flex items-center gap-2 max-w-xs">
+                      <div className="flex-1 flex items-center gap-1.5">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={23}
+                          value={manualHours}
+                          onChange={(e) => setManualHours(Math.max(0, parseInt(e.target.value) || 0))}
+                          className="h-11 text-center text-sm rounded-xl"
+                        />
+                        <span className="text-xs text-muted-foreground shrink-0">h</span>
+                      </div>
+                      <div className="flex-1 flex items-center gap-1.5">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={59}
+                          value={manualMinutes}
+                          onChange={(e) => setManualMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                          className="h-11 text-center text-sm rounded-xl"
+                        />
+                        <span className="text-xs text-muted-foreground shrink-0">min</span>
                       </div>
                     </div>
-                  )}
-
-                  {/* Controls */}
-                  <div className="flex items-center gap-2">
-                    {entryMode === 'cronometro' ? (
-                      <>
-                        {!isRunning ? (
-                          <Button size="lg" className="gap-2 flex-1 h-12 text-sm" onClick={startTimer}>
-                            <Play className="h-4 w-4" />
-                            {elapsed > 0 ? 'Continuar' : 'Iniciar'}
-                          </Button>
-                        ) : (
-                          <Button size="lg" variant="outline" className="gap-2 flex-1 h-12 text-sm" onClick={pauseTimer}>
-                            <Pause className="h-4 w-4" />
-                            Pausar
-                          </Button>
-                        )}
-                        {elapsed > 0 && (
-                          <Button size="lg" variant="destructive" className="gap-2 h-12 text-sm" onClick={stopTimer}>
-                            <Square className="h-4 w-4" />
-                            Parar
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <Button size="lg" className="gap-2 flex-1 h-12 text-sm" onClick={handleManualSave}>
-                        <Save className="h-4 w-4" />
-                        Registrar Atividade
-                      </Button>
-                    )}
                   </div>
+                )}
+
+                {/* Controls */}
+                <div className="flex items-center gap-2 max-w-md">
+                  {entryMode === 'cronometro' ? (
+                    <>
+                      {!isRunning ? (
+                        <Button size="lg" className="gap-2 flex-1 h-12 text-sm rounded-xl" onClick={startTimer}>
+                          <Play className="h-4 w-4" />
+                          {elapsed > 0 ? 'Continuar' : 'Iniciar Atividade'}
+                        </Button>
+                      ) : (
+                        <Button size="lg" variant="outline" className="gap-2 flex-1 h-12 text-sm rounded-xl" onClick={pauseTimer}>
+                          <Pause className="h-4 w-4" />
+                          Pausar
+                        </Button>
+                      )}
+                      {elapsed > 0 && (
+                        <Button size="lg" variant="destructive" className="gap-2 h-12 text-sm rounded-xl" onClick={stopTimer}>
+                          <Square className="h-4 w-4" />
+                          Parar
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <Button size="lg" className="gap-2 flex-1 h-12 text-sm rounded-xl" onClick={handleManualSave}>
+                      <Save className="h-4 w-4" />
+                      Registrar Atividade
+                    </Button>
+                  )}
                 </div>
-              </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ─── Bottom Bar (always visible) ─── */}
+        <div className="border-t border-border/50 bg-background/95 backdrop-blur-xl">
+          <div className="max-w-4xl mx-auto flex items-center gap-2 px-3 py-2">
+            {/* Discipline Select */}
+            <Select value={selectedDiscipline} onValueChange={setSelectedDiscipline} disabled={isBusy}>
+              <SelectTrigger className="h-10 text-xs rounded-xl border-border/50 flex-1 min-w-0">
+                <SelectValue placeholder="Escolha uma matéria" />
+              </SelectTrigger>
+              <SelectContent>
+                {disciplines.map((d) => (
+                  <SelectItem key={d.id} value={d.id} className="py-2">
+                    {d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Content Select (hidden on very small screens when timer running) */}
+            <Select value={selectedTopic} onValueChange={setSelectedTopic} disabled={isBusy}>
+              <SelectTrigger className="h-10 text-xs rounded-xl border-border/50 flex-1 min-w-0 hidden sm:flex">
+                <SelectValue placeholder="Escolha um conteúdo" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredTopics.map((t) => (
+                  <SelectItem key={t.id} value={t.id} className="py-2">
+                    <span className="line-clamp-1">{t.text}</span>
+                  </SelectItem>
+                ))}
+                {filteredTopics.length === 0 && (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">Sem conteúdo</div>
+                )}
+              </SelectContent>
+            </Select>
+
+            {/* Timer display in bar when running */}
+            {isBusy && (
+              <span className={`font-mono text-sm font-bold shrink-0 ${isRunning ? 'text-primary' : 'text-foreground'}`}>
+                {formatTimer(elapsed)}
+              </span>
             )}
-          </AnimatePresence>
+
+            {/* Quick action button */}
+            {!isBusy ? (
+              <Button
+                size="sm"
+                className="h-10 gap-1.5 rounded-xl px-4 shrink-0 text-xs font-semibold"
+                onClick={() => {
+                  if (entryMode === 'cronometro') {
+                    startTimer();
+                  } else {
+                    setExpanded(true);
+                  }
+                }}
+              >
+                <Play className="h-3.5 w-3.5" />
+                Iniciar
+              </Button>
+            ) : (
+              <div className="flex items-center gap-1 shrink-0">
+                {isRunning ? (
+                  <Button size="sm" variant="outline" className="h-10 rounded-xl px-3 text-xs" onClick={pauseTimer}>
+                    <Pause className="h-3.5 w-3.5" />
+                  </Button>
+                ) : (
+                  <Button size="sm" className="h-10 rounded-xl px-3 text-xs" onClick={startTimer}>
+                    <Play className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <Button size="sm" variant="destructive" className="h-10 rounded-xl px-3 text-xs" onClick={stopTimer}>
+                  <Square className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+
+            {/* Expand/collapse */}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-10 w-10 rounded-xl shrink-0"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Edit Dialog */}
       <Dialog open={showSaveDialog} onOpenChange={(v) => { if (!v) handleDiscard(); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Save className="h-5 w-5 text-primary" />
@@ -451,33 +496,15 @@ export function StudyTimer() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Acertos</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={saveData.correctAnswers}
-                    onChange={(e) => setSaveData((p) => ({ ...p, correctAnswers: parseInt(e.target.value) || 0 }))}
-                    className="h-11 text-sm"
-                  />
+                  <Input type="number" min={0} value={saveData.correctAnswers} onChange={(e) => setSaveData((p) => ({ ...p, correctAnswers: parseInt(e.target.value) || 0 }))} className="h-11 text-sm rounded-xl" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Erros</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={saveData.wrongAnswers}
-                    onChange={(e) => setSaveData((p) => ({ ...p, wrongAnswers: parseInt(e.target.value) || 0 }))}
-                    className="h-11 text-sm"
-                  />
+                  <Input type="number" min={0} value={saveData.wrongAnswers} onChange={(e) => setSaveData((p) => ({ ...p, wrongAnswers: parseInt(e.target.value) || 0 }))} className="h-11 text-sm rounded-xl" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Em branco</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={saveData.blankAnswers}
-                    onChange={(e) => setSaveData((p) => ({ ...p, blankAnswers: parseInt(e.target.value) || 0 }))}
-                    className="h-11 text-sm"
-                  />
+                  <Input type="number" min={0} value={saveData.blankAnswers} onChange={(e) => setSaveData((p) => ({ ...p, blankAnswers: parseInt(e.target.value) || 0 }))} className="h-11 text-sm rounded-xl" />
                 </div>
               </div>
             )}
@@ -485,32 +512,21 @@ export function StudyTimer() {
             {(activityType === 'leitura' || activityType === 'estudo') && (
               <div className="space-y-1.5">
                 <Label className="text-xs">Páginas lidas</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={saveData.pagesRead}
-                  onChange={(e) => setSaveData((p) => ({ ...p, pagesRead: parseInt(e.target.value) || 0 }))}
-                  className="h-11 text-sm"
-                />
+                <Input type="number" min={0} value={saveData.pagesRead} onChange={(e) => setSaveData((p) => ({ ...p, pagesRead: parseInt(e.target.value) || 0 }))} className="h-11 text-sm rounded-xl" />
               </div>
             )}
 
             <div className="space-y-1.5">
               <Label className="text-xs">Anotações (opcional)</Label>
-              <Textarea
-                value={saveData.notes}
-                onChange={(e) => setSaveData((p) => ({ ...p, notes: e.target.value }))}
-                placeholder="O que você estudou..."
-                className="min-h-[70px] text-sm"
-              />
+              <Textarea value={saveData.notes} onChange={(e) => setSaveData((p) => ({ ...p, notes: e.target.value }))} placeholder="O que você estudou..." className="min-h-[70px] text-sm rounded-xl" />
             </div>
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleDiscard}>Fechar</Button>
-            <Button onClick={handleSave} className="gap-2">
+            <Button variant="outline" className="rounded-xl" onClick={handleDiscard}>Fechar</Button>
+            <Button onClick={handleSave} className="gap-2 rounded-xl">
               <Save className="h-4 w-4" />
-              Atualizar Registro
+              Atualizar
             </Button>
           </DialogFooter>
         </DialogContent>
