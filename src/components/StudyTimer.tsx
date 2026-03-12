@@ -83,6 +83,64 @@ export function StudyTimer() {
     setIsRunning(false);
   }, [elapsed]);
 
+  const autoSaveRecord = useCallback((finalElapsed: number) => {
+    const today = new Date().toISOString().split('T')[0];
+    const record: StudyRecord = {
+      id: crypto.randomUUID(),
+      disciplineId: selectedDiscipline,
+      date: today,
+      activityType,
+      turno: getTurno(),
+      durationSeconds: finalElapsed,
+      correctAnswers: 0,
+      wrongAnswers: 0,
+      blankAnswers: 0,
+      pagesRead: 0,
+      topicsCompleted: [],
+      notes: '',
+    };
+
+    addStudyRecord(record);
+    updateStreak(today);
+
+    // Auto-generate revisions
+    const revisionSettings = useAppStore.getState().settings.revision;
+    if (revisionSettings.enabled) {
+      const markDays: Record<string, number> = { '24h': 1, '7d': 7, '30d': 30, '60d': 60 };
+      const addRevision = useAppStore.getState().addRevision;
+      for (const mark of revisionSettings.marks) {
+        const due = new Date(today);
+        due.setDate(due.getDate() + (markDays[mark] || 1));
+        addRevision({
+          id: crypto.randomUUID(),
+          disciplineId: selectedDiscipline,
+          studyDate: today,
+          mark,
+          dueDate: due.toISOString().split('T')[0],
+          completed: false,
+        });
+      }
+    }
+
+    const discName = disciplines.find((d) => d.id === selectedDiscipline)?.name || '';
+    const mins = Math.round(finalElapsed / 60);
+    toast.success(`${mins} min de ${discName} registrados automaticamente!`, {
+      description: 'Clique em "Editar" para adicionar detalhes.',
+      action: {
+        label: 'Editar',
+        onClick: () => {
+          setLastSavedRecordId(record.id);
+          setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
+          setEditElapsed(finalElapsed);
+          setShowSaveDialog(true);
+        },
+      },
+      duration: 8000,
+    });
+
+    return record.id;
+  }, [selectedDiscipline, activityType, addStudyRecord, updateStreak, disciplines]);
+
   const stopTimer = useCallback(() => {
     if (elapsed < 10) {
       setIsRunning(false);
@@ -91,8 +149,10 @@ export function StudyTimer() {
       return;
     }
     setIsRunning(false);
-    setShowSaveDialog(true);
-  }, [elapsed]);
+    autoSaveRecord(elapsed);
+    setElapsed(0);
+    elapsedBeforePause.current = 0;
+  }, [elapsed, autoSaveRecord]);
 
   const handleSave = useCallback(() => {
     const today = new Date().toISOString().split('T')[0];
