@@ -9,3 +9,5 @@ project_id = "gkshppuhcqpqqzwjnsqr"
     verify_jwt = false
   [functions.send-revision-reminders]
     verify_jwt = false
+  [functions.send-weekly-report]
+    verify_jwt = false
