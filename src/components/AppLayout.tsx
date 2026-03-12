@@ -62,7 +62,7 @@ export function AppLayout() {
               )}
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 gradient-mesh">
+          <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 pb-20 gradient-mesh">
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
