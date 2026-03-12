@@ -306,10 +306,10 @@ export function StudyTimer() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Save className="h-5 w-5 text-primary" />
-              Salvar Sessão de Estudo
+              Editar Sessão de Estudo
             </DialogTitle>
             <DialogDescription>
-              {currentDiscName} — {formatTimer(elapsed)} ({Math.round(elapsed / 60)} min)
+              {currentDiscName} — {formatTimer(editElapsed)} ({Math.round(editElapsed / 60)} min)
             </DialogDescription>
           </DialogHeader>
 
