@@ -489,6 +489,27 @@ export function StudyTimer() {
               </div>
             )}
 
+            {/* Nova matéria */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10 gap-1 rounded-xl px-2.5 shrink-0 text-xs border-border/50 hidden sm:flex"
+              onClick={() => setShowNewDiscipline(true)}
+              disabled={isBusy}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Nova matéria
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-10 w-10 rounded-xl shrink-0 sm:hidden border-border/50"
+              onClick={() => setShowNewDiscipline(true)}
+              disabled={isBusy}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+
             {/* Expand/collapse */}
             <Button
               size="icon"
