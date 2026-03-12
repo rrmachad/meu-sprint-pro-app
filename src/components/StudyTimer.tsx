@@ -209,6 +209,28 @@ export function StudyTimer() {
     setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
   }, []);
 
+  const handleAddDiscipline = useCallback(() => {
+    const name = newDisciplineName.trim();
+    if (!name) { toast.error('Informe o nome da matéria.'); return; }
+    if (disciplines.some((d) => d.name.toLowerCase() === name.toLowerCase())) {
+      toast.error('Essa matéria já existe.'); return;
+    }
+    const newDisc = {
+      id: crypto.randomUUID(),
+      name,
+      category: 'mista' as const,
+      weight: 0,
+      prova: 'P1',
+      defaultQuestions: 0,
+      order: disciplines.length,
+    };
+    addDiscipline(newDisc);
+    setSelectedDiscipline(newDisc.id);
+    setNewDisciplineName('');
+    setShowNewDiscipline(false);
+    toast.success(`Matéria "${name}" adicionada!`);
+  }, [newDisciplineName, disciplines, addDiscipline]);
+
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
