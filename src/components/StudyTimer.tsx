@@ -576,6 +576,41 @@ export function StudyTimer() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Nova Matéria Dialog */}
+      <Dialog open={showNewDiscipline} onOpenChange={setShowNewDiscipline}>
+        <DialogContent className="sm:max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              Nova Matéria
+            </DialogTitle>
+            <DialogDescription>
+              Adicione uma nova matéria para registrar seus estudos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nome da matéria</Label>
+              <Input
+                value={newDisciplineName}
+                onChange={(e) => setNewDisciplineName(e.target.value)}
+                placeholder="Ex: Direito Constitucional"
+                className="h-11 text-sm rounded-xl"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddDiscipline()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" className="rounded-xl" onClick={() => { setShowNewDiscipline(false); setNewDisciplineName(''); }}>Cancelar</Button>
+            <Button onClick={handleAddDiscipline} className="gap-2 rounded-xl">
+              <Plus className="h-4 w-4" />
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
