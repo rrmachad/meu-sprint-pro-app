@@ -340,11 +340,24 @@ export default function Indicators() {
       ? `${format(start, 'dd/MM/yyyy')} a ${format(end, 'dd/MM/yyyy')}`
       : format(start, "MMMM 'de' yyyy", { locale: ptBR });
 
-    const totalSeconds = allStudyRecords
-      .filter((r) => r.date >= format(start, 'yyyy-MM-dd') && r.date <= format(end, 'yyyy-MM-dd'))
-      .reduce((a, r) => a + r.durationSeconds, 0);
+    const startStr = format(start, 'yyyy-MM-dd');
+    const endStr = format(end, 'yyyy-MM-dd');
 
-    return { data, discNames: topDiscs.map((d) => d.name), periodLabel, totalSeconds };
+    const periodRecords = allStudyRecords.filter((r) => r.date >= startStr && r.date <= endStr);
+    const totalSeconds = periodRecords.reduce((a, r) => a + r.durationSeconds, 0);
+
+    // Pie data: hours per discipline in this period
+    const discHoursMap: Record<string, number> = {};
+    periodRecords.forEach((r) => {
+      const disc = disciplines.find((d) => d.id === r.disciplineId);
+      const name = disc?.name || 'Outro';
+      discHoursMap[name] = (discHoursMap[name] || 0) + r.durationSeconds / 3600;
+    });
+    const pieData = Object.entries(discHoursMap)
+      .map(([name, hours], i) => ({ name, value: Math.round(hours * 100) / 100, color: COLORS[i % COLORS.length] }))
+      .sort((a, b) => b.value - a.value);
+
+    return { data, discNames: topDiscs.map((d) => d.name), periodLabel, totalSeconds, pieData };
   }, [allStudyRecords, disciplines, timelineMode, timelineOffset]);
 
   const formatDuration = (seconds: number) => {
