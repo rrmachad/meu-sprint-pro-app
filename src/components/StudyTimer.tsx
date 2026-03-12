@@ -38,7 +38,7 @@ export function StudyTimer() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
   const cycles = useAppStore((s) => s.cycles);
-  const { addStudyRecord, updateStreak, addDiscipline } = useAppStore();
+  const { addStudyRecord, updateStreak, addDiscipline, addTopic } = useAppStore();
 
   const [entryMode, setEntryMode] = useState<EntryMode>('cronometro');
   const [isRunning, setIsRunning] = useState(false);
@@ -50,6 +50,8 @@ export function StudyTimer() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showNewDiscipline, setShowNewDiscipline] = useState(false);
   const [newDisciplineName, setNewDisciplineName] = useState('');
+  const [newTopics, setNewTopics] = useState<string[]>([]);
+  const [newTopicInput, setNewTopicInput] = useState('');
   const [lastSavedRecordId, setLastSavedRecordId] = useState<string | null>(null);
   const [editElapsed, setEditElapsed] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
@@ -209,14 +211,27 @@ export function StudyTimer() {
     setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
   }, []);
 
+  const handleAddTopicToList = useCallback(() => {
+    const text = newTopicInput.trim();
+    if (!text) return;
+    if (newTopics.includes(text)) { toast.error('Tópico já adicionado.'); return; }
+    setNewTopics((prev) => [...prev, text]);
+    setNewTopicInput('');
+  }, [newTopicInput, newTopics]);
+
+  const handleRemoveTopicFromList = useCallback((index: number) => {
+    setNewTopics((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   const handleAddDiscipline = useCallback(() => {
     const name = newDisciplineName.trim();
     if (!name) { toast.error('Informe o nome da matéria.'); return; }
     if (disciplines.some((d) => d.name.toLowerCase() === name.toLowerCase())) {
       toast.error('Essa matéria já existe.'); return;
     }
+    const newDiscId = crypto.randomUUID();
     const newDisc = {
-      id: crypto.randomUUID(),
+      id: newDiscId,
       name,
       category: 'mista' as const,
       weight: 0,
@@ -225,11 +240,26 @@ export function StudyTimer() {
       order: disciplines.length,
     };
     addDiscipline(newDisc);
-    setSelectedDiscipline(newDisc.id);
+
+    // Add topics
+    newTopics.forEach((text, i) => {
+      addTopic({
+        id: crypto.randomUUID(),
+        disciplineId: newDiscId,
+        text,
+        completed: false,
+        order: i,
+      });
+    });
+
+    setSelectedDiscipline(newDiscId);
     setNewDisciplineName('');
+    setNewTopics([]);
+    setNewTopicInput('');
     setShowNewDiscipline(false);
-    toast.success(`Matéria "${name}" adicionada!`);
-  }, [newDisciplineName, disciplines, addDiscipline]);
+    const topicCount = newTopics.length;
+    toast.success(`Matéria "${name}" adicionada${topicCount > 0 ? ` com ${topicCount} tópico${topicCount > 1 ? 's' : ''}` : ''}!`);
+  }, [newDisciplineName, newTopics, disciplines, addDiscipline, addTopic]);
 
   useEffect(() => {
     if (isRunning) {
@@ -578,33 +608,71 @@ export function StudyTimer() {
       </Dialog>
 
       {/* Nova Matéria Dialog */}
-      <Dialog open={showNewDiscipline} onOpenChange={setShowNewDiscipline}>
-        <DialogContent className="sm:max-w-sm rounded-2xl">
+      <Dialog open={showNewDiscipline} onOpenChange={(v) => { if (!v) { setShowNewDiscipline(false); setNewDisciplineName(''); setNewTopics([]); setNewTopicInput(''); } }}>
+        <DialogContent className="sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-primary" />
               Nova Matéria
             </DialogTitle>
             <DialogDescription>
-              Adicione uma nova matéria para registrar seus estudos.
+              Adicione uma matéria e seus conteúdos/assuntos do edital.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs">Nome da matéria</Label>
+              <Label className="text-xs font-medium">Nome da matéria</Label>
               <Input
                 value={newDisciplineName}
                 onChange={(e) => setNewDisciplineName(e.target.value)}
                 placeholder="Ex: Direito Constitucional"
                 className="h-11 text-sm rounded-xl"
-                onKeyDown={(e) => e.key === 'Enter' && handleAddDiscipline()}
                 autoFocus
               />
             </div>
+
+            {/* Topics section */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" />
+                Conteúdos / Assuntos
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newTopicInput}
+                  onChange={(e) => setNewTopicInput(e.target.value)}
+                  placeholder="Ex: Princípios Fundamentais"
+                  className="h-10 text-sm rounded-xl flex-1"
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTopicToList(); } }}
+                />
+                <Button size="sm" variant="outline" className="h-10 rounded-xl px-3 shrink-0" onClick={handleAddTopicToList} disabled={!newTopicInput.trim()}>
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              {newTopics.length > 0 && (
+                <div className="space-y-1 max-h-40 overflow-y-auto rounded-xl border border-border/50 p-2">
+                  {newTopics.map((topic, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm py-1.5 px-2 rounded-lg bg-muted/30 group">
+                      <span className="text-xs text-muted-foreground font-mono w-5 shrink-0">{idx + 1}.</span>
+                      <span className="flex-1 line-clamp-1">{topic}</span>
+                      <button
+                        onClick={() => handleRemoveTopicFromList(idx)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {newTopics.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhum conteúdo adicionado ainda. Você pode adicionar depois também.</p>
+              )}
+            </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" className="rounded-xl" onClick={() => { setShowNewDiscipline(false); setNewDisciplineName(''); }}>Cancelar</Button>
-            <Button onClick={handleAddDiscipline} className="gap-2 rounded-xl">
+            <Button variant="outline" className="rounded-xl" onClick={() => { setShowNewDiscipline(false); setNewDisciplineName(''); setNewTopics([]); setNewTopicInput(''); }}>Cancelar</Button>
+            <Button onClick={handleAddDiscipline} className="gap-2 rounded-xl" disabled={!newDisciplineName.trim()}>
               <Plus className="h-4 w-4" />
               Adicionar
             </Button>
