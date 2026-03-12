@@ -38,7 +38,7 @@ export function StudyTimer() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
   const cycles = useAppStore((s) => s.cycles);
-  const { addStudyRecord, updateStreak } = useAppStore();
+  const { addStudyRecord, updateStreak, addDiscipline } = useAppStore();
 
   const [entryMode, setEntryMode] = useState<EntryMode>('cronometro');
   const [isRunning, setIsRunning] = useState(false);
@@ -48,6 +48,8 @@ export function StudyTimer() {
   const [activityType, setActivityType] = useState<ActivityType>('estudo');
   const [expanded, setExpanded] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showNewDiscipline, setShowNewDiscipline] = useState(false);
+  const [newDisciplineName, setNewDisciplineName] = useState('');
   const [lastSavedRecordId, setLastSavedRecordId] = useState<string | null>(null);
   const [editElapsed, setEditElapsed] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
