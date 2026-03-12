@@ -1,25 +1,36 @@
 import { useMemo, useCallback, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart3, TrendingUp, Clock, CheckCircle2, BookOpen,
   Target, Brain, CalendarDays, Download, Timer, Crosshair, Activity,
+  History, Trash2, Pencil, ChevronLeft, ChevronRight, X, Save,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { useCountUp } from '@/hooks/useCountUp';
 import { toast } from 'sonner';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell,
+  ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   AreaChart, Area,
 } from 'recharts';
-import { format, subDays, subMonths, parseISO, startOfWeek, endOfWeek, isWithinInterval, isAfter } from 'date-fns';
+import { format, subDays, subMonths, parseISO, startOfWeek, endOfWeek, isWithinInterval, isAfter, addWeeks, subWeeks, startOfMonth, endOfMonth, addMonths, eachDayOfInterval, eachWeekOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useInView } from 'framer-motion';
+import type { StudyRecord, ActivityType } from '@/types';
 
 type PeriodFilter = '7d' | '30d' | '90d' | 'all';
 const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
