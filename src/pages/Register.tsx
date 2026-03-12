@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { sendTransactionalEmail } from '@/lib/transactionalEmail';
 import { Zap } from 'lucide-react';
 
 const Register = () => {
