@@ -211,14 +211,27 @@ export function StudyTimer() {
     setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
   }, []);
 
+  const handleAddTopicToList = useCallback(() => {
+    const text = newTopicInput.trim();
+    if (!text) return;
+    if (newTopics.includes(text)) { toast.error('Tópico já adicionado.'); return; }
+    setNewTopics((prev) => [...prev, text]);
+    setNewTopicInput('');
+  }, [newTopicInput, newTopics]);
+
+  const handleRemoveTopicFromList = useCallback((index: number) => {
+    setNewTopics((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   const handleAddDiscipline = useCallback(() => {
     const name = newDisciplineName.trim();
     if (!name) { toast.error('Informe o nome da matéria.'); return; }
     if (disciplines.some((d) => d.name.toLowerCase() === name.toLowerCase())) {
       toast.error('Essa matéria já existe.'); return;
     }
+    const newDiscId = crypto.randomUUID();
     const newDisc = {
-      id: crypto.randomUUID(),
+      id: newDiscId,
       name,
       category: 'mista' as const,
       weight: 0,
@@ -227,11 +240,26 @@ export function StudyTimer() {
       order: disciplines.length,
     };
     addDiscipline(newDisc);
-    setSelectedDiscipline(newDisc.id);
+
+    // Add topics
+    newTopics.forEach((text, i) => {
+      addTopic({
+        id: crypto.randomUUID(),
+        disciplineId: newDiscId,
+        text,
+        completed: false,
+        order: i,
+      });
+    });
+
+    setSelectedDiscipline(newDiscId);
     setNewDisciplineName('');
+    setNewTopics([]);
+    setNewTopicInput('');
     setShowNewDiscipline(false);
-    toast.success(`Matéria "${name}" adicionada!`);
-  }, [newDisciplineName, disciplines, addDiscipline]);
+    const topicCount = newTopics.length;
+    toast.success(`Matéria "${name}" adicionada${topicCount > 0 ? ` com ${topicCount} tópico${topicCount > 1 ? 's' : ''}` : ''}!`);
+  }, [newDisciplineName, newTopics, disciplines, addDiscipline, addTopic]);
 
   useEffect(() => {
     if (isRunning) {
