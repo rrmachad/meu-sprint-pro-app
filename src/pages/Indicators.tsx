@@ -120,8 +120,18 @@ export default function Indicators() {
   const topics = useAppStore((s) => s.topics);
   const simulados = useAppStore((s) => s.simulados);
   const goals = useAppStore((s) => s.settings.goals);
+  const { updateStudyRecord, removeStudyRecord } = useAppStore();
   const [period, setPeriod] = useState<PeriodFilter>('all');
   const chartsRef = useRef<HTMLDivElement>(null);
+
+  // ─── Histórico state ───
+  const [historyDisciplineFilter, setHistoryDisciplineFilter] = useState<string>('all');
+  const [editingRecord, setEditingRecord] = useState<StudyRecord | null>(null);
+  const [editForm, setEditForm] = useState({ hours: 0, minutes: 0, correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '', activityType: 'estudo' as ActivityType });
+
+  // ─── Linha do Tempo state ───
+  const [timelineMode, setTimelineMode] = useState<'semana' | 'mes'>('semana');
+  const [timelineOffset, setTimelineOffset] = useState(0);
 
   const studyRecords = useMemo(() => {
     if (period === 'all') return allStudyRecords;
