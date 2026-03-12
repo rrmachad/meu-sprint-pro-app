@@ -734,6 +734,169 @@ export default function Indicators() {
             </div>
           </TabsContent>
 
+          {/* ── Histórico ── */}
+          <TabsContent value="historico" className="space-y-4">
+            <Card className="glass border-border/30">
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <History className="h-4 w-4 text-electric-blue" />
+                    Histórico de Estudos
+                  </CardTitle>
+                  <Select value={historyDisciplineFilter} onValueChange={setHistoryDisciplineFilter}>
+                    <SelectTrigger className="w-[200px] h-10 rounded-xl border-border/40">
+                      <SelectValue placeholder="Todas Matérias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas Matérias</SelectItem>
+                      {disciplines.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {historyGroups.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum registro encontrado.</p>
+                ) : (
+                  historyGroups.map((group) => (
+                    <div key={group.date} className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-foreground">
+                          {format(parseISO(group.date), "dd/MM/yyyy", { locale: ptBR })}
+                        </span>
+                        <Badge variant="secondary" className="text-xs font-mono bg-primary/10 text-primary border-0">
+                          {formatDuration(group.totalSeconds)}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">
+                          {group.records.length} {group.records.length === 1 ? 'atividade' : 'atividades'}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 pl-1">
+                        {group.records.map((record) => {
+                          const disc = disciplines.find((d) => d.id === record.disciplineId);
+                          const discIndex = disciplines.indexOf(disc!);
+                          const color = COLORS[discIndex % COLORS.length] || COLORS[0];
+                          const actLabel = record.activityType === 'estudo' ? 'Estudo' : record.activityType === 'revisao' ? 'Revisão' : record.activityType === 'exercicios' ? 'Exercícios' : 'Leitura';
+                          return (
+                            <div
+                              key={record.id}
+                              className="flex items-center gap-3 rounded-xl border border-border/30 bg-muted/30 px-3 py-2.5 group hover:border-primary/30 transition-colors"
+                            >
+                              <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: color }} />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-medium truncate block">
+                                  {disc?.name || 'Desconhecida'}
+                                  {record.topicsCompleted.length > 0 && (
+                                    <span className="text-muted-foreground font-normal"> — {record.topicsCompleted[0]}</span>
+                                  )}
+                                </span>
+                                <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
+                                  <span>{actLabel}</span>
+                                  {record.correctAnswers + record.wrongAnswers > 0 && (
+                                    <span>{record.correctAnswers}/{record.correctAnswers + record.wrongAnswers + record.blankAnswers} questões</span>
+                                  )}
+                                  {record.pagesRead > 0 && <span>{record.pagesRead} págs</span>}
+                                </div>
+                              </div>
+                              <span className="text-xs font-mono text-muted-foreground shrink-0">
+                                {formatDuration(record.durationSeconds)}
+                              </span>
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary"
+                                  onClick={() => openEditRecord(record)}
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 rounded-lg hover:bg-destructive/10 hover:text-destructive"
+                                  onClick={() => deleteRecord(record.id)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Linha do Tempo ── */}
+          <TabsContent value="timeline" className="space-y-4">
+            <Card className="glass border-border/30" data-pdf-chart="Linha do Tempo">
+              <CardHeader className="pb-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+                    <BarChart3 className="h-4 w-4 text-sporty-orange" />
+                    Linha do Tempo
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center glass rounded-xl p-0.5 gap-0.5 border-border/30">
+                      {(['semana', 'mes'] as const).map((m) => (
+                        <button
+                          key={m}
+                          onClick={() => { setTimelineMode(m); setTimelineOffset(0); }}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                            timelineMode === m ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {m === 'semana' ? 'Semana' : 'Mês'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between mb-4">
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => setTimelineOffset((o) => o - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="text-center">
+                    <p className="text-sm font-bold">{timelineData.periodLabel}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{formatDuration(timelineData.totalSeconds)}</p>
+                  </div>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => setTimelineOffset((o) => o + 1)} disabled={timelineOffset >= 0}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={timelineData.data}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <ReTooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: 10 }} />
+                    {timelineData.discNames.map((name, i) => (
+                      <Bar key={name} dataKey={name} stackId="stack" fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+                {timelineData.discNames.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {timelineData.discNames.map((name, i) => (
+                      <div key={name} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <div className="h-2 w-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                        {name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* ── Radar / Visão Geral ── */}
           <TabsContent value="radar" className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
