@@ -973,6 +973,73 @@ export default function Indicators() {
           </TabsContent>
         </Tabs>
       </motion.div>
+
+      {/* ─── Edit Record Dialog ─── */}
+      <Dialog open={!!editingRecord} onOpenChange={(open) => !open && setEditingRecord(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Atividade</DialogTitle>
+            <DialogDescription>
+              {editingRecord && disciplines.find((d) => d.id === editingRecord.disciplineId)?.name} — {editingRecord && format(parseISO(editingRecord.date), 'dd/MM/yyyy')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Horas</Label>
+                <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.hours} onChange={(e) => setEditForm((f) => ({ ...f, hours: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Minutos</Label>
+                <Input type="number" min={0} max={59} className="h-11 rounded-xl" value={editForm.minutes} onChange={(e) => setEditForm((f) => ({ ...f, minutes: parseInt(e.target.value) || 0 }))} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Tipo de Atividade</Label>
+              <Select value={editForm.activityType} onValueChange={(v) => setEditForm((f) => ({ ...f, activityType: v as ActivityType }))}>
+                <SelectTrigger className="h-11 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="estudo">Estudo</SelectItem>
+                  <SelectItem value="revisao">Revisão</SelectItem>
+                  <SelectItem value="exercicios">Exercícios</SelectItem>
+                  <SelectItem value="leitura">Leitura</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Acertos</Label>
+                <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.correctAnswers} onChange={(e) => setEditForm((f) => ({ ...f, correctAnswers: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Erros</Label>
+                <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.wrongAnswers} onChange={(e) => setEditForm((f) => ({ ...f, wrongAnswers: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Em branco</Label>
+                <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.blankAnswers} onChange={(e) => setEditForm((f) => ({ ...f, blankAnswers: parseInt(e.target.value) || 0 }))} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Páginas lidas</Label>
+              <Input type="number" min={0} className="h-11 rounded-xl" value={editForm.pagesRead} onChange={(e) => setEditForm((f) => ({ ...f, pagesRead: parseInt(e.target.value) || 0 }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Anotações</Label>
+              <Textarea className="rounded-xl min-h-[80px]" placeholder="Faça suas anotações aqui..." value={editForm.notes} onChange={(e) => setEditForm((f) => ({ ...f, notes: e.target.value }))} />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="destructive" size="sm" className="rounded-xl" onClick={() => { if (editingRecord) { deleteRecord(editingRecord.id); setEditingRecord(null); } }}>
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir
+            </Button>
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setEditingRecord(null)}>Cancelar</Button>
+            <Button size="sm" className="rounded-xl" onClick={saveEditRecord}>
+              <Save className="h-3.5 w-3.5 mr-1" /> Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
