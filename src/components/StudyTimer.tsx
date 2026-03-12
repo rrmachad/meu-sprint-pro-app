@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Square, Clock, BookOpen, Save,
-  Timer, PenLine, ChevronUp, ChevronDown, ChevronRight, X,
+  Timer, PenLine, ChevronUp, ChevronDown, ChevronRight, X, Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,7 +38,7 @@ export function StudyTimer() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
   const cycles = useAppStore((s) => s.cycles);
-  const { addStudyRecord, updateStreak } = useAppStore();
+  const { addStudyRecord, updateStreak, addDiscipline } = useAppStore();
 
   const [entryMode, setEntryMode] = useState<EntryMode>('cronometro');
   const [isRunning, setIsRunning] = useState(false);
@@ -48,6 +48,8 @@ export function StudyTimer() {
   const [activityType, setActivityType] = useState<ActivityType>('estudo');
   const [expanded, setExpanded] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showNewDiscipline, setShowNewDiscipline] = useState(false);
+  const [newDisciplineName, setNewDisciplineName] = useState('');
   const [lastSavedRecordId, setLastSavedRecordId] = useState<string | null>(null);
   const [editElapsed, setEditElapsed] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
@@ -206,6 +208,28 @@ export function StudyTimer() {
     setLastSavedRecordId(null);
     setSaveData({ correctAnswers: 0, wrongAnswers: 0, blankAnswers: 0, pagesRead: 0, notes: '' });
   }, []);
+
+  const handleAddDiscipline = useCallback(() => {
+    const name = newDisciplineName.trim();
+    if (!name) { toast.error('Informe o nome da matéria.'); return; }
+    if (disciplines.some((d) => d.name.toLowerCase() === name.toLowerCase())) {
+      toast.error('Essa matéria já existe.'); return;
+    }
+    const newDisc = {
+      id: crypto.randomUUID(),
+      name,
+      category: 'mista' as const,
+      weight: 0,
+      prova: 'P1',
+      defaultQuestions: 0,
+      order: disciplines.length,
+    };
+    addDiscipline(newDisc);
+    setSelectedDiscipline(newDisc.id);
+    setNewDisciplineName('');
+    setShowNewDiscipline(false);
+    toast.success(`Matéria "${name}" adicionada!`);
+  }, [newDisciplineName, disciplines, addDiscipline]);
 
   useEffect(() => {
     if (isRunning) {
@@ -465,6 +489,27 @@ export function StudyTimer() {
               </div>
             )}
 
+            {/* Nova matéria */}
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10 gap-1 rounded-xl px-2.5 shrink-0 text-xs border-border/50 hidden sm:flex"
+              onClick={() => setShowNewDiscipline(true)}
+              disabled={isBusy}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Nova matéria
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-10 w-10 rounded-xl shrink-0 sm:hidden border-border/50"
+              onClick={() => setShowNewDiscipline(true)}
+              disabled={isBusy}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+
             {/* Expand/collapse */}
             <Button
               size="icon"
@@ -527,6 +572,41 @@ export function StudyTimer() {
             <Button onClick={handleSave} className="gap-2 rounded-xl">
               <Save className="h-4 w-4" />
               Atualizar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Nova Matéria Dialog */}
+      <Dialog open={showNewDiscipline} onOpenChange={setShowNewDiscipline}>
+        <DialogContent className="sm:max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" />
+              Nova Matéria
+            </DialogTitle>
+            <DialogDescription>
+              Adicione uma nova matéria para registrar seus estudos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nome da matéria</Label>
+              <Input
+                value={newDisciplineName}
+                onChange={(e) => setNewDisciplineName(e.target.value)}
+                placeholder="Ex: Direito Constitucional"
+                className="h-11 text-sm rounded-xl"
+                onKeyDown={(e) => e.key === 'Enter' && handleAddDiscipline()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" className="rounded-xl" onClick={() => { setShowNewDiscipline(false); setNewDisciplineName(''); }}>Cancelar</Button>
+            <Button onClick={handleAddDiscipline} className="gap-2 rounded-xl">
+              <Plus className="h-4 w-4" />
+              Adicionar
             </Button>
           </DialogFooter>
         </DialogContent>
