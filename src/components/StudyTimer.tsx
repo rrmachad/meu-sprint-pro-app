@@ -374,10 +374,10 @@ export function StudyTimer() {
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleDiscard}>Descartar</Button>
+            <Button variant="outline" onClick={handleDiscard}>Fechar</Button>
             <Button onClick={handleSave} className="gap-2">
               <Save className="h-4 w-4" />
-              Salvar Registro
+              Atualizar Registro
             </Button>
           </DialogFooter>
         </DialogContent>
