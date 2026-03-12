@@ -38,7 +38,7 @@ export function StudyTimer() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
   const cycles = useAppStore((s) => s.cycles);
-  const { addStudyRecord, updateStreak, addDiscipline } = useAppStore();
+  const { addStudyRecord, updateStreak, addDiscipline, addTopic } = useAppStore();
 
   const [entryMode, setEntryMode] = useState<EntryMode>('cronometro');
   const [isRunning, setIsRunning] = useState(false);
