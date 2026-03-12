@@ -231,6 +231,20 @@ export default function Indicators() {
     return { thisWeek: Math.round(thisWeekHours * 10) / 10, lastWeek: Math.round(lastWeekHours * 10) / 10, change: Math.round(change) };
   }, [studyRecords]);
 
+  // ─── Activity type distribution ───
+  const activityDistribution = useMemo(() => {
+    const map: Record<string, number> = {};
+    studyRecords.forEach((r) => {
+      const label = r.activityType === 'estudo' ? 'Estudo' : r.activityType === 'revisao' ? 'Revisão' : r.activityType === 'exercicios' ? 'Exercícios' : 'Leitura';
+      map[label] = (map[label] || 0) + r.durationSeconds / 3600;
+    });
+    return Object.entries(map).map(([name, value], i) => ({
+      name,
+      value: Math.round(value * 10) / 10,
+      color: COLORS[i % COLORS.length],
+    }));
+  }, [studyRecords]);
+
   // ─── Histórico: records grouped by date ───
   const historyGroups = useMemo(() => {
     const filtered = historyDisciplineFilter === 'all'
