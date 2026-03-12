@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { sendTransactionalEmail } from '@/lib/transactionalEmail';
 import { Zap } from 'lucide-react';
 
 const Register = () => {
@@ -37,6 +38,12 @@ const Register = () => {
       toast.error(error.message);
     } else {
       toast.success('Conta criada! Verifique seu e-mail para confirmar.');
+      // Enviar emails transacionais em background (não bloqueia navegação)
+      const userName = `${form.nome} ${form.sobrenome}`.trim();
+      Promise.allSettled([
+        sendTransactionalEmail('welcome', { userName }, form.email),
+        sendTransactionalEmail('signup-confirmation', { userName }, form.email),
+      ]).catch(() => {/* silencioso */});
       navigate('/login');
     }
   };
