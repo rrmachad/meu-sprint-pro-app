@@ -592,9 +592,11 @@ export default function Indicators() {
       {/* ─── Tabs ─── */}
       <motion.div variants={itemVariants} ref={chartsRef}>
         <Tabs defaultValue="evolucao" className="space-y-4">
-          <TabsList className="glass border-border/30">
+          <TabsList className="glass border-border/30 flex-wrap h-auto">
             <TabsTrigger value="evolucao">Evolução</TabsTrigger>
             <TabsTrigger value="disciplinas">Disciplinas</TabsTrigger>
+            <TabsTrigger value="historico">Histórico</TabsTrigger>
+            <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
             <TabsTrigger value="radar">Visão Geral</TabsTrigger>
           </TabsList>
 
