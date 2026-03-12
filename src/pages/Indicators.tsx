@@ -231,19 +231,116 @@ export default function Indicators() {
     return { thisWeek: Math.round(thisWeekHours * 10) / 10, lastWeek: Math.round(lastWeekHours * 10) / 10, change: Math.round(change) };
   }, [studyRecords]);
 
-  // ─── Activity type distribution ───
-  const activityDistribution = useMemo(() => {
-    const map: Record<string, number> = {};
-    studyRecords.forEach((r) => {
-      const label = r.activityType === 'estudo' ? 'Estudo' : r.activityType === 'revisao' ? 'Revisão' : r.activityType === 'exercicios' ? 'Exercícios' : 'Leitura';
-      map[label] = (map[label] || 0) + r.durationSeconds / 3600;
+  // ─── Histórico: records grouped by date ───
+  const historyGroups = useMemo(() => {
+    const filtered = historyDisciplineFilter === 'all'
+      ? studyRecords
+      : studyRecords.filter((r) => r.disciplineId === historyDisciplineFilter);
+    const grouped: Record<string, StudyRecord[]> = {};
+    filtered.forEach((r) => {
+      if (!grouped[r.date]) grouped[r.date] = [];
+      grouped[r.date].push(r);
     });
-    return Object.entries(map).map(([name, value], i) => ({
-      name,
-      value: Math.round(value * 10) / 10,
-      color: COLORS[i % COLORS.length],
-    }));
-  }, [studyRecords]);
+    return Object.entries(grouped)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, records]) => ({
+        date,
+        records,
+        totalSeconds: records.reduce((a, r) => a + r.durationSeconds, 0),
+      }));
+  }, [studyRecords, historyDisciplineFilter]);
+
+  const openEditRecord = useCallback((record: StudyRecord) => {
+    setEditingRecord(record);
+    setEditForm({
+      hours: Math.floor(record.durationSeconds / 3600),
+      minutes: Math.floor((record.durationSeconds % 3600) / 60),
+      correctAnswers: record.correctAnswers,
+      wrongAnswers: record.wrongAnswers,
+      blankAnswers: record.blankAnswers,
+      pagesRead: record.pagesRead,
+      notes: record.notes,
+      activityType: record.activityType,
+    });
+  }, []);
+
+  const saveEditRecord = useCallback(() => {
+    if (!editingRecord) return;
+    updateStudyRecord(editingRecord.id, {
+      durationSeconds: editForm.hours * 3600 + editForm.minutes * 60,
+      correctAnswers: editForm.correctAnswers,
+      wrongAnswers: editForm.wrongAnswers,
+      blankAnswers: editForm.blankAnswers,
+      pagesRead: editForm.pagesRead,
+      notes: editForm.notes,
+      activityType: editForm.activityType,
+    });
+    toast.success('Registro atualizado!');
+    setEditingRecord(null);
+  }, [editingRecord, editForm, updateStudyRecord]);
+
+  const deleteRecord = useCallback((id: string) => {
+    removeStudyRecord(id);
+    toast.success('Registro excluído.');
+  }, [removeStudyRecord]);
+
+  // ─── Linha do Tempo: stacked bar data ───
+  const timelineData = useMemo(() => {
+    const today = new Date();
+    let start: Date, end: Date, days: Date[];
+
+    if (timelineMode === 'semana') {
+      const baseStart = startOfWeek(today, { weekStartsOn: 1 });
+      start = subWeeks(baseStart, -timelineOffset);
+      end = endOfWeek(start, { weekStartsOn: 1 });
+      days = eachDayOfInterval({ start, end });
+    } else {
+      const baseStart = startOfMonth(today);
+      start = addMonths(baseStart, timelineOffset);
+      end = endOfMonth(start);
+      const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 });
+      days = weeks;
+    }
+
+    const topDiscs = disciplines.slice(0, 8);
+
+    const data = days.map((day) => {
+      const dayStr = format(day, 'yyyy-MM-dd');
+      const label = timelineMode === 'semana'
+        ? format(day, 'EEE', { locale: ptBR })
+        : format(day, 'dd/MM');
+
+      const entry: Record<string, any> = { label, date: dayStr };
+      topDiscs.forEach((disc) => {
+        const dayRecords = allStudyRecords.filter((r) => {
+          if (timelineMode === 'semana') return r.date === dayStr && r.disciplineId === disc.id;
+          const weekEnd = endOfWeek(day, { weekStartsOn: 1 });
+          return r.disciplineId === disc.id && r.date >= dayStr && r.date <= format(weekEnd, 'yyyy-MM-dd');
+        });
+        entry[disc.name] = Math.round(dayRecords.reduce((a, r) => a + r.durationSeconds / 3600, 0) * 10) / 10;
+      });
+      return entry;
+    });
+
+    const periodLabel = timelineMode === 'semana'
+      ? `${format(start, 'dd/MM/yyyy')} a ${format(end, 'dd/MM/yyyy')}`
+      : format(start, "MMMM 'de' yyyy", { locale: ptBR });
+
+    const totalSeconds = allStudyRecords
+      .filter((r) => r.date >= format(start, 'yyyy-MM-dd') && r.date <= format(end, 'yyyy-MM-dd'))
+      .reduce((a, r) => a + r.durationSeconds, 0);
+
+    return { data, discNames: topDiscs.map((d) => d.name), periodLabel, totalSeconds };
+  }, [allStudyRecords, disciplines, timelineMode, timelineOffset]);
+
+  const formatDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
 
   const exportPdf = useCallback(async () => {
     try {
