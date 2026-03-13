@@ -26,16 +26,16 @@ export const RecoveryEmail = ({ siteName, confirmationUrl }: RecoveryEmailProps)
     <Body style={main}>
       <Container style={container}>
         <Text style={logo}>⚡ Meu Sprint Pro</Text>
-        <Heading style={h1}>Redefinir senha</Heading>
+        <Heading style={h1}>Redefinir sua senha</Heading>
         <Text style={text}>
-          Recebemos uma solicitação para redefinir a senha da sua conta. Clique no botão abaixo para escolher uma nova senha.
+          Recebemos uma solicitação para redefinir sua senha. Clique no botão abaixo para escolher uma nova senha.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Redefinir Senha
         </Button>
         <Hr style={hr} />
         <Text style={footer}>
-          Se você não solicitou, ignore este e-mail. Sua senha não será alterada.
+          Se você não solicitou a redefinição, pode ignorar este e-mail. Sua senha não será alterada.
         </Text>
       </Container>
     </Body>

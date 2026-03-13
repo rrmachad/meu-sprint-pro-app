@@ -25,11 +25,11 @@ interface EmailChangeEmailProps {
 export const EmailChangeEmail = ({ siteName, email, newEmail, confirmationUrl }: EmailChangeEmailProps) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirme a alteração de e-mail — Meu Sprint Pro</Preview>
+    <Preview>Confirme a alteração do seu e-mail — Meu Sprint Pro</Preview>
     <Body style={main}>
       <Container style={container}>
         <Text style={logo}>⚡ Meu Sprint Pro</Text>
-        <Heading style={h1}>Confirme a alteração de e-mail</Heading>
+        <Heading style={h1}>Alteração de e-mail</Heading>
         <Text style={text}>
           Você solicitou a alteração do seu e-mail de{' '}
           <Link href={`mailto:${email}`} style={link}>{email}</Link>{' '}
