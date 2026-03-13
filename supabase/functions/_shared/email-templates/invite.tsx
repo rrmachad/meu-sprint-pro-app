@@ -12,7 +12,6 @@ import {
   Link,
   Preview,
   Text,
-  Hr,
 } from 'npm:@react-email/components@0.0.22'
 
 interface InviteEmailProps {
@@ -21,25 +20,31 @@ interface InviteEmailProps {
   confirmationUrl: string
 }
 
-export const InviteEmail = ({ siteName, siteUrl, confirmationUrl }: InviteEmailProps) => (
-  <Html lang="pt-BR" dir="ltr">
+export const InviteEmail = ({
+  siteName,
+  siteUrl,
+  confirmationUrl,
+}: InviteEmailProps) => (
+  <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Você foi convidado para o Meu Sprint Pro</Preview>
+    <Preview>You've been invited to join {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Text style={logo}>⚡ Meu Sprint Pro</Text>
-        <Heading style={h1}>Você foi convidado!</Heading>
+        <Heading style={h1}>You've been invited</Heading>
         <Text style={text}>
-          Você foi convidado para participar do{' '}
-          <Link href={siteUrl} style={link}><strong>Meu Sprint Pro</strong></Link>.
-          Clique no botão abaixo para aceitar o convite e criar sua conta.
+          You've been invited to join{' '}
+          <Link href={siteUrl} style={link}>
+            <strong>{siteName}</strong>
+          </Link>
+          . Click the button below to accept the invitation and create your
+          account.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Aceitar Convite
+          Accept Invitation
         </Button>
-        <Hr style={hr} />
         <Text style={footer}>
-          Se você não esperava este convite, pode ignorar este e-mail.
+          If you weren't expecting this invitation, you can safely ignore this
+          email.
         </Text>
       </Container>
     </Body>
@@ -48,12 +53,27 @@ export const InviteEmail = ({ siteName, siteUrl, confirmationUrl }: InviteEmailP
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: "'Inter', Arial, sans-serif" }
-const container = { margin: '0 auto', padding: '40px 20px', maxWidth: '560px' }
-const logo = { fontSize: '24px', fontWeight: '700' as const, color: '#0fa968', textAlign: 'center' as const, marginBottom: '24px' }
-const h1 = { fontSize: '22px', fontWeight: '700' as const, color: '#1a1a2e', margin: '0 0 16px' }
-const text = { fontSize: '15px', color: '#55575d', lineHeight: '1.6', margin: '0 0 16px' }
-const link = { color: '#0fa968', textDecoration: 'underline' }
-const button = { backgroundColor: '#0fa968', color: '#ffffff', fontSize: '15px', fontWeight: '600' as const, borderRadius: '12px', padding: '12px 24px', textDecoration: 'none', textAlign: 'center' as const, display: 'block' as const, marginTop: '24px' }
-const hr = { borderColor: '#e5e7eb', margin: '32px 0 16px' }
-const footer = { fontSize: '12px', color: '#9ca3af', textAlign: 'center' as const }
+const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const container = { padding: '20px 25px' }
+const h1 = {
+  fontSize: '22px',
+  fontWeight: 'bold' as const,
+  color: '#000000',
+  margin: '0 0 20px',
+}
+const text = {
+  fontSize: '14px',
+  color: '#55575d',
+  lineHeight: '1.5',
+  margin: '0 0 25px',
+}
+const link = { color: 'inherit', textDecoration: 'underline' }
+const button = {
+  backgroundColor: '#000000',
+  color: '#ffffff',
+  fontSize: '14px',
+  borderRadius: '8px',
+  padding: '12px 20px',
+  textDecoration: 'none',
+}
+const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
