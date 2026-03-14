@@ -17,6 +17,18 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "framer-motion", "@radix-ui/react-context"],
+    dedupe: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "framer-motion",
+      "@radix-ui/react-context",
+      "@radix-ui/react-compose-refs",
+      "@radix-ui/react-presence",
+      "@radix-ui/react-primitive",
+      "@radix-ui/react-collapsible",
+      "@radix-ui/react-accordion",
+    ],
   },
 }));
