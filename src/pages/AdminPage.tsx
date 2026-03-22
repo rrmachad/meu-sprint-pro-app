@@ -76,7 +76,18 @@ interface Metrics {
   estimatedMRR: number;
   activeLicenses: number;
   newUsersLast30Days: number;
+  userGrowthData: { date: string; count: number }[];
+  cumulativeData: { date: string; total: number }[];
+  revenueByTier: Record<string, { count: number; revenue: number }>;
 }
+
+const CHART_COLORS = [
+  'hsl(var(--primary))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
 
 function MetricCard({ icon: Icon, label, value, suffix, gradient }: {
   icon: typeof Users;
