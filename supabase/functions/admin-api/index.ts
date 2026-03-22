@@ -307,6 +307,43 @@ serve(async (req) => {
         });
       }
 
+      case "change_role": {
+        const targetUserId = String(params.user_id);
+        const newRole = String(params.role); // "admin" | "moderator" | "user" (user = remove role)
+
+        // Prevent changing own role
+        if (targetUserId === userData.user.id) {
+          throw new Error("Forbidden: cannot change your own role");
+        }
+
+        if (newRole === "user") {
+          // Remove any role entry (default = regular user)
+          await supabaseAdmin
+            .from("user_roles")
+            .delete()
+            .eq("user_id", targetUserId);
+        } else {
+          // Upsert role
+          const { data: existing } = await supabaseAdmin
+            .from("user_roles")
+            .select("id")
+            .eq("user_id", targetUserId)
+            .maybeSingle();
+
+          if (existing) {
+            await supabaseAdmin
+              .from("user_roles")
+              .update({ role: newRole })
+              .eq("id", existing.id);
+          } else {
+            await supabaseAdmin
+              .from("user_roles")
+              .insert({ user_id: targetUserId, role: newRole });
+          }
+        }
+        return json({ success: true });
+      }
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }

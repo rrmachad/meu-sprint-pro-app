@@ -138,6 +138,7 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [changingRole, setChangingRole] = useState<string | null>(null);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -152,6 +153,23 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
   }, [adminApi]);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
+
+  const handleChangeRole = async (userId: string, newRole: string) => {
+    setChangingRole(userId);
+    try {
+      await adminApi('change_role', { user_id: userId, role: newRole });
+      toast.success('Papel atualizado!');
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, role: newRole === 'user' ? null : newRole } : u
+        )
+      );
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao alterar papel');
+    } finally {
+      setChangingRole(null);
+    }
+  };
 
   const filtered = users.filter(
     (u) =>
@@ -217,13 +235,20 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
                       </div>
                     </TableCell>
                     <TableCell>
-                      {u.role ? (
-                        <Badge className={`text-[10px] border ${u.role === 'admin' ? 'bg-destructive/20 text-destructive border-destructive/30' : u.role === 'moderator' ? 'bg-chart-2/20 text-chart-2 border-chart-2/30' : 'bg-muted text-muted-foreground'}`}>
-                          {u.role === 'admin' ? 'Admin' : u.role === 'moderator' ? 'Moderador' : u.role}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Usuário</span>
-                      )}
+                      <Select
+                        value={u.role || 'user'}
+                        onValueChange={(val) => handleChangeRole(u.id, val)}
+                        disabled={changingRole === u.id}
+                      >
+                        <SelectTrigger className="h-7 w-[130px] text-xs glass border-border/30">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">Usuário</SelectItem>
+                          <SelectItem value="moderator">Moderador</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px] border-border/40 capitalize">
