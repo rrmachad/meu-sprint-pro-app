@@ -2,14 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+export type AdminRole = 'admin' | 'moderator' | null;
+
 export function useAdmin() {
   const { session } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<AdminRole>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!session?.user?.id) {
-      setIsAdmin(false);
+      setRole(null);
       setLoading(false);
       return;
     }
@@ -18,13 +20,18 @@ export function useAdmin() {
       .from('user_roles')
       .select('role')
       .eq('user_id', session.user.id)
-      .eq('role', 'admin')
+      .in('role', ['admin', 'moderator'])
+      .limit(1)
       .maybeSingle()
       .then(({ data }) => {
-        setIsAdmin(!!data);
+        setRole((data?.role as AdminRole) || null);
         setLoading(false);
       });
   }, [session?.user?.id]);
+
+  const isAdmin = role === 'admin';
+  const isModerator = role === 'moderator';
+  const hasAccess = isAdmin || isModerator;
 
   const adminApi = useCallback(
     async (action: string, params: Record<string, unknown> = {}) => {
@@ -39,5 +46,5 @@ export function useAdmin() {
     [session?.access_token]
   );
 
-  return { isAdmin, loading, adminApi };
+  return { isAdmin, isModerator, hasAccess, role, loading, adminApi };
 }
