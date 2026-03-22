@@ -88,7 +88,7 @@ export function AdminNotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [playNotificationSound]);
+  }, [playNotificationSound, soundEnabled]);
 
   const markAllRead = async () => {
     const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
