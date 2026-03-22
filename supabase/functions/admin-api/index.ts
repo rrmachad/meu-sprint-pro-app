@@ -93,6 +93,23 @@ serve(async (req) => {
         return json({ users: enriched, total: users.length });
       }
 
+      case "recent_signups": {
+        const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+        if (error) throw error;
+        const sorted = users
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 20)
+          .map((u) => ({
+            id: u.id,
+            email: u.email,
+            full_name: u.user_metadata?.full_name || u.user_metadata?.name || null,
+            avatar_url: u.user_metadata?.avatar_url || u.user_metadata?.picture || null,
+            created_at: u.created_at,
+            provider: u.app_metadata?.provider || 'email',
+          }));
+        return json({ users: sorted });
+      }
+
       case "metrics": {
         const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
         if (error) throw error;

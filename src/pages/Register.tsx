@@ -51,6 +51,12 @@ const Register = () => {
       Promise.allSettled([
         sendTransactionalEmail('welcome', { userName }, form.email),
         sendTransactionalEmail('signup-confirmation', { userName }, form.email),
+        sendTransactionalEmail('admin-new-signup', {
+          userName,
+          userEmail: form.email,
+          signupDate: new Date().toLocaleDateString('pt-BR'),
+          provider: 'email',
+        }),
       ]).catch(() => {});
       navigate('/login');
     }
