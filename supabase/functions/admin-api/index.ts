@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const adminOnlyActions = [
       "create_license", "toggle_license", "delete_license",
-      "grant_role", "revoke_role", "find_user_by_email",
+      "grant_role", "revoke_role", "find_user_by_email", "change_role",
     ];
 
     if (!isAdmin && adminOnlyActions.includes(action)) {
@@ -305,6 +305,43 @@ serve(async (req) => {
             full_name: found.user_metadata?.full_name || found.user_metadata?.name || null,
           },
         });
+      }
+
+      case "change_role": {
+        const targetUserId = String(params.user_id);
+        const newRole = String(params.role); // "admin" | "moderator" | "user" (user = remove role)
+
+        // Prevent changing own role
+        if (targetUserId === userData.user.id) {
+          throw new Error("Forbidden: cannot change your own role");
+        }
+
+        if (newRole === "user") {
+          // Remove any role entry (default = regular user)
+          await supabaseAdmin
+            .from("user_roles")
+            .delete()
+            .eq("user_id", targetUserId);
+        } else {
+          // Upsert role
+          const { data: existing } = await supabaseAdmin
+            .from("user_roles")
+            .select("id")
+            .eq("user_id", targetUserId)
+            .maybeSingle();
+
+          if (existing) {
+            await supabaseAdmin
+              .from("user_roles")
+              .update({ role: newRole })
+              .eq("id", existing.id);
+          } else {
+            await supabaseAdmin
+              .from("user_roles")
+              .insert({ user_id: targetUserId, role: newRole });
+          }
+        }
+        return json({ success: true });
       }
 
       default:
