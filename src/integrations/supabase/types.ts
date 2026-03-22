@@ -656,6 +656,30 @@ export type Database = {
           },
         ]
       }
+      moderator_permissions: {
+        Row: {
+          enabled: boolean
+          id: string
+          label: string
+          permission_key: string
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: string
+          label?: string
+          permission_key: string
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: string
+          label?: string
+          permission_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ofertas: {
         Row: {
           archived: boolean
