@@ -1,9 +1,9 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
   FileText, Settings, Flame, Sun, Moon, LogOut, RotateCcw,
-  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock, Crown, Sparkles,
+  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock, Crown, Sparkles, Shield,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useTheme } from 'next-themes';
 import { NavLink } from '@/components/NavLink';
