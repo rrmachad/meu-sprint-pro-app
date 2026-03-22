@@ -1200,8 +1200,26 @@ function BackupTab() {
   );
 }
 
+// ==================== INCOMPLETE BADGE ====================
+function IncompleteDot() {
+  return (
+    <span className="relative flex h-2 w-2 ml-1">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive" />
+    </span>
+  );
+}
+
 // ==================== MAIN SETTINGS PAGE ====================
 export default function SettingsPage() {
+  const settings = useAppStore((s) => s.settings);
+  const disciplines = useAppStore((s) => s.disciplines);
+
+  const perfilIncomplete = !settings.contest.candidateName;
+  const concursoIncomplete = !settings.contest.name || !settings.contest.organ;
+  const disciplinasIncomplete = disciplines.length === 0;
+  const metasIncomplete = !settings.weeklyHours || settings.weeklyHours <= 0 || settings.studyDays.length === 0;
+
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
       <div className="flex items-center gap-3">
@@ -1216,22 +1234,22 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="perfil" className="space-y-4">
+      <Tabs defaultValue={perfilIncomplete ? 'perfil' : concursoIncomplete ? 'concurso' : disciplinasIncomplete ? 'disciplinas' : metasIncomplete ? 'metas' : 'perfil'} className="space-y-4">
         <TabsList className="grid grid-cols-3 md:grid-cols-6 h-auto gap-1 glass border-border/30 p-1 rounded-xl">
           <TabsTrigger value="perfil" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
-            <User className="h-3.5 w-3.5" /> Perfil
+            <User className="h-3.5 w-3.5" /> Perfil {perfilIncomplete && <IncompleteDot />}
           </TabsTrigger>
           <TabsTrigger value="concurso" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
-            <Building2 className="h-3.5 w-3.5" /> Concurso
+            <Building2 className="h-3.5 w-3.5" /> Concurso {concursoIncomplete && <IncompleteDot />}
           </TabsTrigger>
           <TabsTrigger value="disciplinas" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
-            <BookOpen className="h-3.5 w-3.5" /> Disciplinas
+            <BookOpen className="h-3.5 w-3.5" /> Disciplinas {disciplinasIncomplete && <IncompleteDot />}
           </TabsTrigger>
           <TabsTrigger value="revisoes" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <RotateCcw className="h-3.5 w-3.5" /> Revisões
           </TabsTrigger>
           <TabsTrigger value="metas" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
-            <Target className="h-3.5 w-3.5" /> Metas
+            <Target className="h-3.5 w-3.5" /> Metas {metasIncomplete && <IncompleteDot />}
           </TabsTrigger>
           <TabsTrigger value="backup" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <Download className="h-3.5 w-3.5" /> Backup
