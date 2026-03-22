@@ -50,6 +50,7 @@ interface AdminUser {
   created_at: string;
   last_sign_in_at: string | null;
   provider: string;
+  role: string | null;
   subscription: {
     status: string;
     product_id: string;
@@ -178,6 +179,7 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
             <TableHeader>
               <TableRow className="border-border/30">
                 <TableHead>Usuário</TableHead>
+                <TableHead>Papel</TableHead>
                 <TableHead>Provedor</TableHead>
                 <TableHead>Plano</TableHead>
                 <TableHead>Cadastro</TableHead>
@@ -187,13 +189,13 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={6} className="text-center py-8">
                     <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     Nenhum usuário encontrado
                   </TableCell>
                 </TableRow>
@@ -213,6 +215,15 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
                           <p className="text-xs text-muted-foreground">{u.email}</p>
                         </div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {u.role ? (
+                        <Badge className={`text-[10px] border ${u.role === 'admin' ? 'bg-destructive/20 text-destructive border-destructive/30' : u.role === 'moderator' ? 'bg-chart-2/20 text-chart-2 border-chart-2/30' : 'bg-muted text-muted-foreground'}`}>
+                          {u.role === 'admin' ? 'Admin' : u.role === 'moderator' ? 'Moderador' : u.role}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Usuário</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px] border-border/40 capitalize">
