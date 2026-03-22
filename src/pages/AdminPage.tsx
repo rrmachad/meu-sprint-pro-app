@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Shield, Users, CreditCard, Key, Plus, Trash2,
   RefreshCw, Copy, BarChart3, TrendingUp, UserPlus,
-  CheckCircle, XCircle, Loader2, Clock, Download, UserCog, Search, ScrollText,
+  CheckCircle, XCircle, Loader2, Clock, Download, UserCog, Search, ScrollText, Settings,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useModeratorPermissions } from '@/hooks/useModeratorPermissions';
 import { Navigate } from 'react-router-dom';
 import { TIERS } from '@/hooks/useSubscription';
 import { useCountUp } from '@/hooks/useCountUp';
