@@ -293,7 +293,17 @@ export function StudyTimer() {
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               className="overflow-hidden border-t border-border/50 glass-strong backdrop-blur-xl"
             >
-              <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+              <div className="max-w-4xl mx-auto px-4 py-4 space-y-4 relative">
+                {/* Close button */}
+                {!isBusy && (
+                  <button
+                    onClick={() => setExpanded(false)}
+                    className="absolute top-3 right-3 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    aria-label="Fechar"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
                 {/* Mode toggle */}
                 {!isBusy && (
                   <div className="flex rounded-xl border border-border overflow-hidden max-w-xs">
