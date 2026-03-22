@@ -23,6 +23,10 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import {
+  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 import { useAdmin } from '@/hooks/useAdmin';
 import { Navigate } from 'react-router-dom';
 import { TIERS } from '@/hooks/useSubscription';
