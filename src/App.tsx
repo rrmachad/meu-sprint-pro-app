@@ -60,12 +60,9 @@ function ProtectedRoutes() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        {/* Rotas livres - acessíveis sem assinatura */}
+        <Route path="/" element={<Dashboard />} />
         <Route path="/assinatura" element={<SubscriptionPage />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
-
-        {/* Rotas protegidas por assinatura */}
-        <Route path="/" element={subscribed ? <Dashboard /> : <Navigate to="/assinatura" replace />} />
         <Route path="/indicadores" element={subscribed ? <Indicators /> : <Navigate to="/assinatura" replace />} />
         <Route path="/planejamento" element={subscribed ? <Planning /> : <Navigate to="/assinatura" replace />} />
         <Route path="/edital" element={subscribed ? <Syllabus /> : <Navigate to="/assinatura" replace />} />
