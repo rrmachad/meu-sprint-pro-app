@@ -192,7 +192,7 @@ const LandingPage = () => {
                 initial="hidden" whileInView="visible" viewport={{ once: true }}
                 variants={fadeUp} custom={i}
               >
-                <span className="text-5xl font-extrabold text-primary/15">{item.step}</span>
+                <span className="text-5xl font-extrabold text-primary/40">{item.step}</span>
                 <h3 className="mt-2 text-lg font-bold">{item.title}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">{item.desc}</p>
               </motion.div>
