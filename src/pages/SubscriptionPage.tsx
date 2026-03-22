@@ -10,20 +10,20 @@ import { useEffect } from 'react';
 
 const tierFeatures: Record<TierKey, string[]> = {
   basic: [
-    'Até 3 ofertas ativas',
-    'Construtor de página de vendas',
-    'Painel de tráfego D0-D10',
-    'Controle de faturamento',
-    'Hub de Agentes GPT (2 agentes)',
+    'Dashboard de desempenho',
+    'Ciclo de estudos personalizado',
+    'Controle de revisões espaçadas',
+    'Até 10 disciplinas',
+    'Registro de sessões de estudo',
   ],
   premium: [
-    'Ofertas ilimitadas',
-    'Construtor de página de vendas',
-    'Painel de tráfego D0-D10',
-    'Controle de faturamento completo',
-    'Hub completo de Agentes GPT',
-    'Biblioteca de criativos avançada',
-    'Relatórios e exportação',
+    'Disciplinas ilimitadas',
+    'Dashboard avançado com indicadores',
+    'Ciclos de estudo inteligentes',
+    'Revisões espaçadas completas',
+    'Simulados com análise detalhada',
+    'Raio-X do edital com progresso',
+    'Relatórios e exportação em PDF',
     'Suporte prioritário',
   ],
 };
@@ -75,7 +75,7 @@ export default function SubscriptionPage() {
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Planos & Assinatura</h1>
         <p className="text-muted-foreground">
-          Escolha o plano ideal para escalar suas ofertas de marketing digital.
+          Escolha o plano ideal para acelerar sua aprovação no concurso.
         </p>
       </div>
 
