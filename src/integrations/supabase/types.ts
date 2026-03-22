@@ -475,6 +475,74 @@ export type Database = {
           },
         ]
       }
+      license_redemptions: {
+        Row: {
+          id: string
+          license_id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          license_id: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          license_id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_redemptions_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      licenses: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          current_uses: number
+          duration_days: number
+          expires_at: string | null
+          id: string
+          max_uses: number
+          tier: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          duration_days?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number
+          tier?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number
+          duration_days?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number
+          tier?: string
+        }
+        Relationships: []
+      }
       metricas_trafego: {
         Row: {
           cpc: number
@@ -1003,6 +1071,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           candidate_name: string | null
@@ -1100,6 +1189,13 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -1120,6 +1216,7 @@ export type Database = {
     }
     Enums: {
       activity_type: "estudo" | "revisao" | "exercicios" | "leitura"
+      app_role: "admin" | "moderator" | "user"
       difficulty_level:
         | "muita_facilidade"
         | "leve_facilidade"
@@ -1259,6 +1356,7 @@ export const Constants = {
   public: {
     Enums: {
       activity_type: ["estudo", "revisao", "exercicios", "leitura"],
+      app_role: ["admin", "moderator", "user"],
       difficulty_level: [
         "muita_facilidade",
         "leve_facilidade",
