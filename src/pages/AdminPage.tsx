@@ -1074,7 +1074,7 @@ export default function AdminPage() {
       )}
 
       <Tabs defaultValue={isAdmin ? "users" : "recent"} className="space-y-4">
-        <TabsList className={`grid ${isAdmin ? 'grid-cols-3 md:grid-cols-5' : 'grid-cols-3'} h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-2xl`}>
+        <TabsList className={`grid ${isAdmin ? 'grid-cols-3 md:grid-cols-6' : 'grid-cols-3'} h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-3xl`}>
           <TabsTrigger value="recent" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <Clock className="h-3.5 w-3.5" /> Recentes
           </TabsTrigger>
@@ -1094,6 +1094,11 @@ export default function AdminPage() {
           <TabsTrigger value="metrics" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <BarChart3 className="h-3.5 w-3.5" /> Métricas
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="audit" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+              <ScrollText className="h-3.5 w-3.5" /> Auditoria
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="recent">
