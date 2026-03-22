@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Shield, Users, CreditCard, Key, Plus, Trash2,
   RefreshCw, Copy, BarChart3, TrendingUp, UserPlus,
-  CheckCircle, XCircle, Loader2, Clock, Download, UserCog, Search,
+  CheckCircle, XCircle, Loader2, Clock, Download, UserCog, Search, ScrollText,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -893,6 +893,119 @@ function CollaboratorsTab({ adminApi }: { adminApi: (action: string, params?: Re
   );
 }
 
+// ==================== AUDIT LOG TAB ====================
+interface AuditEntry {
+  id: string;
+  actor_id: string;
+  action: string;
+  target_user_id: string | null;
+  old_value: string | null;
+  new_value: string | null;
+  metadata: { target_email?: string; actor_email?: string } | null;
+  created_at: string;
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin',
+  moderator: 'Moderador',
+  user: 'Usuário',
+};
+
+function AuditLogTab({ adminApi }: { adminApi: (action: string, params?: Record<string, unknown>) => Promise<unknown> }) {
+  const [logs, setLogs] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await adminApi('list_audit_log') as { logs: AuditEntry[] };
+      setLogs(data.logs);
+    } catch {
+      toast.error('Erro ao carregar log de auditoria');
+    } finally {
+      setLoading(false);
+    }
+  }, [adminApi]);
+
+  useEffect(() => { load(); }, [load]);
+
+  return (
+    <motion.div variants={itemVariants} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{logs.length} registro(s)</p>
+        <Button variant="outline" size="icon" onClick={load} className="glass border-border/30">
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+
+      <Card className="glass border-border/30 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/30">
+                <TableHead>Data</TableHead>
+                <TableHead>Admin</TableHead>
+                <TableHead>Ação</TableHead>
+                <TableHead>Usuário Alvo</TableHead>
+                <TableHead>De</TableHead>
+                <TableHead>Para</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                  </TableCell>
+                </TableRow>
+              ) : logs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Nenhuma alteração registrada
+                  </TableCell>
+                </TableRow>
+              ) : (
+                logs.map((entry) => (
+                  <TableRow key={entry.id} className="border-border/20 hover:bg-muted/30">
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      {new Date(entry.created_at).toLocaleString('pt-BR')}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {entry.metadata?.actor_email || entry.actor_id.slice(0, 8)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px]">
+                        {entry.action === 'change_role' ? 'Alteração de papel' : entry.action}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {entry.metadata?.target_email || entry.target_user_id?.slice(0, 8) || '—'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="text-[10px] bg-muted text-muted-foreground">
+                        {ROLE_LABELS[entry.old_value || ''] || entry.old_value || '—'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`text-[10px] border ${
+                        entry.new_value === 'admin' ? 'bg-destructive/20 text-destructive border-destructive/30' :
+                        entry.new_value === 'moderator' ? 'bg-chart-2/20 text-chart-2 border-chart-2/30' :
+                        'bg-muted text-muted-foreground'
+                      }`}>
+                        {ROLE_LABELS[entry.new_value || ''] || entry.new_value || '—'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+    </motion.div>
+  );
+}
+
 // ==================== MAIN ADMIN PAGE ====================
 export default function AdminPage() {
   const { isAdmin, isModerator, hasAccess, role, loading, adminApi } = useAdmin();
@@ -961,7 +1074,7 @@ export default function AdminPage() {
       )}
 
       <Tabs defaultValue={isAdmin ? "users" : "recent"} className="space-y-4">
-        <TabsList className={`grid ${isAdmin ? 'grid-cols-3 md:grid-cols-5' : 'grid-cols-3'} h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-2xl`}>
+        <TabsList className={`grid ${isAdmin ? 'grid-cols-3 md:grid-cols-6' : 'grid-cols-3'} h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-3xl`}>
           <TabsTrigger value="recent" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <Clock className="h-3.5 w-3.5" /> Recentes
           </TabsTrigger>
@@ -981,6 +1094,11 @@ export default function AdminPage() {
           <TabsTrigger value="metrics" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <BarChart3 className="h-3.5 w-3.5" /> Métricas
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="audit" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+              <ScrollText className="h-3.5 w-3.5" /> Auditoria
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="recent">
@@ -997,6 +1115,11 @@ export default function AdminPage() {
         {isAdmin && (
           <TabsContent value="licenses">
             <LicensesTab adminApi={adminApi} />
+          </TabsContent>
+        )}
+        {isAdmin && (
+          <TabsContent value="audit">
+            <AuditLogTab adminApi={adminApi} />
           </TabsContent>
         )}
         <TabsContent value="metrics">

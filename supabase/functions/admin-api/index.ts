@@ -309,21 +309,23 @@ serve(async (req) => {
 
       case "change_role": {
         const targetUserId = String(params.user_id);
-        const newRole = String(params.role); // "admin" | "moderator" | "user" (user = remove role)
+        const newRole = String(params.role);
 
-        // Prevent changing own role
         if (targetUserId === userData.user.id) {
           throw new Error("Forbidden: cannot change your own role");
         }
 
+        // Get old role
+        const { data: oldRoleData } = await supabaseAdmin
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+        const oldRole = oldRoleData?.role || "user";
+
         if (newRole === "user") {
-          // Remove any role entry (default = regular user)
-          await supabaseAdmin
-            .from("user_roles")
-            .delete()
-            .eq("user_id", targetUserId);
+          await supabaseAdmin.from("user_roles").delete().eq("user_id", targetUserId);
         } else {
-          // Upsert role
           const { data: existing } = await supabaseAdmin
             .from("user_roles")
             .select("id")
@@ -331,17 +333,36 @@ serve(async (req) => {
             .maybeSingle();
 
           if (existing) {
-            await supabaseAdmin
-              .from("user_roles")
-              .update({ role: newRole })
-              .eq("id", existing.id);
+            await supabaseAdmin.from("user_roles").update({ role: newRole }).eq("id", existing.id);
           } else {
-            await supabaseAdmin
-              .from("user_roles")
-              .insert({ user_id: targetUserId, role: newRole });
+            await supabaseAdmin.from("user_roles").insert({ user_id: targetUserId, role: newRole });
           }
         }
+
+        // Get target email for audit
+        const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+        const targetEmail = targetUser?.user?.email || targetUserId;
+
+        await supabaseAdmin.from("audit_log").insert({
+          actor_id: userData.user.id,
+          action: "change_role",
+          target_user_id: targetUserId,
+          old_value: oldRole,
+          new_value: newRole,
+          metadata: { target_email: targetEmail, actor_email: userData.user.email },
+        });
+
         return json({ success: true });
+      }
+
+      case "list_audit_log": {
+        const { data, error } = await supabaseAdmin
+          .from("audit_log")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        return json({ logs: data });
       }
 
       default:
