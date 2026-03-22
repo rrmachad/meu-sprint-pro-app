@@ -79,7 +79,7 @@ serve(async (req) => {
       consent_collection: {
         terms_of_service: "required",
       },
-      success_url: `${req.headers.get("origin")}/assinatura?success=true`,
+      success_url: `${req.headers.get("origin")}/pagamento-sucesso`,
       cancel_url: `${req.headers.get("origin")}/assinatura?canceled=true`,
     });
 

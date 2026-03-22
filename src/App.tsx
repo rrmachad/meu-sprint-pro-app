@@ -28,6 +28,7 @@ const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ function ProtectedRoutes() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/assinatura" element={<SubscriptionPage />} />
+        <Route path="/pagamento-sucesso" element={<PaymentSuccess />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
         <Route path="/indicadores" element={subscribed ? <Indicators /> : <Navigate to="/assinatura" replace />} />
         <Route path="/planejamento" element={subscribed ? <Planning /> : <Navigate to="/assinatura" replace />} />
