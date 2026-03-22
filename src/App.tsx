@@ -47,11 +47,10 @@ function useOnboardingSeen() {
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
   const setupCompleted = useAppStore((s) => s.settings.setupCompleted);
-
-  // Sync data from Supabase when logged in
   const { syncing } = useSupabaseSync();
+  const { subscribed, loading: subLoading } = useSubscription();
 
-  if (loading || syncing) return <Loading />;
+  if (loading || syncing || subLoading) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
 
   if (!setupCompleted) {
@@ -61,14 +60,17 @@ function ProtectedRoutes() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/indicadores" element={<Indicators />} />
-        <Route path="/planejamento" element={<Planning />} />
-        <Route path="/edital" element={<Syllabus />} />
-        <Route path="/simulados" element={<MockExams />} />
-        <Route path="/revisoes" element={<Revisions />} />
-        <Route path="/configuracoes" element={<SettingsPage />} />
+        {/* Rotas livres - acessíveis sem assinatura */}
         <Route path="/assinatura" element={<SubscriptionPage />} />
+        <Route path="/configuracoes" element={<SettingsPage />} />
+
+        {/* Rotas protegidas por assinatura */}
+        <Route path="/" element={subscribed ? <Dashboard /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/indicadores" element={subscribed ? <Indicators /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/planejamento" element={subscribed ? <Planning /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/edital" element={subscribed ? <Syllabus /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/simulados" element={subscribed ? <MockExams /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/revisoes" element={subscribed ? <Revisions /> : <Navigate to="/assinatura" replace />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
