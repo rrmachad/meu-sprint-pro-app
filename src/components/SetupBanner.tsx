@@ -58,10 +58,20 @@ export function SetupBanner() {
               <AlertTriangle className="h-5 w-5 text-amber-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-foreground">Complete sua configuração</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Falta preencher: {missing.join(', ')}. Configure nas{' '}
-                <span className="font-medium text-amber-400">Configurações</span> para aproveitar o app ao máximo.
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-semibold text-sm text-foreground">Complete sua configuração</p>
+                <span className="text-xs font-bold tabular-nums text-amber-400">{completed}/{TOTAL_ITEMS}</span>
+              </div>
+              <div className="flex gap-1 mb-1.5">
+                {checks.map((c, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${c.done ? 'bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.4)]' : 'bg-muted-foreground/20'}`}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Falta: {missing.map((m) => m.label.toLowerCase()).join(', ')}.
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
