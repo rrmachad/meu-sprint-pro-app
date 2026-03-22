@@ -37,11 +37,48 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    // Determine plan name for metadata
+    const planDescriptions: Record<string, { name: string; desc: string }> = {
+      "price_1TDmShDaZO2bVcEoQMGDlfAw": {
+        name: "Plano Básico",
+        desc: "Até 10 disciplinas, revisões espaçadas, ciclos personalizados e cronograma semanal.",
+      },
+      "price_1TDmT3DaZO2bVcEo27RorBfU": {
+        name: "Plano Premium",
+        desc: "Tudo ilimitado + simulados avançados + relatórios em PDF + suporte prioritário.",
+      },
+    };
+
+    const planInfo = planDescriptions[priceId] || { name: "Meu Sprint Pro", desc: "Assinatura Meu Sprint Pro" };
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
+      locale: "pt-BR",
+      allow_promotion_codes: true,
+      billing_address_collection: "auto",
+      tax_id_collection: { enabled: true },
+      subscription_data: {
+        description: `${planInfo.name} — Meu Sprint Pro`,
+        metadata: {
+          app: "meu-sprint-pro",
+          plan: planInfo.name,
+          user_id: user.id,
+        },
+      },
+      custom_text: {
+        submit: {
+          message: `Ao assinar o ${planInfo.name}, você terá acesso imediato a todos os recursos inclusos. ${planInfo.desc}`,
+        },
+        terms_of_service: {
+          message: "Concordo com os [termos de serviço](https://elite-study-plan.lovable.app/termos).",
+        },
+      },
+      consent_collection: {
+        terms_of_service: "required",
+      },
       success_url: `${req.headers.get("origin")}/assinatura?success=true`,
       cancel_url: `${req.headers.get("origin")}/assinatura?canceled=true`,
     });
