@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity } from 'lucide-react';
+import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity, Crown } from 'lucide-react';
 import { useCountUp } from '@/hooks/useCountUp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, AreaChart, Area, LineChart, Line,
@@ -134,6 +136,8 @@ export default function Dashboard() {
   const revisions = useAppStore((s) => s.revisions);
   const completeRevision = useAppStore((s) => s.completeRevision);
   const candidateName = useAppStore((s) => s.settings.contest.candidateName);
+  const { isFree } = useSubscriptionLimits();
+  const navigate = useNavigate();
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
@@ -345,7 +349,29 @@ export default function Dashboard() {
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
 
-      {/* Stat Cards - Tactile glassmorphism with count-up */}
+      {/* Banner upgrade para plano gratuito */}
+      {isFree && (
+        <motion.div variants={itemVariants}>
+          <Card className="border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10">
+            <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                  <Crown className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Você está no plano gratuito</p>
+                  <p className="text-xs text-muted-foreground">Limite de 3 disciplinas e revisão apenas 24h. Faça upgrade para desbloquear tudo.</p>
+                </div>
+              </div>
+              <Button size="sm" onClick={() => navigate('/assinatura')} className="shrink-0">
+                Ver Planos
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => (
           <StatCard key={stat.label} stat={stat} />

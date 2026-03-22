@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import type { Topic, Discipline } from '@/types';
 
 const pageVariants = {
@@ -1372,15 +1373,22 @@ export default function Syllabus() {
     toast.success(`${topicTexts.length} tópicos importados com sucesso!`);
   };
 
+  const { canAddDiscipline, maxDisciplines } = useSubscriptionLimits();
+
   const handleImportBulk = (parsed: ParsedDiscipline[]) => {
     let totalImported = 0;
     let disciplinesCreated = 0;
+    let currentDisciplineCount = disciplines.length;
 
     parsed.forEach((disc) => {
       let discipline = disciplines.find(
         (d) => d.name.toLowerCase().trim() === disc.name.toLowerCase().trim()
       );
       if (!discipline) {
+        if (!canAddDiscipline(currentDisciplineCount)) {
+          toast.error(`Limite de ${maxDisciplines} disciplinas atingido (plano gratuito). Disciplina "${disc.name}" ignorada.`);
+          return;
+        }
         const newDisc: Discipline = {
           id: crypto.randomUUID(),
           name: disc.name,
@@ -1388,11 +1396,12 @@ export default function Syllabus() {
           weight: 0,
           prova: 'P1',
           defaultQuestions: 0,
-          order: disciplines.length + disciplinesCreated,
+          order: currentDisciplineCount,
         };
         addDiscipline(newDisc);
         discipline = newDisc;
         disciplinesCreated++;
+        currentDisciplineCount++;
       }
 
       const existingCount = topics.filter((t) => t.disciplineId === discipline!.id).length;
