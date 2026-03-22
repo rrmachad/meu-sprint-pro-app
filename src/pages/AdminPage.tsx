@@ -527,14 +527,14 @@ function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Re
                     <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                   </TableCell>
                 </TableRow>
-              ) : users.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                    Nenhum cadastro encontrado
+                    Nenhum cadastro neste período
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((u) => (
+                filtered.map((u) => (
                   <TableRow key={u.id} className="border-border/20 hover:bg-muted/30">
                     <TableCell>
                       <div className="flex items-center gap-3">
