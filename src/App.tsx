@@ -111,9 +111,11 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Suspense fallback={<Loading />}>
-              <AppRoutes />
-            </Suspense>
+            <UpgradeModalProvider>
+              <Suspense fallback={<Loading />}>
+                <AppRoutes />
+              </Suspense>
+            </UpgradeModalProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
