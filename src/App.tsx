@@ -24,6 +24,7 @@ const Register = lazy(() => import('./pages/Register'));
 const Login = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ function ProtectedRoutes() {
         <Route path="/simulados" element={<MockExams />} />
         <Route path="/revisoes" element={<Revisions />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
+        <Route path="/assinatura" element={<SubscriptionPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
