@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Square, Clock, BookOpen, Save,
-  Timer, PenLine, ChevronUp, ChevronDown, ChevronRight, X, Plus,
+  Timer, PenLine, ChevronUp, ChevronDown, ChevronRight, X, Plus, CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
