@@ -134,7 +134,7 @@ function getTierBadgeClass(productId: string | null): string {
 }
 
 // ==================== USERS TAB ====================
-function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<string, unknown>) => Promise<unknown> }) {
+function UsersTab({ adminApi, isAdmin }: { adminApi: (action: string, params?: Record<string, unknown>) => Promise<unknown>; isAdmin: boolean }) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
