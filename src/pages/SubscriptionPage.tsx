@@ -223,6 +223,54 @@ export default function SubscriptionPage() {
           );
         })}
       </div>
+
+      {/* License Redemption */}
+      <Card className="glass border-border/30 rounded-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600">
+              <Gift className="h-4 w-4 text-white" />
+            </div>
+            Tem um código de acesso?
+          </CardTitle>
+          <CardDescription>
+            Insira seu código de licença para desbloquear funcionalidades premium.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={licenseCode}
+                onChange={(e) => setLicenseCode(e.target.value.toUpperCase())}
+                placeholder="Ex: MSP-A3B5C7D9"
+                className="pl-10 glass border-border/30 font-mono tracking-wider"
+                maxLength={20}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && licenseCode.trim()) {
+                    handleRedeem();
+                  }
+                }}
+              />
+            </div>
+            <Button
+              onClick={handleRedeem}
+              disabled={redeeming || !licenseCode.trim()}
+              className="bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:opacity-90 shrink-0"
+            >
+              {redeeming ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  Resgatando...
+                </>
+              ) : (
+                'Resgatar'
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
