@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   BookOpen, Brain, Target, Clock, BarChart3, Calendar,
   CheckCircle2, Star, Users, Zap, ArrowRight, Shield,
-  TrendingUp, Award, Smartphone, ChevronRight
+  TrendingUp, Award, Smartphone, ChevronRight, X, Check, Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -232,6 +232,96 @@ const LandingPage = () => {
                 </div>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing comparison */}
+      <section className="border-y border-border/40 bg-card/30 py-20 md:py-28">
+        <div className="mx-auto max-w-5xl px-4">
+          <motion.div className="text-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
+            <h2 className="text-3xl font-extrabold md:text-4xl">Escolha o plano ideal para sua <span className="text-primary">aprovação</span></h2>
+            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">Comece grátis e faça upgrade quando quiser. Sem surpresas, cancele a qualquer momento.</p>
+          </motion.div>
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
+            {/* Gratuito */}
+            <motion.div className="rounded-2xl border border-border/40 bg-card p-6 flex flex-col" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
+              <h3 className="text-lg font-bold">Gratuito</h3>
+              <div className="mt-2"><span className="text-3xl font-extrabold">R$ 0</span><span className="text-sm text-muted-foreground">/mês</span></div>
+              <p className="mt-2 text-sm text-muted-foreground">Perfeito para começar a organizar seus estudos.</p>
+              <ul className="mt-6 space-y-3 flex-1">
+                {[
+                  { ok: true, text: 'Até 3 disciplinas' },
+                  { ok: true, text: 'Cronômetro de estudos' },
+                  { ok: true, text: 'Revisão espaçada (24h)' },
+                  { ok: true, text: 'Dashboard simplificado' },
+                  { ok: false, text: 'Ciclo de estudos' },
+                  { ok: false, text: 'Controle de edital' },
+                  { ok: false, text: 'Simulados' },
+                  { ok: false, text: 'Indicadores avançados' },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-center gap-2 text-sm">
+                    {item.ok ? <Check className="h-4 w-4 text-primary shrink-0" /> : <X className="h-4 w-4 text-muted-foreground/40 shrink-0" />}
+                    <span className={item.ok ? '' : 'text-muted-foreground/50'}>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button variant="outline" className="mt-6 w-full" asChild><Link to="/cadastro">Começar grátis</Link></Button>
+            </motion.div>
+
+            {/* Básico */}
+            <motion.div className="relative rounded-2xl border-2 border-primary bg-card p-6 flex flex-col glow-primary" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full gradient-primary px-4 py-1 text-xs font-bold text-primary-foreground">MAIS POPULAR</div>
+              <h3 className="text-lg font-bold">Básico</h3>
+              <div className="mt-2"><span className="text-3xl font-extrabold text-primary">R$ 19,90</span><span className="text-sm text-muted-foreground">/mês</span></div>
+              <p className="mt-2 text-sm text-muted-foreground">Para quem leva o concurso a sério.</p>
+              <ul className="mt-6 space-y-3 flex-1">
+                {[
+                  'Até 10 disciplinas',
+                  'Cronômetro de estudos',
+                  'Revisão espaçada completa',
+                  'Dashboard completo',
+                  'Ciclo de estudos',
+                  'Controle de edital',
+                  'Simulados ilimitados',
+                  'Indicadores de performance',
+                ].map((text) => (
+                  <li key={text} className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button className="mt-6 w-full gradient-primary glow-primary" asChild><Link to="/cadastro">Assinar Básico</Link></Button>
+            </motion.div>
+
+            {/* Premium */}
+            <motion.div className="rounded-2xl border border-border/40 bg-card p-6 flex flex-col" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={2}>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold">Premium</h3>
+                <Crown className="h-4 w-4 text-primary" />
+              </div>
+              <div className="mt-2"><span className="text-3xl font-extrabold">R$ 49,90</span><span className="text-sm text-muted-foreground">/mês</span></div>
+              <p className="mt-2 text-sm text-muted-foreground">Máxima performance para quem quer ser aprovado rápido.</p>
+              <ul className="mt-6 space-y-3 flex-1">
+                {[
+                  'Disciplinas ilimitadas',
+                  'Tudo do plano Básico',
+                  'Relatórios semanais por e-mail',
+                  'Lembretes de revisão',
+                  'Exportação de dados (PDF)',
+                  'Suporte prioritário',
+                  'Novas funcionalidades primeiro',
+                  'Sem anúncios',
+                ].map((text) => (
+                  <li key={text} className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    <span>{text}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button variant="outline" className="mt-6 w-full border-primary text-primary hover:bg-primary/10" asChild><Link to="/cadastro">Assinar Premium</Link></Button>
+            </motion.div>
           </div>
         </div>
       </section>
