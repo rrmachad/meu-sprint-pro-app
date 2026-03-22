@@ -27,6 +27,7 @@ const Login = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 const queryClient = new QueryClient();
 
@@ -88,11 +89,12 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/landing" element={user ? <Navigate to="/" replace /> : <LandingPage />} />
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/cadastro" element={user ? <Navigate to="/" replace /> : <Register />} />
       <Route path="/esqueci-senha" element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/*" element={<ProtectedRoutes />} />
+      <Route path="/*" element={user ? <ProtectedRoutes /> : <Navigate to="/landing" replace />} />
     </Routes>
   );
 }
