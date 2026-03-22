@@ -1137,8 +1137,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="concurso" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-1 glass border-border/30 p-1 rounded-xl">
+      <Tabs defaultValue="perfil" className="space-y-4">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 h-auto gap-1 glass border-border/30 p-1 rounded-xl">
+          <TabsTrigger value="perfil" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
+            <User className="h-3.5 w-3.5" /> Perfil
+          </TabsTrigger>
           <TabsTrigger value="concurso" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <Building2 className="h-3.5 w-3.5" /> Concurso
           </TabsTrigger>
@@ -1156,6 +1159,7 @@ export default function SettingsPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="perfil"><ProfileTab /></TabsContent>
         <TabsContent value="concurso"><ContestTab /></TabsContent>
         <TabsContent value="disciplinas"><DisciplinesTab /></TabsContent>
         <TabsContent value="revisoes"><RevisionsTab /></TabsContent>
