@@ -24,6 +24,7 @@ const Register = lazy(() => import('./pages/Register'));
 const Login = lazy(() => import('./pages/Login'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 
 const queryClient = new QueryClient();
 
