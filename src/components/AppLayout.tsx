@@ -1,18 +1,35 @@
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { StudyTimer } from '@/components/StudyTimer';
+import { AdminNotificationBell } from '@/components/AdminNotificationBell';
 import { useAppStore } from '@/store/useAppStore';
 import { useStudyReminders } from '@/hooks/useStudyReminders';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Wifi, WifiOff, Zap } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export function AppLayout() {
   const candidateName = useAppStore((s) => s.settings.contest.candidateName);
   const location = useLocation();
   const { connectionStatus } = useSupabaseSync();
+  const { user } = useAuth();
   useStudyReminders();
+
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user?.id]);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -38,7 +55,8 @@ export function AppLayout() {
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
               </span>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-3">
+              {isAdmin && <AdminNotificationBell />}
               {connectionStatus === 'connected' ? (
                 <div className="flex items-center gap-1.5 text-xs text-neon-green" title="Conectado em tempo real">
                   <span className="relative flex h-2 w-2">
