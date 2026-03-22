@@ -134,7 +134,7 @@ function getTierBadgeClass(productId: string | null): string {
 }
 
 // ==================== USERS TAB ====================
-function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<string, unknown>) => Promise<unknown> }) {
+function UsersTab({ adminApi, isAdmin }: { adminApi: (action: string, params?: Record<string, unknown>) => Promise<unknown>; isAdmin: boolean }) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -235,20 +235,26 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={u.role || 'user'}
-                        onValueChange={(val) => handleChangeRole(u.id, val)}
-                        disabled={changingRole === u.id}
-                      >
-                        <SelectTrigger className="h-7 w-[130px] text-xs glass border-border/30">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">Usuário</SelectItem>
-                          <SelectItem value="moderator">Moderador</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {isAdmin ? (
+                        <Select
+                          value={u.role || 'user'}
+                          onValueChange={(val) => handleChangeRole(u.id, val)}
+                          disabled={changingRole === u.id}
+                        >
+                          <SelectTrigger className="h-7 w-[130px] text-xs glass border-border/30">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">Usuário</SelectItem>
+                            <SelectItem value="moderator">Moderador</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {u.role || 'usuário'}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px] border-border/40 capitalize">
@@ -1105,7 +1111,7 @@ export default function AdminPage() {
           <RecentSignupsTab adminApi={adminApi} />
         </TabsContent>
         <TabsContent value="users">
-          <UsersTab adminApi={adminApi} />
+          <UsersTab adminApi={adminApi} isAdmin={isAdmin} />
         </TabsContent>
         {isAdmin && (
           <TabsContent value="collaborators">
@@ -1158,27 +1164,29 @@ export default function AdminPage() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="glass border-border/30 rounded-xl">
-                    <CardHeader>
-                      <CardTitle className="text-base">Resumo Financeiro</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Assinantes ativos</span>
-                        <span className="font-bold">{metrics.activeSubscriptions}</span>
-                      </div>
-                      <Separator className="bg-border/30" />
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">MRR estimado</span>
-                        <span className="font-bold text-primary">R$ {metrics.estimatedMRR.toFixed(2)}</span>
-                      </div>
-                      <Separator className="bg-border/30" />
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Licenças ativas</span>
-                        <span className="font-bold">{metrics.activeLicenses}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {isAdmin && (
+                    <Card className="glass border-border/30 rounded-xl">
+                      <CardHeader>
+                        <CardTitle className="text-base">Resumo Financeiro</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Assinantes ativos</span>
+                          <span className="font-bold">{metrics.activeSubscriptions}</span>
+                        </div>
+                        <Separator className="bg-border/30" />
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">MRR estimado</span>
+                          <span className="font-bold text-primary">R$ {metrics.estimatedMRR.toFixed(2)}</span>
+                        </div>
+                        <Separator className="bg-border/30" />
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Licenças ativas</span>
+                          <span className="font-bold">{metrics.activeLicenses}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
 
                 {/* User Growth Chart - Daily new signups */}
@@ -1277,7 +1285,7 @@ export default function AdminPage() {
                 </Card>
 
                 {/* Revenue by Tier */}
-                {Object.keys(metrics.revenueByTier).length > 0 && (
+                {isAdmin && Object.keys(metrics.revenueByTier).length > 0 && (
                   <Card className="glass border-border/30 rounded-xl">
                     <CardHeader>
                       <CardTitle className="text-base">Receita por Plano</CardTitle>
