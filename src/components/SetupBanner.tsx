@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store/useAppStore';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, X, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,13 +31,16 @@ export function SetupBanner() {
   if (isAdmin) return null;
   if (dismissed) return null;
 
-  const missing: string[] = [];
-  if (!settings.contest.candidateName) missing.push('seu nome');
-  if (!settings.contest.name) missing.push('concurso');
-  if (!settings.contest.examDate) missing.push('data da prova');
-  const hasDisciplines = useAppStore.getState().disciplines.length > 0;
-  if (!hasDisciplines) missing.push('disciplinas');
-  if (!settings.weeklyHours || settings.weeklyHours <= 0) missing.push('carga horária');
+  const TOTAL_ITEMS = 5;
+  const checks = [
+    { label: 'Seu nome', done: !!settings.contest.candidateName },
+    { label: 'Concurso', done: !!settings.contest.name },
+    { label: 'Data da prova', done: !!settings.contest.examDate },
+    { label: 'Disciplinas', done: useAppStore.getState().disciplines.length > 0 },
+    { label: 'Carga horária', done: !!(settings.weeklyHours && settings.weeklyHours > 0) },
+  ];
+  const completed = checks.filter((c) => c.done).length;
+  const missing = checks.filter((c) => !c.done);
 
   if (missing.length === 0) return null;
 
@@ -55,10 +58,20 @@ export function SetupBanner() {
               <AlertTriangle className="h-5 w-5 text-amber-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm text-foreground">Complete sua configuração</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Falta preencher: {missing.join(', ')}. Configure nas{' '}
-                <span className="font-medium text-amber-400">Configurações</span> para aproveitar o app ao máximo.
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-semibold text-sm text-foreground">Complete sua configuração</p>
+                <span className="text-xs font-bold tabular-nums text-amber-400">{completed}/{TOTAL_ITEMS}</span>
+              </div>
+              <div className="flex gap-1 mb-1.5">
+                {checks.map((c, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${c.done ? 'bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.4)]' : 'bg-muted-foreground/20'}`}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Falta: {missing.map((m) => m.label.toLowerCase()).join(', ')}.
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
