@@ -1285,7 +1285,7 @@ export default function AdminPage() {
                 </Card>
 
                 {/* Revenue by Tier */}
-                {Object.keys(metrics.revenueByTier).length > 0 && (
+                {isAdmin && Object.keys(metrics.revenueByTier).length > 0 && (
                   <Card className="glass border-border/30 rounded-xl">
                     <CardHeader>
                       <CardTitle className="text-base">Receita por Plano</CardTitle>
