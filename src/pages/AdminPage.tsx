@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Shield, Users, CreditCard, Key, Plus, Trash2,
   RefreshCw, Copy, BarChart3, TrendingUp, UserPlus,
-  CheckCircle, XCircle, Loader2, Clock,
+  CheckCircle, XCircle, Loader2, Clock, Download,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -505,6 +505,32 @@ function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Re
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-xs">{filtered.length} cadastro(s)</Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            className="glass border-border/30"
+            disabled={filtered.length === 0}
+            onClick={() => {
+              const header = 'Nome,Email,Método,Data de Cadastro\n';
+              const rows = filtered.map((u) => {
+                const name = (u.full_name || '').replace(/,/g, ' ');
+                const email = u.email || '';
+                const provider = u.provider || 'email';
+                const date = new Date(u.created_at).toLocaleString('pt-BR');
+                return `"${name}","${email}","${provider}","${date}"`;
+              }).join('\n');
+              const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `cadastros_${period}_${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toast.success('CSV exportado com sucesso!');
+            }}
+          >
+            <Download className="h-4 w-4 mr-1" /> CSV
+          </Button>
           <Button variant="outline" size="icon" onClick={load} className="glass border-border/30">
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
