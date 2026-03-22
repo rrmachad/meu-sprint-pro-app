@@ -28,6 +28,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
 import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { useUpgradeModal } from '@/components/UpgradeModal';
 import { useNavigate } from 'react-router-dom';
 import type { Discipline, DisciplineCategory, ProvaPhase, RevisionMark } from '@/types';
 
@@ -288,7 +289,7 @@ function DisciplinesTab() {
   };
 
   const { canAddDiscipline, isFree, maxDisciplines } = useSubscriptionLimits();
-  const navigate = useNavigate();
+  const { showUpgradeModal } = useUpgradeModal();
 
   const handleSave = () => {
     if (!form.name.trim()) { toast.error('Informe o nome da disciplina.'); return; }
@@ -297,7 +298,7 @@ function DisciplinesTab() {
       toast.success('Disciplina atualizada!');
     } else {
       if (!canAddDiscipline(disciplines.length)) {
-        toast.error(`Limite de ${maxDisciplines} disciplinas no plano gratuito. Faça upgrade para adicionar mais.`);
+        showUpgradeModal('Adicionar mais disciplinas');
         return;
       }
       const disc: Discipline = { id: crypto.randomUUID(), ...form, order: disciplines.length };
@@ -513,6 +514,7 @@ function RevisionsTab() {
   const settings = useAppStore((s) => s.settings);
   const updateSettings = useAppStore((s) => s.updateSettings);
   const { isRevisionMarkAllowed, isFree } = useSubscriptionLimits();
+  const { showUpgradeModal } = useUpgradeModal();
 
   const toggleEnabled = (enabled: boolean) => {
     updateSettings({ revision: { ...settings.revision, enabled } });
@@ -566,7 +568,7 @@ function RevisionsTab() {
                     checked={settings.revision.marks.includes(rm.value)}
                     onCheckedChange={() => {
                       if (locked) {
-                        toast.error('Marcos de revisão avançados requerem um plano pago.');
+                        showUpgradeModal('Marcos de revisão avançados');
                         return;
                       }
                       toggleMark(rm.value);
