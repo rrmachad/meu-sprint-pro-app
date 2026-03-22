@@ -16,7 +16,20 @@ export function AppLayout() {
   const candidateName = useAppStore((s) => s.settings.contest.candidateName);
   const location = useLocation();
   const { connectionStatus } = useSupabaseSync();
+  const { user } = useAuth();
   useStudyReminders();
+
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user?.id]);
 
   const greeting = () => {
     const h = new Date().getHours();
