@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   BookOpen, Brain, Target, Clock, BarChart3, Calendar,
   CheckCircle2, Star, Users, Zap, ArrowRight, Shield,
-  TrendingUp, Award, Smartphone, ChevronRight
+  TrendingUp, Award, Smartphone, ChevronRight, X, Check, Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
