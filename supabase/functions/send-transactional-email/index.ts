@@ -4,6 +4,7 @@ import { WelcomeEmail } from '../_shared/transactional-templates/welcome.tsx'
 import { StudyReportEmail } from '../_shared/transactional-templates/study-report.tsx'
 import { RevisionReminderEmail } from '../_shared/transactional-templates/revision-reminder.tsx'
 import { SignupConfirmationEmail } from '../_shared/transactional-templates/signup-confirmation.tsx'
+import { AdminNewSignupEmail } from '../_shared/transactional-templates/admin-new-signup.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,7 @@ const corsHeaders = {
 
 const SENDER_DOMAIN = 'notify.meusprint.pro'
 
-type TemplateName = 'welcome' | 'study-report' | 'revision-reminder' | 'signup-confirmation'
+type TemplateName = 'welcome' | 'study-report' | 'revision-reminder' | 'signup-confirmation' | 'admin-new-signup'
 
 function renderTemplate(template: TemplateName, data: Record<string, unknown>): { subject: string; html: string } {
   switch (template) {
@@ -31,6 +32,10 @@ function renderTemplate(template: TemplateName, data: Record<string, unknown>): 
     case 'signup-confirmation': {
       const html = render(SignupConfirmationEmail(data as any))
       return { subject: 'Cadastro confirmado — Elite Concurseiro ✅', html }
+    }
+    case 'admin-new-signup': {
+      const html = render(AdminNewSignupEmail(data as any))
+      return { subject: `🆕 Novo cadastro: ${data.userName || data.userEmail || 'novo usuário'}`, html }
     }
     default:
       throw new Error(`Unknown template: ${template}`)

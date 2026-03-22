@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-type TemplateName = 'welcome' | 'study-report' | 'revision-reminder' | 'signup-confirmation';
+type TemplateName = 'welcome' | 'study-report' | 'revision-reminder' | 'signup-confirmation' | 'admin-new-signup';
 
 interface StudyReportData {
   userName?: string;
@@ -26,7 +26,14 @@ interface SignupConfirmationData {
   userName?: string;
 }
 
-type TemplateData = StudyReportData | RevisionReminderData | WelcomeData | SignupConfirmationData;
+interface AdminNewSignupData {
+  userName?: string;
+  userEmail?: string;
+  signupDate?: string;
+  provider?: string;
+}
+
+type TemplateData = StudyReportData | RevisionReminderData | WelcomeData | SignupConfirmationData | AdminNewSignupData;
 
 export async function sendTransactionalEmail(
   template: TemplateName,

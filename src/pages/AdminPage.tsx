@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Shield, Users, CreditCard, Key, Plus, Trash2,
   RefreshCw, Copy, BarChart3, TrendingUp, UserPlus,
-  CheckCircle, XCircle, Loader2,
+  CheckCircle, XCircle, Loader2, Clock,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -450,6 +450,107 @@ function LicensesTab({ adminApi }: { adminApi: (action: string, params?: Record<
   );
 }
 
+// ==================== RECENT SIGNUPS TAB ====================
+function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Record<string, unknown>) => Promise<unknown> }) {
+  const [users, setUsers] = useState<{ id: string; email: string; full_name: string | null; avatar_url: string | null; created_at: string; provider: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await adminApi('recent_signups') as { users: typeof users };
+      setUsers(data.users);
+    } catch {
+      toast.error('Erro ao carregar cadastros recentes');
+    } finally {
+      setLoading(false);
+    }
+  }, [adminApi]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}min atrás`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h atrás`;
+    const days = Math.floor(hours / 24);
+    return `${days}d atrás`;
+  };
+
+  return (
+    <motion.div variants={itemVariants} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">Últimos 20 cadastros</p>
+        <Button variant="outline" size="icon" onClick={load} className="glass border-border/30">
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+      <Card className="glass border-border/30 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/30">
+                <TableHead>Usuário</TableHead>
+                <TableHead>Método</TableHead>
+                <TableHead>Quando</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                  </TableCell>
+                </TableRow>
+              ) : users.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                    Nenhum cadastro encontrado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                users.map((u) => (
+                  <TableRow key={u.id} className="border-border/20 hover:bg-muted/30">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          {u.avatar_url && <AvatarImage src={u.avatar_url} />}
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                            {(u.full_name || u.email)?.[0]?.toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">{u.full_name || '—'}</p>
+                          <p className="text-xs text-muted-foreground">{u.email}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] border-border/40 capitalize">
+                        {u.provider}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="text-xs font-medium">{timeAgo(u.created_at)}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {new Date(u.created_at).toLocaleString('pt-BR')}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+    </motion.div>
+  );
+}
+
 // ==================== MAIN ADMIN PAGE ====================
 export default function AdminPage() {
   const { isAdmin, loading, adminApi } = useAdmin();
@@ -510,7 +611,10 @@ export default function AdminPage() {
       )}
 
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-md">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-lg">
+          <TabsTrigger value="recent" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+            <Clock className="h-3.5 w-3.5" /> Recentes
+          </TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <Users className="h-3.5 w-3.5" /> Usuários
           </TabsTrigger>
@@ -522,6 +626,9 @@ export default function AdminPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="recent">
+          <RecentSignupsTab adminApi={adminApi} />
+        </TabsContent>
         <TabsContent value="users">
           <UsersTab adminApi={adminApi} />
         </TabsContent>
