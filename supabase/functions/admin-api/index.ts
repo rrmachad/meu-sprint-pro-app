@@ -227,10 +227,59 @@ serve(async (req) => {
       case "grant_role": {
         const { error } = await supabaseAdmin.from("user_roles").insert({
           user_id: params.user_id,
-          role: params.role || "admin",
+          role: params.role || "moderator",
         });
         if (error) throw error;
         return json({ success: true });
+      }
+
+      case "list_roles": {
+        const { data, error } = await supabaseAdmin
+          .from("user_roles")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+
+        // Enrich with user info
+        const enriched = await Promise.all(
+          (data || []).map(async (r: any) => {
+            let email = null;
+            let full_name = null;
+            try {
+              const { data: u } = await supabaseAdmin.auth.admin.getUserById(r.user_id);
+              email = u?.user?.email || null;
+              full_name = u?.user?.user_metadata?.full_name || u?.user?.user_metadata?.name || null;
+            } catch { /* ignore */ }
+            return { ...r, email, full_name };
+          })
+        );
+
+        return json({ roles: enriched });
+      }
+
+      case "revoke_role": {
+        const { error } = await supabaseAdmin
+          .from("user_roles")
+          .delete()
+          .eq("id", params.role_id);
+        if (error) throw error;
+        return json({ success: true });
+      }
+
+      case "find_user_by_email": {
+        const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+        if (error) throw error;
+        const found = users.find(
+          (u) => u.email?.toLowerCase() === String(params.email).toLowerCase()
+        );
+        if (!found) return json({ user: null });
+        return json({
+          user: {
+            id: found.id,
+            email: found.email,
+            full_name: found.user_metadata?.full_name || found.user_metadata?.name || null,
+          },
+        });
       }
 
       default:
