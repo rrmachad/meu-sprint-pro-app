@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Shield, Users, CreditCard, Key, Plus, Trash2,
   RefreshCw, Copy, BarChart3, TrendingUp, UserPlus,
-  CheckCircle, XCircle, Loader2, Clock, Download, UserCog, Search, ScrollText,
+  CheckCircle, XCircle, Loader2, Clock, Download, UserCog, Search, ScrollText, Settings,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useModeratorPermissions } from '@/hooks/useModeratorPermissions';
 import { Navigate } from 'react-router-dom';
 import { TIERS } from '@/hooks/useSubscription';
 import { useCountUp } from '@/hooks/useCountUp';
@@ -1012,11 +1013,73 @@ function AuditLogTab({ adminApi }: { adminApi: (action: string, params?: Record<
   );
 }
 
+// ==================== PERMISSIONS CONFIG TAB ====================
+function PermissionsConfigTab() {
+  const { permissions, loading, toggle } = useModeratorPermissions();
+
+  const ICONS: Record<string, string> = {
+    tab_users: '👥',
+    tab_recent: '🕐',
+    tab_metrics: '📊',
+    tab_collaborators: '🤝',
+    tab_licenses: '🔑',
+    tab_audit: '📜',
+    change_roles: '🔄',
+    view_financial: '💰',
+  };
+
+  return (
+    <motion.div variants={itemVariants} className="space-y-4">
+      <Card className="glass border-border/30 rounded-xl">
+        <CardHeader>
+          <CardTitle className="text-base">Permissões do Moderador</CardTitle>
+          <CardDescription>
+            Configure quais funcionalidades os moderadores podem acessar no painel.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            permissions.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between py-3 px-2 rounded-lg hover:bg-muted/30 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{ICONS[p.permission_key] || '⚙️'}</span>
+                  <span className="text-sm font-medium">{p.label}</span>
+                </div>
+                <Switch
+                  checked={p.enabled}
+                  onCheckedChange={(checked) => {
+                    toggle(p.id, checked);
+                    toast.success(`${p.label}: ${checked ? 'ativado' : 'desativado'}`);
+                  }}
+                />
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 // ==================== MAIN ADMIN PAGE ====================
 export default function AdminPage() {
   const { isAdmin, isModerator, hasAccess, role, loading, adminApi } = useAdmin();
+  const { isAllowed, loading: permLoading } = useModeratorPermissions();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
+
+  // For moderators, use dynamic permissions; admins see everything
+  const canSee = useCallback(
+    (key: string) => isAdmin || isAllowed(key),
+    [isAdmin, isAllowed]
+  );
 
   const loadMetrics = useCallback(async () => {
     setMetricsLoading(true);
@@ -1034,7 +1097,7 @@ export default function AdminPage() {
     if (hasAccess) loadMetrics();
   }, [hasAccess, loadMetrics]);
 
-  if (loading) {
+  if (loading || permLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -1045,6 +1108,9 @@ export default function AdminPage() {
   if (!hasAccess) {
     return <Navigate to="/" replace />;
   }
+
+  // Build visible tabs for moderators
+  const showFinancial = canSee('view_financial');
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6">
@@ -1066,11 +1132,11 @@ export default function AdminPage() {
 
       {/* Metrics - visible to all */}
       {metrics && (
-        <div className={`grid grid-cols-2 ${isAdmin ? 'md:grid-cols-5' : 'md:grid-cols-3'} gap-3`}>
+        <div className={`grid grid-cols-2 ${isAdmin || showFinancial ? 'md:grid-cols-5' : 'md:grid-cols-3'} gap-3`}>
           <MetricCard icon={Users} label="Total Usuários" value={metrics.totalUsers} gradient="gradient-neon" />
           <MetricCard icon={UserPlus} label="Novos (30d)" value={metrics.newUsersLast30Days} gradient="gradient-blue" />
           <MetricCard icon={CreditCard} label="Assinantes Ativos" value={metrics.activeSubscriptions} gradient="gradient-orange" />
-          {isAdmin && (
+          {(isAdmin || showFinancial) && (
             <>
               <MetricCard icon={TrendingUp} label="MRR Estimado" value={metrics.estimatedMRR} suffix="R$" gradient="bg-gradient-to-br from-emerald-500 to-emerald-600" />
               <MetricCard icon={Key} label="Licenças Ativas" value={metrics.activeLicenses} gradient="bg-gradient-to-br from-violet-500 to-violet-600" />
@@ -1079,243 +1145,156 @@ export default function AdminPage() {
         </div>
       )}
 
-      <Tabs defaultValue={isAdmin ? "users" : "recent"} className="space-y-4">
-        <TabsList className={`grid ${isAdmin ? 'grid-cols-3 md:grid-cols-6' : 'grid-cols-3'} h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-3xl`}>
-          <TabsTrigger value="recent" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
-            <Clock className="h-3.5 w-3.5" /> Recentes
-          </TabsTrigger>
-          <TabsTrigger value="users" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
-            <Users className="h-3.5 w-3.5" /> Usuários
-          </TabsTrigger>
-          {isAdmin && (
+      <Tabs defaultValue={isAdmin ? "users" : (canSee('tab_recent') ? "recent" : "users")} className="space-y-4">
+        <TabsList className="flex flex-wrap h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-4xl">
+          {canSee('tab_recent') && (
+            <TabsTrigger value="recent" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+              <Clock className="h-3.5 w-3.5" /> Recentes
+            </TabsTrigger>
+          )}
+          {canSee('tab_users') && (
+            <TabsTrigger value="users" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+              <Users className="h-3.5 w-3.5" /> Usuários
+            </TabsTrigger>
+          )}
+          {canSee('tab_collaborators') && (
             <TabsTrigger value="collaborators" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
               <UserCog className="h-3.5 w-3.5" /> Equipe
             </TabsTrigger>
           )}
-          {isAdmin && (
+          {canSee('tab_licenses') && (
             <TabsTrigger value="licenses" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
               <Key className="h-3.5 w-3.5" /> Licenças
             </TabsTrigger>
           )}
-          <TabsTrigger value="metrics" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
-            <BarChart3 className="h-3.5 w-3.5" /> Métricas
-          </TabsTrigger>
-          {isAdmin && (
+          {canSee('tab_metrics') && (
+            <TabsTrigger value="metrics" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+              <BarChart3 className="h-3.5 w-3.5" /> Métricas
+            </TabsTrigger>
+          )}
+          {canSee('tab_audit') && (
             <TabsTrigger value="audit" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
               <ScrollText className="h-3.5 w-3.5" /> Auditoria
             </TabsTrigger>
           )}
+          {isAdmin && (
+            <TabsTrigger value="permissions" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+              <Settings className="h-3.5 w-3.5" /> Permissões
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        <TabsContent value="recent">
-          <RecentSignupsTab adminApi={adminApi} />
-        </TabsContent>
-        <TabsContent value="users">
-          <UsersTab adminApi={adminApi} isAdmin={isAdmin} />
-        </TabsContent>
-        {isAdmin && (
+        {canSee('tab_recent') && (
+          <TabsContent value="recent">
+            <RecentSignupsTab adminApi={adminApi} />
+          </TabsContent>
+        )}
+        {canSee('tab_users') && (
+          <TabsContent value="users">
+            <UsersTab adminApi={adminApi} isAdmin={isAdmin || canSee('change_roles')} />
+          </TabsContent>
+        )}
+        {canSee('tab_collaborators') && (
           <TabsContent value="collaborators">
             <CollaboratorsTab adminApi={adminApi} />
           </TabsContent>
         )}
-        {isAdmin && (
+        {canSee('tab_licenses') && (
           <TabsContent value="licenses">
             <LicensesTab adminApi={adminApi} />
           </TabsContent>
         )}
-        {isAdmin && (
+        {canSee('tab_audit') && (
           <TabsContent value="audit">
             <AuditLogTab adminApi={adminApi} />
           </TabsContent>
         )}
-        <TabsContent value="metrics">
-          <motion.div variants={itemVariants} className="space-y-4">
-            <div className="flex justify-end">
-              <Button variant="outline" size="sm" onClick={loadMetrics} className="gap-1 glass border-border/30">
-                <RefreshCw className={`h-3.5 w-3.5 ${metricsLoading ? 'animate-spin' : ''}`} /> Atualizar
-              </Button>
-            </div>
-            {metrics ? (
-              <div className="space-y-4">
-                {/* Summary cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="glass border-border/30 rounded-xl">
-                    <CardHeader>
-                      <CardTitle className="text-base">Resumo de Usuários</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Total de cadastros</span>
-                        <span className="font-bold">{metrics.totalUsers}</span>
-                      </div>
-                      <Separator className="bg-border/30" />
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Novos últimos 30 dias</span>
-                        <span className="font-bold text-primary">{metrics.newUsersLast30Days}</span>
-                      </div>
-                      <Separator className="bg-border/30" />
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Taxa de conversão</span>
-                        <span className="font-bold">
-                          {metrics.totalUsers > 0
-                            ? ((metrics.activeSubscriptions / metrics.totalUsers) * 100).toFixed(1)
-                            : 0}%
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  {isAdmin && (
+        {canSee('tab_metrics') && (
+          <TabsContent value="metrics">
+            <motion.div variants={itemVariants} className="space-y-4">
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={loadMetrics} className="gap-1 glass border-border/30">
+                  <RefreshCw className={`h-3.5 w-3.5 ${metricsLoading ? 'animate-spin' : ''}`} /> Atualizar
+                </Button>
+              </div>
+              {metrics ? (
+                <div className="space-y-4">
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="glass border-border/30 rounded-xl">
                       <CardHeader>
-                        <CardTitle className="text-base">Resumo Financeiro</CardTitle>
+                        <CardTitle className="text-base">Resumo de Usuários</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Assinantes ativos</span>
-                          <span className="font-bold">{metrics.activeSubscriptions}</span>
+                          <span className="text-muted-foreground">Total de cadastros</span>
+                          <span className="font-bold">{metrics.totalUsers}</span>
                         </div>
                         <Separator className="bg-border/30" />
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">MRR estimado</span>
-                          <span className="font-bold text-primary">R$ {metrics.estimatedMRR.toFixed(2)}</span>
+                          <span className="text-muted-foreground">Novos últimos 30 dias</span>
+                          <span className="font-bold text-primary">{metrics.newUsersLast30Days}</span>
                         </div>
                         <Separator className="bg-border/30" />
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Licenças ativas</span>
-                          <span className="font-bold">{metrics.activeLicenses}</span>
+                          <span className="text-muted-foreground">Taxa de conversão</span>
+                          <span className="font-bold">
+                            {metrics.totalUsers > 0
+                              ? ((metrics.activeSubscriptions / metrics.totalUsers) * 100).toFixed(1)
+                              : 0}%
+                          </span>
                         </div>
                       </CardContent>
                     </Card>
-                  )}
-                </div>
+                    {showFinancial && (
+                      <Card className="glass border-border/30 rounded-xl">
+                        <CardHeader>
+                          <CardTitle className="text-base">Resumo Financeiro</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Assinantes ativos</span>
+                            <span className="font-bold">{metrics.activeSubscriptions}</span>
+                          </div>
+                          <Separator className="bg-border/30" />
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">MRR estimado</span>
+                            <span className="font-bold text-primary">R$ {metrics.estimatedMRR.toFixed(2)}</span>
+                          </div>
+                          <Separator className="bg-border/30" />
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Licenças ativas</span>
+                            <span className="font-bold">{metrics.activeLicenses}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
 
-                {/* User Growth Chart - Daily new signups */}
-                <Card className="glass border-border/30 rounded-xl">
-                  <CardHeader>
-                    <CardTitle className="text-base">Novos Cadastros (últimos 30 dias)</CardTitle>
-                    <CardDescription>Quantidade de novos usuários por dia</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={metrics.userGrowthData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
-                          <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                            tickFormatter={(v) => {
-                              const d = new Date(v + 'T00:00:00');
-                              return `${d.getDate()}/${d.getMonth() + 1}`;
-                            }}
-                            interval={4}
-                          />
-                          <YAxis
-                            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                            allowDecimals={false}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: 'hsl(var(--card))',
-                              border: '1px solid hsl(var(--border))',
-                              borderRadius: '8px',
-                              fontSize: '12px',
-                            }}
-                            labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('pt-BR')}
-                            formatter={(value: number) => [value, 'Novos usuários']}
-                          />
-                          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Cumulative Growth Chart */}
-                <Card className="glass border-border/30 rounded-xl">
-                  <CardHeader>
-                    <CardTitle className="text-base">Crescimento Acumulado de Usuários</CardTitle>
-                    <CardDescription>Total de usuários ao longo do tempo</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={metrics.cumulativeData}>
-                          <defs>
-                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
-                          <XAxis
-                            dataKey="date"
-                            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                            tickFormatter={(v) => {
-                              const d = new Date(v + 'T00:00:00');
-                              return `${d.getDate()}/${d.getMonth() + 1}`;
-                            }}
-                            interval={4}
-                          />
-                          <YAxis
-                            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                            allowDecimals={false}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: 'hsl(var(--card))',
-                              border: '1px solid hsl(var(--border))',
-                              borderRadius: '8px',
-                              fontSize: '12px',
-                            }}
-                            labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('pt-BR')}
-                            formatter={(value: number) => [value, 'Total de usuários']}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="total"
-                            stroke="hsl(var(--primary))"
-                            fillOpacity={1}
-                            fill="url(#colorTotal)"
-                            strokeWidth={2}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Revenue by Tier */}
-                {isAdmin && Object.keys(metrics.revenueByTier).length > 0 && (
+                  {/* User Growth Chart */}
                   <Card className="glass border-border/30 rounded-xl">
                     <CardHeader>
-                      <CardTitle className="text-base">Receita por Plano</CardTitle>
-                      <CardDescription>Distribuição de assinantes e receita por tier</CardDescription>
+                      <CardTitle className="text-base">Novos Cadastros (últimos 30 dias)</CardTitle>
+                      <CardDescription>Quantidade de novos usuários por dia</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-64 flex items-center justify-center">
+                      <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={Object.entries(metrics.revenueByTier).map(([productId, data], i) => {
-                                const tierEntry = Object.entries(TIERS).find(([, t]) => t.product_id === productId);
-                                return {
-                                  name: tierEntry ? tierEntry[1].name : 'Outro',
-                                  value: data.revenue,
-                                  count: data.count,
-                                };
-                              })}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={90}
-                              paddingAngle={4}
-                              dataKey="value"
-                              label={({ name, value }) => `${name}: R$${value.toFixed(0)}`}
-                            >
-                              {Object.keys(metrics.revenueByTier).map((_, i) => (
-                                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                              ))}
-                            </Pie>
+                          <BarChart data={metrics.userGrowthData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                            <XAxis
+                              dataKey="date"
+                              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                              tickFormatter={(v) => {
+                                const d = new Date(v + 'T00:00:00');
+                                return `${d.getDate()}/${d.getMonth() + 1}`;
+                              }}
+                              interval={4}
+                            />
+                            <YAxis
+                              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                              allowDecimals={false}
+                            />
                             <Tooltip
                               contentStyle={{
                                 backgroundColor: 'hsl(var(--card))',
@@ -1323,27 +1302,136 @@ export default function AdminPage() {
                                 borderRadius: '8px',
                                 fontSize: '12px',
                               }}
-                              formatter={(value: number, name: string, props: any) => [
-                                `R$ ${value.toFixed(2)} (${props.payload.count} assinantes)`,
-                                name,
-                              ]}
+                              labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('pt-BR')}
+                              formatter={(value: number) => [value, 'Novos usuários']}
                             />
-                            <Legend />
-                          </PieChart>
+                            <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                          </BarChart>
                         </ResponsiveContainer>
                       </div>
                     </CardContent>
                   </Card>
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-                Carregando métricas...
-              </div>
-            )}
-          </motion.div>
-        </TabsContent>
+
+                  {/* Cumulative Growth Chart */}
+                  <Card className="glass border-border/30 rounded-xl">
+                    <CardHeader>
+                      <CardTitle className="text-base">Crescimento Acumulado de Usuários</CardTitle>
+                      <CardDescription>Total de usuários ao longo do tempo</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={metrics.cumulativeData}>
+                            <defs>
+                              <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                            <XAxis
+                              dataKey="date"
+                              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                              tickFormatter={(v) => {
+                                const d = new Date(v + 'T00:00:00');
+                                return `${d.getDate()}/${d.getMonth() + 1}`;
+                              }}
+                              interval={4}
+                            />
+                            <YAxis
+                              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                              allowDecimals={false}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                              }}
+                              labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('pt-BR')}
+                              formatter={(value: number) => [value, 'Total de usuários']}
+                            />
+                            <Area
+                              type="monotone"
+                              dataKey="total"
+                              stroke="hsl(var(--primary))"
+                              fillOpacity={1}
+                              fill="url(#colorTotal)"
+                              strokeWidth={2}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Revenue by Tier */}
+                  {showFinancial && Object.keys(metrics.revenueByTier).length > 0 && (
+                    <Card className="glass border-border/30 rounded-xl">
+                      <CardHeader>
+                        <CardTitle className="text-base">Receita por Plano</CardTitle>
+                        <CardDescription>Distribuição de assinantes e receita por tier</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-64 flex items-center justify-center">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={Object.entries(metrics.revenueByTier).map(([productId, data]) => {
+                                  const tierEntry = Object.entries(TIERS).find(([, t]) => t.product_id === productId);
+                                  return {
+                                    name: tierEntry ? tierEntry[1].name : 'Outro',
+                                    value: data.revenue,
+                                    count: data.count,
+                                  };
+                                })}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={60}
+                                outerRadius={90}
+                                paddingAngle={4}
+                                dataKey="value"
+                                label={({ name, value }) => `${name}: R$${value.toFixed(0)}`}
+                              >
+                                {Object.keys(metrics.revenueByTier).map((_, i) => (
+                                  <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '8px',
+                                  fontSize: '12px',
+                                }}
+                                formatter={(value: number, name: string, props: any) => [
+                                  `R$ ${value.toFixed(2)} (${props.payload.count} assinantes)`,
+                                  name,
+                                ]}
+                              />
+                              <Legend />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                  Carregando métricas...
+                </div>
+              )}
+            </motion.div>
+          </TabsContent>
+        )}
+        {isAdmin && (
+          <TabsContent value="permissions">
+            <PermissionsConfigTab />
+          </TabsContent>
+        )}
       </Tabs>
     </motion.div>
   );
