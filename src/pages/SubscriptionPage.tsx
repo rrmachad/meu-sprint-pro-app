@@ -33,15 +33,18 @@ export default function SubscriptionPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
 
+  const successParam = searchParams.get('success');
+  const canceledParam = searchParams.get('canceled');
+
   useEffect(() => {
-    if (searchParams.get('success') === 'true') {
+    if (successParam === 'true') {
       toast.success('Assinatura realizada com sucesso! Atualizando status...');
       checkSubscription();
     }
-    if (searchParams.get('canceled') === 'true') {
+    if (canceledParam === 'true') {
       toast.info('Checkout cancelado.');
     }
-  }, [searchParams, checkSubscription]);
+  }, [successParam, canceledParam, checkSubscription]);
 
   const handleCheckout = async (priceId: string) => {
     setCheckoutLoading(priceId);
