@@ -1,12 +1,12 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
   FileText, Settings, Flame, Sun, Moon, LogOut, RotateCcw,
-  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard,
+  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
 import { NavLink } from '@/components/NavLink';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader,
@@ -15,6 +15,8 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { useAuth } from '@/hooks/useAuth';
 import { Progress } from '@/components/ui/progress';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useUpgradeModal } from '@/components/UpgradeModal';
 
 const navItems = [
   { title: 'Dashboard', url: '/', icon: Home },
