@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
@@ -296,18 +297,25 @@ export function StudyTimer() {
               <div className="max-w-4xl mx-auto px-4 py-4 space-y-4 relative">
                 {/* Close button */}
                 {!isBusy && (
-                  <motion.button
-                    onClick={() => setExpanded(false)}
-                    className="absolute top-3 right-3 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                    aria-label="Fechar"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.15, duration: 0.25, ease: 'easeOut' }}
-                    whileHover={{ scale: 1.15, rotate: 90 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <X className="h-4 w-4" />
-                  </motion.button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <motion.button
+                        onClick={() => setExpanded(false)}
+                        className="absolute top-3 right-3 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                        aria-label="Fechar painel"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.15, duration: 0.25, ease: 'easeOut' }}
+                        whileHover={{ scale: 1.15, rotate: 90 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <X className="h-4 w-4" />
+                      </motion.button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="text-xs">
+                      Fechar painel
+                    </TooltipContent>
+                  </Tooltip>
                 )}
                 {/* Mode toggle */}
                 {!isBusy && (
