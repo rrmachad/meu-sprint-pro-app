@@ -75,7 +75,7 @@ export default function SubscriptionPage() {
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Planos & Assinatura</h1>
         <p className="text-muted-foreground">
-          Escolha o plano ideal para escalar suas ofertas de marketing digital.
+          Escolha o plano ideal para acelerar sua aprovação no concurso.
         </p>
       </div>
 
