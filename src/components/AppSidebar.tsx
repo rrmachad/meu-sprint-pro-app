@@ -55,6 +55,11 @@ export function AppSidebar() {
   const { theme, setTheme } = useTheme();
   const { subscribed, tier } = useSubscription();
   const { showUpgradeModal } = useUpgradeModal();
+  const { user } = useAuth();
+
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+  const initials = fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   const pendingRevisionCount = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
