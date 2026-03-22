@@ -859,7 +859,7 @@ function CollaboratorsTab({ adminApi }: { adminApi: (action: string, params?: Re
 
 // ==================== MAIN ADMIN PAGE ====================
 export default function AdminPage() {
-  const { isAdmin, loading, adminApi } = useAdmin();
+  const { isAdmin, isModerator, hasAccess, role, loading, adminApi } = useAdmin();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
 
@@ -876,8 +876,8 @@ export default function AdminPage() {
   }, [adminApi]);
 
   useEffect(() => {
-    if (isAdmin) loadMetrics();
-  }, [isAdmin, loadMetrics]);
+    if (hasAccess) loadMetrics();
+  }, [hasAccess, loadMetrics]);
 
   if (loading) {
     return (
@@ -887,7 +887,7 @@ export default function AdminPage() {
     );
   }
 
-  if (!isAdmin) {
+  if (!hasAccess) {
     return <Navigate to="/" replace />;
   }
 
@@ -898,38 +898,50 @@ export default function AdminPage() {
           <Shield className="h-6 w-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Painel Admin</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isAdmin ? 'Painel Admin' : 'Painel Moderador'}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Gerencie usuários, assinaturas e licenças do Meu Sprint PRO.
+            {isAdmin
+              ? 'Gerencie usuários, assinaturas e licenças do Meu Sprint PRO.'
+              : 'Visualize métricas e usuários do Meu Sprint PRO.'}
           </p>
         </div>
       </div>
 
-      {/* Metrics */}
+      {/* Metrics - visible to all */}
       {metrics && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className={`grid grid-cols-2 ${isAdmin ? 'md:grid-cols-5' : 'md:grid-cols-3'} gap-3`}>
           <MetricCard icon={Users} label="Total Usuários" value={metrics.totalUsers} gradient="gradient-neon" />
           <MetricCard icon={UserPlus} label="Novos (30d)" value={metrics.newUsersLast30Days} gradient="gradient-blue" />
           <MetricCard icon={CreditCard} label="Assinantes Ativos" value={metrics.activeSubscriptions} gradient="gradient-orange" />
-          <MetricCard icon={TrendingUp} label="MRR Estimado" value={metrics.estimatedMRR} suffix="R$" gradient="bg-gradient-to-br from-emerald-500 to-emerald-600" />
-          <MetricCard icon={Key} label="Licenças Ativas" value={metrics.activeLicenses} gradient="bg-gradient-to-br from-violet-500 to-violet-600" />
+          {isAdmin && (
+            <>
+              <MetricCard icon={TrendingUp} label="MRR Estimado" value={metrics.estimatedMRR} suffix="R$" gradient="bg-gradient-to-br from-emerald-500 to-emerald-600" />
+              <MetricCard icon={Key} label="Licenças Ativas" value={metrics.activeLicenses} gradient="bg-gradient-to-br from-violet-500 to-violet-600" />
+            </>
+          )}
         </div>
       )}
 
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid grid-cols-3 md:grid-cols-5 h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-2xl">
+      <Tabs defaultValue={isAdmin ? "users" : "recent"} className="space-y-4">
+        <TabsList className={`grid ${isAdmin ? 'grid-cols-3 md:grid-cols-5' : 'grid-cols-3'} h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-2xl`}>
           <TabsTrigger value="recent" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <Clock className="h-3.5 w-3.5" /> Recentes
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <Users className="h-3.5 w-3.5" /> Usuários
           </TabsTrigger>
-          <TabsTrigger value="collaborators" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
-            <UserCog className="h-3.5 w-3.5" /> Equipe
-          </TabsTrigger>
-          <TabsTrigger value="licenses" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
-            <Key className="h-3.5 w-3.5" /> Licenças
-          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="collaborators" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+              <UserCog className="h-3.5 w-3.5" /> Equipe
+            </TabsTrigger>
+          )}
+          {isAdmin && (
+            <TabsTrigger value="licenses" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+              <Key className="h-3.5 w-3.5" /> Licenças
+            </TabsTrigger>
+          )}
           <TabsTrigger value="metrics" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <BarChart3 className="h-3.5 w-3.5" /> Métricas
           </TabsTrigger>
@@ -941,12 +953,16 @@ export default function AdminPage() {
         <TabsContent value="users">
           <UsersTab adminApi={adminApi} />
         </TabsContent>
-        <TabsContent value="collaborators">
-          <CollaboratorsTab adminApi={adminApi} />
-        </TabsContent>
-        <TabsContent value="licenses">
-          <LicensesTab adminApi={adminApi} />
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="collaborators">
+            <CollaboratorsTab adminApi={adminApi} />
+          </TabsContent>
+        )}
+        {isAdmin && (
+          <TabsContent value="licenses">
+            <LicensesTab adminApi={adminApi} />
+          </TabsContent>
+        )}
         <TabsContent value="metrics">
           <motion.div variants={itemVariants} className="space-y-4">
             <div className="flex justify-end">

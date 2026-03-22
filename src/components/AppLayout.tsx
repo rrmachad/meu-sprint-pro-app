@@ -19,16 +19,16 @@ export function AppLayout() {
   const { user } = useAuth();
   useStudyReminders();
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
   useEffect(() => {
     if (!user?.id) return;
     supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .in('role', ['admin', 'moderator'])
       .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
+      .then(({ data }) => setHasAdminAccess(!!data));
   }, [user?.id]);
 
   const greeting = () => {
@@ -56,7 +56,7 @@ export function AppLayout() {
               </span>
             </div>
             <div className="ml-auto flex items-center gap-3">
-              {isAdmin && <AdminNotificationBell />}
+              {hasAdminAccess && <AdminNotificationBell />}
               {connectionStatus === 'connected' ? (
                 <div className="flex items-center gap-1.5 text-xs text-neon-green" title="Conectado em tempo real">
                   <span className="relative flex h-2 w-2">

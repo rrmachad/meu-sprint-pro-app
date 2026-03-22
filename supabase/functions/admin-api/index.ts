@@ -27,15 +27,28 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !userData.user) throw new Error("Unauthorized");
 
-    // Check admin role
+    // Check admin or moderator role
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", userData.user.id)
-      .eq("role", "admin")
+      .in("role", ["admin", "moderator"])
       .maybeSingle();
 
-    if (!roleData) throw new Error("Forbidden: admin role required");
+    if (!roleData) throw new Error("Forbidden: admin or moderator role required");
+
+    const callerRole = roleData.role;
+    const isAdmin = callerRole === "admin";
+
+    // Actions restricted to admin only
+    const adminOnlyActions = [
+      "create_license", "toggle_license", "delete_license",
+      "grant_role", "revoke_role", "find_user_by_email",
+    ];
+
+    if (!isAdmin && adminOnlyActions.includes(action)) {
+      throw new Error("Forbidden: this action requires admin role");
+    }
 
     const { action, ...params } = await req.json();
 
