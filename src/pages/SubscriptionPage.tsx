@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import { Check, Crown, Zap, RefreshCw, Settings, BookOpen, Target, Brain, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, Crown, Zap, RefreshCw, Settings, BookOpen, Target, Brain, TrendingUp, Key, Gift, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useSubscription, TIERS, TierKey } from '@/hooks/useSubscription';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
-import { useEffect } from 'react';
 
 const tierFeatures: Record<TierKey, string[]> = {
   basic: [
@@ -30,8 +32,11 @@ const tierFeatures: Record<TierKey, string[]> = {
 
 export default function SubscriptionPage() {
   const { subscribed, tier, subscriptionEnd, loading, checkSubscription, createCheckout, openPortal } = useSubscription();
+  const { session } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
+  const [licenseCode, setLicenseCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
 
   const successParam = searchParams.get('success');
   const canceledParam = searchParams.get('canceled');
@@ -62,6 +67,29 @@ export default function SubscriptionPage() {
       await openPortal();
     } catch {
       toast.error('Erro ao abrir portal de gerenciamento.');
+    }
+  };
+
+  const handleRedeem = async () => {
+    if (!licenseCode.trim()) return;
+    setRedeeming(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('redeem-license', {
+        body: { code: licenseCode.trim() },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      toast.success(data?.message || 'Código resgatado com sucesso!');
+      setLicenseCode('');
+      checkSubscription();
+    } catch {
+      toast.error('Erro ao resgatar código. Verifique e tente novamente.');
+    } finally {
+      setRedeeming(false);
     }
   };
 
@@ -218,6 +246,54 @@ export default function SubscriptionPage() {
           );
         })}
       </div>
+
+      {/* License Redemption */}
+      <Card className="glass border-border/30 rounded-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600">
+              <Gift className="h-4 w-4 text-white" />
+            </div>
+            Tem um código de acesso?
+          </CardTitle>
+          <CardDescription>
+            Insira seu código de licença para desbloquear funcionalidades premium.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={licenseCode}
+                onChange={(e) => setLicenseCode(e.target.value.toUpperCase())}
+                placeholder="Ex: MSP-A3B5C7D9"
+                className="pl-10 glass border-border/30 font-mono tracking-wider"
+                maxLength={20}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && licenseCode.trim()) {
+                    handleRedeem();
+                  }
+                }}
+              />
+            </div>
+            <Button
+              onClick={handleRedeem}
+              disabled={redeeming || !licenseCode.trim()}
+              className="bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:opacity-90 shrink-0"
+            >
+              {redeeming ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  Resgatando...
+                </>
+              ) : (
+                'Resgatar'
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
