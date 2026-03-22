@@ -48,6 +48,7 @@ export function StudyTimer() {
   const [selectedTopic, setSelectedTopic] = useState('');
   const [activityType, setActivityType] = useState<ActivityType>('estudo');
   const [expanded, setExpanded] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showNewDiscipline, setShowNewDiscipline] = useState(false);
   const [newDisciplineName, setNewDisciplineName] = useState('');
