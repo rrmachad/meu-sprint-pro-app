@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Crown, Zap, RefreshCw, Settings } from 'lucide-react';
+import { Check, Crown, Zap, RefreshCw, Settings, BookOpen, Target, Brain, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
