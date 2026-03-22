@@ -1,12 +1,16 @@
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { StudyTimer } from '@/components/StudyTimer';
+import { AdminNotificationBell } from '@/components/AdminNotificationBell';
 import { useAppStore } from '@/store/useAppStore';
 import { useStudyReminders } from '@/hooks/useStudyReminders';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Wifi, WifiOff, Zap } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export function AppLayout() {
   const candidateName = useAppStore((s) => s.settings.contest.candidateName);
