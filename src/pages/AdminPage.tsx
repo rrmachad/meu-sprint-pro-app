@@ -600,6 +600,263 @@ function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Re
   );
 }
 
+// ==================== COLLABORATORS TAB ====================
+interface RoleEntry {
+  id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  email: string | null;
+  full_name: string | null;
+}
+
+function CollaboratorsTab({ adminApi }: { adminApi: (action: string, params?: Record<string, unknown>) => Promise<unknown> }) {
+  const [roles, setRoles] = useState<RoleEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [selectedRole, setSelectedRole] = useState<string>('moderator');
+  const [searching, setSearching] = useState(false);
+  const [granting, setGranting] = useState(false);
+  const [foundUser, setFoundUser] = useState<{ id: string; email: string; full_name: string | null } | null>(null);
+
+  const loadRoles = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await adminApi('list_roles') as { roles: RoleEntry[] };
+      setRoles(data.roles);
+    } catch {
+      toast.error('Erro ao carregar colaboradores');
+    } finally {
+      setLoading(false);
+    }
+  }, [adminApi]);
+
+  useEffect(() => { loadRoles(); }, [loadRoles]);
+
+  const handleSearch = async () => {
+    if (!email.trim()) return;
+    setSearching(true);
+    setFoundUser(null);
+    try {
+      const data = await adminApi('find_user_by_email', { email: email.trim() }) as { user: { id: string; email: string; full_name: string | null } | null };
+      if (data.user) {
+        setFoundUser(data.user);
+      } else {
+        toast.error('Usuário não encontrado com este email');
+      }
+    } catch {
+      toast.error('Erro ao buscar usuário');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleGrant = async () => {
+    if (!foundUser) return;
+    setGranting(true);
+    try {
+      await adminApi('grant_role', { user_id: foundUser.id, role: selectedRole });
+      toast.success(`Papel "${selectedRole}" atribuído a ${foundUser.email}!`);
+      setDialogOpen(false);
+      setEmail('');
+      setFoundUser(null);
+      setSelectedRole('moderator');
+      loadRoles();
+    } catch {
+      toast.error('Erro ao atribuir papel. O usuário pode já ter este papel.');
+    } finally {
+      setGranting(false);
+    }
+  };
+
+  const handleRevoke = async (roleId: string) => {
+    try {
+      await adminApi('revoke_role', { role_id: roleId });
+      toast.success('Papel revogado');
+      loadRoles();
+    } catch {
+      toast.error('Erro ao revogar papel');
+    }
+  };
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-destructive/20 text-destructive border-destructive/30';
+      case 'moderator':
+        return 'bg-warning/20 text-warning border-warning/30';
+      default:
+        return 'bg-primary/20 text-primary border-primary/30';
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin': return 'Administrador';
+      case 'moderator': return 'Moderador';
+      case 'user': return 'Usuário';
+      default: return role;
+    }
+  };
+
+  return (
+    <motion.div variants={itemVariants} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{roles.length} papel(éis) atribuído(s)</p>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={loadRoles} className="glass border-border/30">
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button onClick={() => setDialogOpen(true)} size="sm" className="gap-1 gradient-neon text-primary-foreground">
+            <Plus className="h-4 w-4" /> Adicionar Colaborador
+          </Button>
+        </div>
+      </div>
+
+      <Card className="glass border-border/30 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/30">
+                <TableHead>Usuário</TableHead>
+                <TableHead>Papel</TableHead>
+                <TableHead>Desde</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                  </TableCell>
+                </TableRow>
+              ) : roles.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    Nenhum colaborador adicionado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                roles.map((r) => (
+                  <TableRow key={r.id} className="border-border/20 hover:bg-muted/30">
+                    <TableCell>
+                      <div>
+                        <p className="text-sm font-medium">{r.full_name || '—'}</p>
+                        <p className="text-xs text-muted-foreground">{r.email || r.user_id}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`text-[10px] border ${getRoleBadge(r.role)}`}>
+                        {getRoleLabel(r.role)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(r.created_at).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell>
+                      {r.role !== 'admin' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRevoke(r.id)}
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="glass border-border/30 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Colaborador</DialogTitle>
+            <DialogDescription>
+              Busque um usuário cadastrado pelo email e atribua um papel.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Email do Usuário</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="usuario@exemplo.com"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setFoundUser(null); }}
+                  className="glass border-border/30"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleSearch}
+                  disabled={searching || !email.trim()}
+                  className="glass border-border/30 shrink-0"
+                >
+                  {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            {foundUser && (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">{foundUser.full_name || foundUser.email}</p>
+                    <p className="text-xs text-muted-foreground">{foundUser.email}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Papel</Label>
+                  <Select value={selectedRole} onValueChange={setSelectedRole}>
+                    <SelectTrigger className="glass border-border/30">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="moderator">Moderador</SelectItem>
+                      <SelectItem value="user">Usuário</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">
+                    {selectedRole === 'moderator'
+                      ? 'Moderadores podem ajudar na gestão de conteúdo e suporte.'
+                      : 'Papel básico de acesso ao sistema.'}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="glass border-border/30">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleGrant}
+              disabled={!foundUser || granting}
+              className="gradient-neon text-primary-foreground"
+            >
+              {granting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Atribuir Papel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </motion.div>
+  );
+}
+
 // ==================== MAIN ADMIN PAGE ====================
 export default function AdminPage() {
   const { isAdmin, loading, adminApi } = useAdmin();
