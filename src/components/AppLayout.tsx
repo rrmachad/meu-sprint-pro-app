@@ -49,7 +49,7 @@ export function AppLayout() {
             <div className="h-5 w-px bg-border/40" />
             <div className="flex flex-col min-w-0">
               <span className="text-sm md:text-base font-semibold text-foreground truncate">
-                {greeting()}, <span className="text-neon-green">{candidateName || 'Atleta'}</span>
+                {greeting()}, <span className="text-neon-green">{candidateName || 'Concurseiro'}</span>
               </span>
               <span className="text-[10px] md:text-xs text-muted-foreground">
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}

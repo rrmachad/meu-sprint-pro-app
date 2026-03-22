@@ -358,27 +358,6 @@ export default function Dashboard() {
       {/* Setup completion banner */}
       <SetupBanner />
 
-      {/* Bootstrap Admin Button - only shows when no admin exists */}
-      {showBootstrap && (
-        <motion.div variants={itemVariants}>
-          <Card className="border-red-500/30 bg-gradient-to-r from-red-500/10 to-orange-500/10">
-            <CardContent className="flex items-center justify-between gap-4 p-4">
-              <div>
-                <p className="font-semibold text-sm">Ativar Acesso Admin</p>
-                <p className="text-xs text-muted-foreground">Clique para se tornar o administrador do Meu Sprint PRO.</p>
-              </div>
-              <Button
-                onClick={handleBootstrapAdmin}
-                disabled={bootstrapping}
-                size="sm"
-                className="bg-gradient-to-r from-red-500 to-orange-500 text-white hover:opacity-90 shrink-0"
-              >
-                {bootstrapping ? 'Ativando...' : 'Ativar Admin'}
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
 
       {/* Banner upgrade para plano gratuito */}
       {isFree && (
