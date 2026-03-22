@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Shield, Users, CreditCard, Key, Plus, Trash2,
   RefreshCw, Copy, BarChart3, TrendingUp, UserPlus,
-  CheckCircle, XCircle, Loader2, Clock, Download,
+  CheckCircle, XCircle, Loader2, Clock, Download, UserCog, Search,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
