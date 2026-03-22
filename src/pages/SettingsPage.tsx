@@ -289,7 +289,7 @@ function DisciplinesTab() {
   };
 
   const { canAddDiscipline, isFree, maxDisciplines } = useSubscriptionLimits();
-  const navigate = useNavigate();
+  const { showUpgradeModal } = useUpgradeModal();
 
   const handleSave = () => {
     if (!form.name.trim()) { toast.error('Informe o nome da disciplina.'); return; }
@@ -298,7 +298,7 @@ function DisciplinesTab() {
       toast.success('Disciplina atualizada!');
     } else {
       if (!canAddDiscipline(disciplines.length)) {
-        toast.error(`Limite de ${maxDisciplines} disciplinas no plano gratuito. Faça upgrade para adicionar mais.`);
+        showUpgradeModal('Adicionar mais disciplinas');
         return;
       }
       const disc: Discipline = { id: crypto.randomUUID(), ...form, order: disciplines.length };
