@@ -24,6 +24,7 @@ const navItems = [
   { title: 'Raio-X', url: '/edital', icon: Crosshair },
   { title: 'Testes', url: '/simulados', icon: FlaskConical },
   { title: 'Configurações', url: '/configuracoes', icon: Settings },
+  { title: 'Assinatura', url: '/assinatura', icon: CreditCard },
 ];
 
 function LogoutButton({ collapsed }: { collapsed: boolean }) {
