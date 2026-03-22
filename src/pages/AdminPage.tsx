@@ -536,53 +536,203 @@ export default function AdminPage() {
               </Button>
             </div>
             {metrics ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                {/* Summary cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="glass border-border/30 rounded-xl">
+                    <CardHeader>
+                      <CardTitle className="text-base">Resumo de Usuários</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Total de cadastros</span>
+                        <span className="font-bold">{metrics.totalUsers}</span>
+                      </div>
+                      <Separator className="bg-border/30" />
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Novos últimos 30 dias</span>
+                        <span className="font-bold text-primary">{metrics.newUsersLast30Days}</span>
+                      </div>
+                      <Separator className="bg-border/30" />
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Taxa de conversão</span>
+                        <span className="font-bold">
+                          {metrics.totalUsers > 0
+                            ? ((metrics.activeSubscriptions / metrics.totalUsers) * 100).toFixed(1)
+                            : 0}%
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="glass border-border/30 rounded-xl">
+                    <CardHeader>
+                      <CardTitle className="text-base">Resumo Financeiro</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Assinantes ativos</span>
+                        <span className="font-bold">{metrics.activeSubscriptions}</span>
+                      </div>
+                      <Separator className="bg-border/30" />
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">MRR estimado</span>
+                        <span className="font-bold text-primary">R$ {metrics.estimatedMRR.toFixed(2)}</span>
+                      </div>
+                      <Separator className="bg-border/30" />
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Licenças ativas</span>
+                        <span className="font-bold">{metrics.activeLicenses}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* User Growth Chart - Daily new signups */}
                 <Card className="glass border-border/30 rounded-xl">
                   <CardHeader>
-                    <CardTitle className="text-base">Resumo de Usuários</CardTitle>
+                    <CardTitle className="text-base">Novos Cadastros (últimos 30 dias)</CardTitle>
+                    <CardDescription>Quantidade de novos usuários por dia</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total de cadastros</span>
-                      <span className="font-bold">{metrics.totalUsers}</span>
-                    </div>
-                    <Separator className="bg-border/30" />
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Novos últimos 30 dias</span>
-                      <span className="font-bold text-primary">{metrics.newUsersLast30Days}</span>
-                    </div>
-                    <Separator className="bg-border/30" />
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Taxa de conversão</span>
-                      <span className="font-bold">
-                        {metrics.totalUsers > 0
-                          ? ((metrics.activeSubscriptions / metrics.totalUsers) * 100).toFixed(1)
-                          : 0}%
-                      </span>
+                  <CardContent>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={metrics.userGrowthData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                          <XAxis
+                            dataKey="date"
+                            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                            tickFormatter={(v) => {
+                              const d = new Date(v + 'T00:00:00');
+                              return `${d.getDate()}/${d.getMonth() + 1}`;
+                            }}
+                            interval={4}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                            allowDecimals={false}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'hsl(var(--card))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                            }}
+                            labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('pt-BR')}
+                            formatter={(value: number) => [value, 'Novos usuários']}
+                          />
+                          <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Cumulative Growth Chart */}
                 <Card className="glass border-border/30 rounded-xl">
                   <CardHeader>
-                    <CardTitle className="text-base">Resumo Financeiro</CardTitle>
+                    <CardTitle className="text-base">Crescimento Acumulado de Usuários</CardTitle>
+                    <CardDescription>Total de usuários ao longo do tempo</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Assinantes ativos</span>
-                      <span className="font-bold">{metrics.activeSubscriptions}</span>
-                    </div>
-                    <Separator className="bg-border/30" />
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">MRR estimado</span>
-                      <span className="font-bold text-emerald-400">R$ {metrics.estimatedMRR.toFixed(2)}</span>
-                    </div>
-                    <Separator className="bg-border/30" />
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Licenças ativas</span>
-                      <span className="font-bold">{metrics.activeLicenses}</span>
+                  <CardContent>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={metrics.cumulativeData}>
+                          <defs>
+                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                          <XAxis
+                            dataKey="date"
+                            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                            tickFormatter={(v) => {
+                              const d = new Date(v + 'T00:00:00');
+                              return `${d.getDate()}/${d.getMonth() + 1}`;
+                            }}
+                            interval={4}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                            allowDecimals={false}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'hsl(var(--card))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                            }}
+                            labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('pt-BR')}
+                            formatter={(value: number) => [value, 'Total de usuários']}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="total"
+                            stroke="hsl(var(--primary))"
+                            fillOpacity={1}
+                            fill="url(#colorTotal)"
+                            strokeWidth={2}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Revenue by Tier */}
+                {Object.keys(metrics.revenueByTier).length > 0 && (
+                  <Card className="glass border-border/30 rounded-xl">
+                    <CardHeader>
+                      <CardTitle className="text-base">Receita por Plano</CardTitle>
+                      <CardDescription>Distribuição de assinantes e receita por tier</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64 flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={Object.entries(metrics.revenueByTier).map(([productId, data], i) => {
+                                const tierEntry = Object.entries(TIERS).find(([, t]) => t.product_id === productId);
+                                return {
+                                  name: tierEntry ? tierEntry[1].name : 'Outro',
+                                  value: data.revenue,
+                                  count: data.count,
+                                };
+                              })}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={90}
+                              paddingAngle={4}
+                              dataKey="value"
+                              label={({ name, value }) => `${name}: R$${value.toFixed(0)}`}
+                            >
+                              {Object.keys(metrics.revenueByTier).map((_, i) => (
+                                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                              }}
+                              formatter={(value: number, name: string, props: any) => [
+                                `R$ ${value.toFixed(2)} (${props.payload.count} assinantes)`,
+                                name,
+                              ]}
+                            />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
