@@ -1,7 +1,7 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
   FileText, Settings, Flame, Sun, Moon, LogOut, RotateCcw,
-  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock,
+  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock, Crown, Sparkles,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -52,7 +52,7 @@ export function AppSidebar() {
   const topics = useAppStore((s) => s.topics);
   const revisions = useAppStore((s) => s.revisions);
   const { theme, setTheme } = useTheme();
-  const { subscribed } = useSubscription();
+  const { subscribed, tier } = useSubscription();
   const { showUpgradeModal } = useUpgradeModal();
 
   const pendingRevisionCount = useMemo(() => {
@@ -172,12 +172,28 @@ export function AppSidebar() {
         </button>
         <LogoutButton collapsed={collapsed} />
         {!collapsed && (
-          <div className="rounded-xl bg-sidebar-accent/30 border border-sidebar-border/30 p-3 text-center space-y-1">
-            <div className="flex items-center justify-center gap-1.5 text-sidebar-foreground/40">
-              <Zap className="h-3 w-3 text-neon-green/50" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider">Meu Sprint Pro v1.0</span>
-            </div>
-          </div>
+          <NavLink
+            to="/assinatura"
+            className="block rounded-xl border border-sidebar-border/30 p-3 text-center space-y-1 transition-all hover:border-primary/30 hover:bg-primary/5"
+            activeClassName=""
+          >
+            {subscribed ? (
+              <div className="flex items-center justify-center gap-1.5">
+                <Crown className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-bold text-primary">
+                  Plano {tier === 'premium' ? 'Premium' : 'Básico'}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold text-muted-foreground">Plano Gratuito</span>
+              </div>
+            )}
+            <p className="text-[10px] text-sidebar-foreground/40">
+              {subscribed ? 'Gerenciar plano' : 'Fazer upgrade'}
+            </p>
+          </NavLink>
         )}
       </SidebarFooter>
     </Sidebar>
