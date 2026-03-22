@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import { Check, Crown, Zap, RefreshCw, Settings, BookOpen, Target, Brain, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, Crown, Zap, RefreshCw, Settings, BookOpen, Target, Brain, TrendingUp, Key, Gift, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useSubscription, TIERS, TierKey } from '@/hooks/useSubscription';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
-import { useEffect } from 'react';
 
 const tierFeatures: Record<TierKey, string[]> = {
   basic: [
