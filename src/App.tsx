@@ -28,6 +28,7 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/landing" element={user ? <Navigate to="/" replace /> : <LandingPage />} />
+      <Route path="/termos" element={<TermsPage />} />
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/cadastro" element={user ? <Navigate to="/" replace /> : <Register />} />
       <Route path="/esqueci-senha" element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />

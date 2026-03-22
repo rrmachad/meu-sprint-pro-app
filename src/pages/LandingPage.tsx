@@ -419,6 +419,7 @@ const LandingPage = () => {
           <div className="flex gap-4 text-xs text-muted-foreground">
             <Link to="/login" className="hover:text-foreground transition-colors">Entrar</Link>
             <Link to="/cadastro" className="hover:text-foreground transition-colors">Cadastrar</Link>
+            <Link to="/termos" className="hover:text-foreground transition-colors">Termos de Uso</Link>
           </div>
         </div>
       </footer>
