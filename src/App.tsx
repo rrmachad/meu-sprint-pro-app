@@ -48,16 +48,11 @@ function useOnboardingSeen() {
 
 function ProtectedRoutes() {
   const { user, loading } = useAuth();
-  const setupCompleted = useAppStore((s) => s.settings.setupCompleted);
   const { syncing } = useSupabaseSync();
   const { subscribed, loading: subLoading } = useSubscription();
 
   if (loading || syncing || subLoading) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
-
-  if (!setupCompleted) {
-    return <SetupWizard />;
-  }
 
   return (
     <Routes>
