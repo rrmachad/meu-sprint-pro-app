@@ -67,6 +67,7 @@ function ProtectedRoutes() {
         <Route path="/simulados" element={<MockExams />} />
         <Route path="/revisoes" element={<Revisions />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
+        <Route path="/assinatura" element={<SubscriptionPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
