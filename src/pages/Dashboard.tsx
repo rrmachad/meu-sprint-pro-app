@@ -143,39 +143,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { session } = useAuth();
 
-  // Bootstrap admin - shows button only if no admin exists yet
-  const [showBootstrap, setShowBootstrap] = useState(false);
-  const [bootstrapping, setBootstrapping] = useState(false);
-
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    supabase
-      .from('user_roles')
-      .select('id')
-      .eq('role', 'admin')
-      .limit(1)
-      .then(({ data }) => {
-        // Show bootstrap if no admin exists
-        if (!data || data.length === 0) setShowBootstrap(true);
-      });
-  }, [session?.user?.id]);
-
-  const handleBootstrapAdmin = useCallback(async () => {
-    setBootstrapping(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('bootstrap-admin', {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
-      if (error) throw error;
-      toast.success('Você agora é admin! Recarregando...');
-      setShowBootstrap(false);
-      setTimeout(() => window.location.reload(), 1500);
-    } catch (err: any) {
-      toast.error(err?.message || 'Erro ao ativar admin');
-    } finally {
-      setBootstrapping(false);
-    }
-  }, [session?.access_token]);
+  // Bootstrap admin removed — admin already exists
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
@@ -390,27 +358,6 @@ export default function Dashboard() {
       {/* Setup completion banner */}
       <SetupBanner />
 
-      {/* Bootstrap Admin Button - only shows when no admin exists */}
-      {showBootstrap && (
-        <motion.div variants={itemVariants}>
-          <Card className="border-red-500/30 bg-gradient-to-r from-red-500/10 to-orange-500/10">
-            <CardContent className="flex items-center justify-between gap-4 p-4">
-              <div>
-                <p className="font-semibold text-sm">Ativar Acesso Admin</p>
-                <p className="text-xs text-muted-foreground">Clique para se tornar o administrador do Meu Sprint PRO.</p>
-              </div>
-              <Button
-                onClick={handleBootstrapAdmin}
-                disabled={bootstrapping}
-                size="sm"
-                className="bg-gradient-to-r from-red-500 to-orange-500 text-white hover:opacity-90 shrink-0"
-              >
-                {bootstrapping ? 'Ativando...' : 'Ativar Admin'}
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
 
       {/* Banner upgrade para plano gratuito */}
       {isFree && (
