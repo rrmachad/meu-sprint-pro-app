@@ -543,17 +543,32 @@ export function StudyTimer() {
             ) : (
               <div className="flex items-center gap-1 shrink-0">
                 {isRunning ? (
-                  <Button size="sm" variant="outline" className="h-10 rounded-xl px-3 text-xs" onClick={pauseTimer}>
-                    <Pause className="h-3.5 w-3.5" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant="outline" className="h-10 rounded-xl px-3 text-xs" onClick={pauseTimer}>
+                        <Pause className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Pausar</TooltipContent>
+                  </Tooltip>
                 ) : (
-                  <Button size="sm" className="h-10 rounded-xl px-3 text-xs" onClick={startTimer}>
-                    <Play className="h-3.5 w-3.5" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" className="h-10 rounded-xl px-3 text-xs" onClick={startTimer}>
+                        <Play className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Continuar</TooltipContent>
+                  </Tooltip>
                 )}
-                <Button size="sm" variant="destructive" className="h-10 rounded-xl px-3 text-xs" onClick={stopTimer}>
-                  <Square className="h-3.5 w-3.5" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="destructive" className="h-10 rounded-xl px-3 text-xs" onClick={stopTimer}>
+                      <Square className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">Parar e salvar</TooltipContent>
+                </Tooltip>
               </div>
             )}
 
