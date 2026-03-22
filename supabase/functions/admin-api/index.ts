@@ -104,11 +104,9 @@ serve(async (req) => {
         let activeSubscriptions = 0;
         let totalRevenue = 0;
 
-        // Get all active subscriptions
         const allSubs = await stripe.subscriptions.list({ status: "active", limit: 100 });
         activeSubscriptions = allSubs.data.length;
 
-        // Estimate MRR
         for (const sub of allSubs.data) {
           const amount = sub.items.data[0]?.price?.unit_amount || 0;
           totalRevenue += amount / 100;
@@ -119,6 +117,39 @@ serve(async (req) => {
           .select("*", { count: "exact", head: true })
           .eq("active", true);
 
+        // Build user growth by day (last 30 days)
+        const now = new Date();
+        const userGrowth: Record<string, number> = {};
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          userGrowth[d.toISOString().split("T")[0]] = 0;
+        }
+        for (const u of users) {
+          const day = u.created_at.split("T")[0];
+          if (day in userGrowth) userGrowth[day]++;
+        }
+        const userGrowthData = Object.entries(userGrowth).map(([date, count]) => ({ date, count }));
+
+        // Build cumulative user growth
+        let cumulative = users.filter(
+          (u) => new Date(u.created_at) < new Date(userGrowthData[0]?.date || now)
+        ).length;
+        const cumulativeData = userGrowthData.map((d) => {
+          cumulative += d.count;
+          return { date: d.date, total: cumulative };
+        });
+
+        // Revenue by subscription tier
+        const revenueByTier: Record<string, { count: number; revenue: number }> = {};
+        for (const sub of allSubs.data) {
+          const productId = String(sub.items.data[0]?.price?.product || "unknown");
+          const amount = (sub.items.data[0]?.price?.unit_amount || 0) / 100;
+          if (!revenueByTier[productId]) revenueByTier[productId] = { count: 0, revenue: 0 };
+          revenueByTier[productId].count++;
+          revenueByTier[productId].revenue += amount;
+        }
+
         return json({
           totalUsers: users.length,
           activeSubscriptions,
@@ -127,6 +158,9 @@ serve(async (req) => {
           newUsersLast30Days: users.filter(
             (u) => new Date(u.created_at) > new Date(Date.now() - 30 * 86400000)
           ).length,
+          userGrowthData,
+          cumulativeData,
+          revenueByTier,
         });
       }
 
