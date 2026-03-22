@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Volume2, VolumeX } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,18 @@ export function AdminNotificationBell() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [open, setOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const stored = localStorage.getItem('admin-notif-sound');
+    return stored !== 'false';
+  });
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem('admin-notif-sound', String(next));
+      return next;
+    });
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -68,7 +80,7 @@ export function AdminNotificationBell() {
         (payload) => {
           const newNotif = payload.new as AdminNotification;
           setNotifications((prev) => [newNotif, ...prev].slice(0, 20));
-          playNotificationSound();
+          if (soundEnabled) playNotificationSound();
         }
       )
       .subscribe();
@@ -76,7 +88,7 @@ export function AdminNotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [playNotificationSound]);
+  }, [playNotificationSound, soundEnabled]);
 
   const markAllRead = async () => {
     const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
@@ -117,7 +129,20 @@ export function AdminNotificationBell() {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0 glass-strong border-border/30" align="end">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
-          <span className="text-sm font-semibold">Notificações</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold">Notificações</span>
+            <button
+              onClick={toggleSound}
+              className="flex items-center justify-center h-6 w-6 rounded hover:bg-muted/50 transition-colors"
+              title={soundEnabled ? 'Desativar som' : 'Ativar som'}
+            >
+              {soundEnabled ? (
+                <Volume2 className="h-3.5 w-3.5 text-primary" />
+              ) : (
+                <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+            </button>
+          </div>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" className="text-xs h-7" onClick={markAllRead}>
               Marcar como lidas
