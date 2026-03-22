@@ -52,7 +52,7 @@ export function AppSidebar() {
   const topics = useAppStore((s) => s.topics);
   const revisions = useAppStore((s) => s.revisions);
   const { theme, setTheme } = useTheme();
-  const { subscribed } = useSubscription();
+  const { subscribed, tier } = useSubscription();
   const { showUpgradeModal } = useUpgradeModal();
 
   const pendingRevisionCount = useMemo(() => {
