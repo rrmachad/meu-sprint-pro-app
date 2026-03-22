@@ -17,6 +17,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
 import type { StudyRecord, ActivityType, Turno } from '@/types';
+import { playSuccessChime } from '@/lib/sounds';
 
 function getTurno(): Turno {
   const h = new Date().getHours();
