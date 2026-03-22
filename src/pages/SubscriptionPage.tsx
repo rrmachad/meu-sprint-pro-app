@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Crown, Zap, RefreshCw, Settings } from 'lucide-react';
+import { Check, Crown, Zap, RefreshCw, Settings, BookOpen, Target, Brain, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -81,6 +81,45 @@ export default function SubscriptionPage() {
           Escolha o plano ideal para acelerar sua aprovação no concurso.
         </p>
       </div>
+
+      {/* Banner informativo */}
+      <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border-primary/20">
+        <CardContent className="p-6">
+          <h2 className="text-lg font-semibold mb-4 text-center">
+            Por que assinar o Meu Sprint Pro?
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
+                <BookOpen className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm font-medium">Ciclos de Estudo</p>
+              <p className="text-xs text-muted-foreground">Organize suas matérias com ciclos inteligentes e otimize seu tempo</p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
+                <Brain className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm font-medium">Revisões Espaçadas</p>
+              <p className="text-xs text-muted-foreground">Nunca mais esqueça o que estudou com revisões no momento certo</p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm font-medium">Simulados</p>
+              <p className="text-xs text-muted-foreground">Teste seu conhecimento e veja sua evolução com análises detalhadas</p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <p className="text-sm font-medium">Dashboard</p>
+              <p className="text-xs text-muted-foreground">Acompanhe indicadores de desempenho e mantenha o foco na aprovação</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {subscribed && (
         <Card className="border-primary/50 bg-primary/5">
