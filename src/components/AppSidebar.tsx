@@ -58,16 +58,16 @@ export function AppSidebar() {
   const { showUpgradeModal } = useUpgradeModal();
   const { user } = useAuth();
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
   useEffect(() => {
     if (!user?.id) return;
     supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .in('role', ['admin', 'moderator'])
       .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
+      .then(({ data }) => setHasAdminAccess(!!data));
   }, [user?.id]);
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
