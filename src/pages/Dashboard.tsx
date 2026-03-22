@@ -387,6 +387,9 @@ export default function Dashboard() {
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
 
+      {/* Setup completion banner */}
+      <SetupBanner />
+
       {/* Bootstrap Admin Button - only shows when no admin exists */}
       {showBootstrap && (
         <motion.div variants={itemVariants}>
