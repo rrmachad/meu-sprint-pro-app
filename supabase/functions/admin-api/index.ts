@@ -65,6 +65,17 @@ serve(async (req) => {
           apiVersion: "2025-08-27.basil",
         });
 
+        // Fetch all roles in one query
+        const userIds = users.map((u) => u.id);
+        const { data: allRoles } = await supabaseAdmin
+          .from("user_roles")
+          .select("user_id, role")
+          .in("user_id", userIds);
+        const roleMap: Record<string, string> = {};
+        (allRoles || []).forEach((r: { user_id: string; role: string }) => {
+          roleMap[r.user_id] = r.role;
+        });
+
         const enriched = await Promise.all(
           users.map(async (u) => {
             let subscription = null;
@@ -99,6 +110,7 @@ serve(async (req) => {
               last_sign_in_at: u.last_sign_in_at,
               provider: u.app_metadata?.provider || "email",
               subscription,
+              role: roleMap[u.id] || null,
             };
           })
         );
