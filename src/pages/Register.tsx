@@ -131,6 +131,7 @@ const Register = () => {
             Cadastrar com Google
           </Button>
 
+          <p className="text-center text-sm text-muted-foreground">
             Já tem conta? <Link to="/login" className="text-primary underline underline-offset-4 font-semibold">Entrar</Link>
           </p>
         </div>
