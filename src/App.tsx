@@ -11,6 +11,7 @@ import { SetupWizard } from '@/components/SetupWizard';
 import { MobileOnboarding } from '@/components/MobileOnboarding';
 import { useAppStore } from '@/store/useAppStore';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { UpgradeModalProvider } from '@/components/UpgradeModal';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
