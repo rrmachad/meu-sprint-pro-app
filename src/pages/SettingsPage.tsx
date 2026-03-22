@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Settings, Building2, BookOpen, RotateCcw, Target,
   Download, Upload, Plus, Trash2, Edit2,
-  HelpCircle, AlertTriangle, Bell, Shield, Zap, Play, User, Camera,
+  HelpCircle, AlertTriangle, Bell, Shield, Zap, Play, User, Camera, Lock,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,7 +77,13 @@ function ProfileTab() {
   );
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isOAuthUser = !!(user?.app_metadata?.provider && user.app_metadata.provider !== 'email');
 
   const initials = fullName
     ? fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -223,6 +229,79 @@ function ProfileTab() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Change Password */}
+      {!isOAuthUser && (
+        <Card className="glass border-border/30 rounded-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="p-1.5 rounded-lg gradient-blue">
+                <Lock className="h-4 w-4 text-primary-foreground" />
+              </div>
+              Alterar Senha
+            </CardTitle>
+            <CardDescription>Defina uma nova senha para sua conta.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword" className="text-xs uppercase tracking-wider text-muted-foreground">
+                Nova Senha
+              </Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="glass border-border/30 focus:border-primary/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-wider text-muted-foreground">
+                Confirmar Nova Senha
+              </Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repita a nova senha"
+                className="glass border-border/30 focus:border-primary/50"
+              />
+            </div>
+            <Button
+              onClick={async () => {
+                if (newPassword.length < 6) {
+                  toast.error('A senha deve ter no mínimo 6 caracteres.');
+                  return;
+                }
+                if (newPassword !== confirmPassword) {
+                  toast.error('As senhas não coincidem.');
+                  return;
+                }
+                setChangingPassword(true);
+                try {
+                  const { error } = await supabase.auth.updateUser({ password: newPassword });
+                  if (error) throw error;
+                  toast.success('Senha alterada com sucesso!');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                } catch {
+                  toast.error('Erro ao alterar senha.');
+                } finally {
+                  setChangingPassword(false);
+                }
+              }}
+              disabled={changingPassword || !newPassword || !confirmPassword}
+              variant="outline"
+              className="gap-2 glass border-border/30 hover:border-primary/40 hover:glow-neon"
+            >
+              <Lock className="h-4 w-4" />
+              {changingPassword ? 'Alterando...' : 'Alterar Senha'}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </motion.div>
   );
 }
