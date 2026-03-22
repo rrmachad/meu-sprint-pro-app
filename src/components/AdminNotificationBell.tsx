@@ -39,6 +39,25 @@ export function AdminNotificationBell() {
     load();
   }, [load]);
 
+  // Play notification sound
+  const playNotificationSound = useCallback(() => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      oscillator.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.4);
+    } catch (e) {
+      // Audio not supported or blocked
+    }
+  }, []);
+
   // Realtime subscription
   useEffect(() => {
     const channel = supabase
@@ -49,6 +68,7 @@ export function AdminNotificationBell() {
         (payload) => {
           const newNotif = payload.new as AdminNotification;
           setNotifications((prev) => [newNotif, ...prev].slice(0, 20));
+          playNotificationSound();
         }
       )
       .subscribe();
@@ -56,7 +76,7 @@ export function AdminNotificationBell() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [playNotificationSound]);
 
   const markAllRead = async () => {
     const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
