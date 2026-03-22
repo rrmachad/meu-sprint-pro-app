@@ -454,6 +454,7 @@ function LicensesTab({ adminApi }: { adminApi: (action: string, params?: Record<
 function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Record<string, unknown>) => Promise<unknown> }) {
   const [users, setUsers] = useState<{ id: string; email: string; full_name: string | null; avatar_url: string | null; created_at: string; provider: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<'today' | '7d' | '30d' | 'all'>('all');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -469,6 +470,13 @@ function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Re
 
   useEffect(() => { load(); }, [load]);
 
+  const filtered = useMemo(() => {
+    if (period === 'all') return users;
+    const now = Date.now();
+    const cutoff = period === 'today' ? now - 86400000 : period === '7d' ? now - 7 * 86400000 : now - 30 * 86400000;
+    return users.filter((u) => new Date(u.created_at).getTime() >= cutoff);
+  }, [users, period]);
+
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
@@ -481,11 +489,26 @@ function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Re
 
   return (
     <motion.div variants={itemVariants} className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Últimos 20 cadastros</p>
-        <Button variant="outline" size="icon" onClick={load} className="glass border-border/30">
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          {(['today', '7d', '30d', 'all'] as const).map((p) => (
+            <Button
+              key={p}
+              variant={period === p ? 'default' : 'outline'}
+              size="sm"
+              className={period === p ? '' : 'glass border-border/30'}
+              onClick={() => setPeriod(p)}
+            >
+              {p === 'today' ? 'Hoje' : p === '7d' ? '7 dias' : p === '30d' ? '30 dias' : 'Todos'}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs">{filtered.length} cadastro(s)</Badge>
+          <Button variant="outline" size="icon" onClick={load} className="glass border-border/30">
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
       <Card className="glass border-border/30 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -504,14 +527,14 @@ function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Re
                     <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
                   </TableCell>
                 </TableRow>
-              ) : users.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                    Nenhum cadastro encontrado
+                    Nenhum cadastro neste período
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((u) => (
+                filtered.map((u) => (
                   <TableRow key={u.id} className="border-border/20 hover:bg-muted/30">
                     <TableCell>
                       <div className="flex items-center gap-3">
