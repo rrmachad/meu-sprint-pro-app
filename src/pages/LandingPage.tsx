@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   BookOpen, Brain, Target, Clock, BarChart3, Calendar,
   CheckCircle2, Star, Users, Zap, ArrowRight, Shield,
