@@ -80,7 +80,7 @@ export function AdminNotificationBell() {
         (payload) => {
           const newNotif = payload.new as AdminNotification;
           setNotifications((prev) => [newNotif, ...prev].slice(0, 20));
-          playNotificationSound();
+          if (soundEnabled) playNotificationSound();
         }
       )
       .subscribe();
