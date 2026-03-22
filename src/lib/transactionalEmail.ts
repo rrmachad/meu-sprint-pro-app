@@ -26,7 +26,14 @@ interface SignupConfirmationData {
   userName?: string;
 }
 
-type TemplateData = StudyReportData | RevisionReminderData | WelcomeData | SignupConfirmationData;
+interface AdminNewSignupData {
+  userName?: string;
+  userEmail?: string;
+  signupDate?: string;
+  provider?: string;
+}
+
+type TemplateData = StudyReportData | RevisionReminderData | WelcomeData | SignupConfirmationData | AdminNewSignupData;
 
 export async function sendTransactionalEmail(
   template: TemplateName,
