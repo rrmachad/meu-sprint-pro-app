@@ -6,6 +6,42 @@ import { RevisionReminderEmail } from '../_shared/transactional-templates/revisi
 import { SignupConfirmationEmail } from '../_shared/transactional-templates/signup-confirmation.tsx'
 import { AdminNewSignupEmail } from '../_shared/transactional-templates/admin-new-signup.tsx'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+}
+
+const SENDER_DOMAIN = 'notify.meusprint.pro'
+
+type TemplateName = 'welcome' | 'study-report' | 'revision-reminder' | 'signup-confirmation' | 'admin-new-signup'
+
+function renderTemplate(template: TemplateName, data: Record<string, unknown>): { subject: string; html: string } {
+  switch (template) {
+    case 'welcome': {
+      const html = render(WelcomeEmail(data as any))
+      return { subject: `Bem-vindo(a) ao Elite Concurseiro, ${data.userName || 'Concurseiro'}!`, html }
+    }
+    case 'study-report': {
+      const html = render(StudyReportEmail(data as any))
+      return { subject: `📊 Seu relatório de estudo — ${data.periodLabel || 'esta semana'}`, html }
+    }
+    case 'revision-reminder': {
+      const html = render(RevisionReminderEmail(data as any))
+      return { subject: `🔔 Você tem ${data.pendingCount || 0} revisão(ões) pendente(s)`, html }
+    }
+    case 'signup-confirmation': {
+      const html = render(SignupConfirmationEmail(data as any))
+      return { subject: 'Cadastro confirmado — Elite Concurseiro ✅', html }
+    }
+    case 'admin-new-signup': {
+      const html = render(AdminNewSignupEmail(data as any))
+      return { subject: `🆕 Novo cadastro: ${data.userName || data.userEmail || 'novo usuário'}`, html }
+    }
+    default:
+      throw new Error(`Unknown template: ${template}`)
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })

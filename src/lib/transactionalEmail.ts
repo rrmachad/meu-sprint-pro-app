@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-type TemplateName = 'welcome' | 'study-report' | 'revision-reminder' | 'signup-confirmation';
+type TemplateName = 'welcome' | 'study-report' | 'revision-reminder' | 'signup-confirmation' | 'admin-new-signup';
 
 interface StudyReportData {
   userName?: string;
