@@ -226,6 +226,7 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
                       )}
                     </TableCell>
                     <TableCell>
+                      <Badge variant="outline" className="text-[10px] border-border/40 capitalize">
                         {u.provider}
                       </Badge>
                     </TableCell>
