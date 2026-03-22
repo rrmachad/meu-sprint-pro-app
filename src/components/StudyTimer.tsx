@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, Square, Clock, BookOpen, Save,
-  Timer, PenLine, ChevronUp, ChevronDown, ChevronRight, X, Plus,
+  Timer, PenLine, ChevronUp, ChevronDown, ChevronRight, X, Plus, CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -48,6 +48,7 @@ export function StudyTimer() {
   const [selectedTopic, setSelectedTopic] = useState('');
   const [activityType, setActivityType] = useState<ActivityType>('estudo');
   const [expanded, setExpanded] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showNewDiscipline, setShowNewDiscipline] = useState(false);
   const [newDisciplineName, setNewDisciplineName] = useState('');
@@ -145,6 +146,9 @@ export function StudyTimer() {
 
     const discName = disciplines.find((d) => d.id === selectedDiscipline)?.name || '';
     const mins = Math.round(finalElapsed / 60);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 1800);
+
     toast.success(`${mins} min de ${discName} registrados!`, {
       description: 'Toque em "Editar" para adicionar detalhes.',
       action: {
@@ -282,6 +286,44 @@ export function StudyTimer() {
 
   return (
     <>
+      {/* Success overlay */}
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            className="fixed inset-0 z-[60] pointer-events-none flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              className="flex flex-col items-center gap-3"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.2, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            >
+              <motion.div
+                className="rounded-full bg-primary/20 p-5 backdrop-blur-md ring-2 ring-primary/30"
+                initial={{ rotate: -90 }}
+                animate={{ rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+              >
+                <CheckCircle2 className="h-12 w-12 text-primary" strokeWidth={2.5} />
+              </motion.div>
+              <motion.p
+                className="text-sm font-semibold text-foreground bg-background/80 backdrop-blur-sm px-4 py-1.5 rounded-full"
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+              >
+                Atividade registrada!
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ─── Fixed Bottom Bar ─── */}
       <div className="fixed bottom-0 left-0 right-0 z-50">
         {/* Expanded Panel */}
