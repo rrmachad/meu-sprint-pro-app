@@ -4,6 +4,7 @@ import {
   Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock, Crown, Sparkles,
 } from 'lucide-react';
 import { useMemo } from 'react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useTheme } from 'next-themes';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
