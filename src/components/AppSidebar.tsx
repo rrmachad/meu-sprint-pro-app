@@ -113,29 +113,44 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === '/'}
-                      onClick={() => setOpenMobile(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[44px] text-sm text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                      activeClassName="bg-neon-green/10 text-neon-green font-semibold glow-neon"
-                    >
-                      <div className="relative shrink-0">
-                        <item.icon className="h-4 w-4" />
-                        {item.url === '/revisoes' && pendingRevisionCount > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-sporty-orange text-[8px] font-bold text-sporty-orange-foreground px-0.5">
-                            {pendingRevisionCount > 9 ? '9+' : pendingRevisionCount}
+              {navItems.map((item) => {
+                const isLocked = !subscribed && PREMIUM_ROUTES.includes(item.url);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <NavLink
+                        to={isLocked ? '#' : item.url}
+                        end={item.url === '/'}
+                        onClick={(e) => {
+                          if (isLocked) {
+                            e.preventDefault();
+                            showUpgradeModal(item.title);
+                          } else {
+                            setOpenMobile(false);
+                          }
+                        }}
+                        className={`flex items-center gap-3 rounded-xl px-3 py-3 min-h-[44px] text-sm transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground ${isLocked ? 'text-sidebar-foreground/40' : 'text-sidebar-foreground/70'}`}
+                        activeClassName={isLocked ? '' : 'bg-neon-green/10 text-neon-green font-semibold glow-neon'}
+                      >
+                        <div className="relative shrink-0">
+                          <item.icon className="h-4 w-4" />
+                          {item.url === '/revisoes' && !isLocked && pendingRevisionCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-sporty-orange text-[8px] font-bold text-sporty-orange-foreground px-0.5">
+                              {pendingRevisionCount > 9 ? '9+' : pendingRevisionCount}
+                            </span>
+                          )}
+                        </div>
+                        {!collapsed && (
+                          <span className="flex items-center gap-2">
+                            {item.title}
+                            {isLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
                           </span>
                         )}
-                      </div>
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
