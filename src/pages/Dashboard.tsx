@@ -136,6 +136,8 @@ export default function Dashboard() {
   const revisions = useAppStore((s) => s.revisions);
   const completeRevision = useAppStore((s) => s.completeRevision);
   const candidateName = useAppStore((s) => s.settings.contest.candidateName);
+  const { isFree } = useSubscriptionLimits();
+  const navigate = useNavigate();
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
