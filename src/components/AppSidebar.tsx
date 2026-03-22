@@ -72,7 +72,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4 pb-2">
+      <SidebarHeader className="p-4 pb-2 space-y-3">
         <div className="flex items-center gap-3">
           <div className="relative flex h-10 w-10 items-center justify-center rounded-xl gradient-neon shadow-neon shrink-0">
             <Zap className="h-5 w-5 text-neon-green-foreground" />
@@ -85,6 +85,19 @@ export function AppSidebar() {
               <span className="text-[10px] text-neon-green/70 font-semibold tracking-wider uppercase">
                 Performance Mental
               </span>
+            </div>
+          )}
+        </div>
+        {/* User avatar */}
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8 shrink-0 border border-border/40">
+            {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName} />}
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{initials || '?'}</AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-semibold text-sidebar-foreground truncate">{fullName}</span>
+              <span className="text-[10px] text-sidebar-foreground/40 truncate">{user?.email}</span>
             </div>
           )}
         </div>
