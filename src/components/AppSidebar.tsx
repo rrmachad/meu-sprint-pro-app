@@ -1,7 +1,7 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
   FileText, Settings, Flame, Sun, Moon, LogOut, RotateCcw,
-  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock,
+  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock, Crown, Sparkles,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTheme } from 'next-themes';
