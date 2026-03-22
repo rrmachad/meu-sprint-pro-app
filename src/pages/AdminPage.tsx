@@ -50,6 +50,7 @@ interface AdminUser {
   created_at: string;
   last_sign_in_at: string | null;
   provider: string;
+  role: string | null;
   subscription: {
     status: string;
     product_id: string;
