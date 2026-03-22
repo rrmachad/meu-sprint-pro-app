@@ -58,11 +58,11 @@ export function SetupBanner() {
               <AlertTriangle className="h-5 w-5 text-amber-400" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1.5">
                 <p className="font-semibold text-sm text-foreground">Complete sua configuração</p>
                 <span className="text-xs font-bold tabular-nums text-amber-400">{completed}/{TOTAL_ITEMS}</span>
               </div>
-              <div className="flex gap-1 mb-1.5">
+              <div className="flex gap-1 mb-2">
                 {checks.map((c, i) => (
                   <div
                     key={i}
@@ -70,9 +70,17 @@ export function SetupBanner() {
                   />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Falta: {missing.map((m) => m.label.toLowerCase()).join(', ')}.
-              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {missing.map((m, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-300 ring-1 ring-inset ring-amber-500/25"
+                  >
+                    <AlertTriangle className="h-3 w-3" />
+                    {m.label}
+                  </span>
+                ))}
+              </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <Button
