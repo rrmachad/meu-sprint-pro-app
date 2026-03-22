@@ -546,23 +546,37 @@ function RevisionsTab() {
         </CardHeader>
         <CardContent>
           <div className={`space-y-3 ${!settings.revision.enabled ? 'opacity-40 pointer-events-none' : ''}`}>
-            {REVISION_MARKS.map((rm, i) => (
-              <motion.div
-                key={rm.value}
-                whileHover={{ scale: 1.01 }}
-                className={`flex items-center justify-between rounded-xl glass border-border/30 p-4 bg-gradient-to-r ${MARK_GRADIENTS[i]} hover:border-primary/30 group`}
-              >
-                <div>
-                  <p className="text-sm font-semibold group-hover:text-primary transition-colors">{rm.label}</p>
-                  <p className="text-xs text-muted-foreground">{rm.description}</p>
-                </div>
-                <Checkbox
-                  checked={settings.revision.marks.includes(rm.value)}
-                  onCheckedChange={() => toggleMark(rm.value)}
-                  className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-              </motion.div>
-            ))}
+            {REVISION_MARKS.map((rm, i) => {
+              const { isRevisionMarkAllowed, isFree } = useSubscriptionLimits();
+              const locked = !isRevisionMarkAllowed(rm.value);
+              return (
+                <motion.div
+                  key={rm.value}
+                  whileHover={{ scale: 1.01 }}
+                  className={`flex items-center justify-between rounded-xl glass border-border/30 p-4 bg-gradient-to-r ${MARK_GRADIENTS[i]} hover:border-primary/30 group ${locked ? 'opacity-50' : ''}`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold group-hover:text-primary transition-colors">
+                      {rm.label}
+                      {locked && <Badge variant="outline" className="ml-2 text-[10px]">PRO</Badge>}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{rm.description}</p>
+                  </div>
+                  <Checkbox
+                    checked={settings.revision.marks.includes(rm.value)}
+                    onCheckedChange={() => {
+                      if (locked) {
+                        toast.error('Marcos de revisão avançados requerem um plano pago.');
+                        return;
+                      }
+                      toggleMark(rm.value);
+                    }}
+                    disabled={locked}
+                    className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                </motion.div>
+              );
+            })}
           </div>
           {settings.revision.enabled && (
             <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
