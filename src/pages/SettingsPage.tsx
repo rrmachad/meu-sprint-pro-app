@@ -27,6 +27,8 @@ import {
 } from '@/components/ui/dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
+import { useNavigate } from 'react-router-dom';
 import type { Discipline, DisciplineCategory, ProvaPhase, RevisionMark } from '@/types';
 
 const pageVariants = {
