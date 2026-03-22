@@ -217,7 +217,15 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px] border-border/40 capitalize">
+                      {u.role ? (
+                        <Badge className={`text-[10px] border ${u.role === 'admin' ? 'bg-destructive/20 text-destructive border-destructive/30' : u.role === 'moderator' ? 'bg-chart-2/20 text-chart-2 border-chart-2/30' : 'bg-muted text-muted-foreground'}`}>
+                          {u.role === 'admin' ? 'Admin' : u.role === 'moderator' ? 'Moderador' : u.role}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Usuário</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                         {u.provider}
                       </Badge>
                     </TableCell>
