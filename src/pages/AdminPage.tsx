@@ -1164,27 +1164,29 @@ export default function AdminPage() {
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="glass border-border/30 rounded-xl">
-                    <CardHeader>
-                      <CardTitle className="text-base">Resumo Financeiro</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Assinantes ativos</span>
-                        <span className="font-bold">{metrics.activeSubscriptions}</span>
-                      </div>
-                      <Separator className="bg-border/30" />
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">MRR estimado</span>
-                        <span className="font-bold text-primary">R$ {metrics.estimatedMRR.toFixed(2)}</span>
-                      </div>
-                      <Separator className="bg-border/30" />
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Licenças ativas</span>
-                        <span className="font-bold">{metrics.activeLicenses}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  {isAdmin && (
+                    <Card className="glass border-border/30 rounded-xl">
+                      <CardHeader>
+                        <CardTitle className="text-base">Resumo Financeiro</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Assinantes ativos</span>
+                          <span className="font-bold">{metrics.activeSubscriptions}</span>
+                        </div>
+                        <Separator className="bg-border/30" />
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">MRR estimado</span>
+                          <span className="font-bold text-primary">R$ {metrics.estimatedMRR.toFixed(2)}</span>
+                        </div>
+                        <Separator className="bg-border/30" />
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Licenças ativas</span>
+                          <span className="font-bold">{metrics.activeLicenses}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
 
                 {/* User Growth Chart - Daily new signups */}
