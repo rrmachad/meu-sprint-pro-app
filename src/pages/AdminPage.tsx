@@ -1117,6 +1117,11 @@ export default function AdminPage() {
             <LicensesTab adminApi={adminApi} />
           </TabsContent>
         )}
+        {isAdmin && (
+          <TabsContent value="audit">
+            <AuditLogTab adminApi={adminApi} />
+          </TabsContent>
+        )}
         <TabsContent value="metrics">
           <motion.div variants={itemVariants} className="space-y-4">
             <div className="flex justify-end">
