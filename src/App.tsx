@@ -29,6 +29,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 const queryClient = new QueryClient();
 
