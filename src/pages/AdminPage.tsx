@@ -235,20 +235,26 @@ function UsersTab({ adminApi, isAdmin }: { adminApi: (action: string, params?: R
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={u.role || 'user'}
-                        onValueChange={(val) => handleChangeRole(u.id, val)}
-                        disabled={changingRole === u.id}
-                      >
-                        <SelectTrigger className="h-7 w-[130px] text-xs glass border-border/30">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">Usuário</SelectItem>
-                          <SelectItem value="moderator">Moderador</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {isAdmin ? (
+                        <Select
+                          value={u.role || 'user'}
+                          onValueChange={(val) => handleChangeRole(u.id, val)}
+                          disabled={changingRole === u.id}
+                        >
+                          <SelectTrigger className="h-7 w-[130px] text-xs glass border-border/30">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">Usuário</SelectItem>
+                            <SelectItem value="moderator">Moderador</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {u.role || 'usuário'}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px] border-border/40 capitalize">
