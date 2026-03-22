@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
+import { useSubscriptionLimits } from '@/hooks/useSubscriptionLimits';
 import type { Topic, Discipline } from '@/types';
 
 const pageVariants = {
