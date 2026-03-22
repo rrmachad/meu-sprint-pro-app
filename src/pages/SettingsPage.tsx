@@ -548,7 +548,6 @@ function RevisionsTab() {
         <CardContent>
           <div className={`space-y-3 ${!settings.revision.enabled ? 'opacity-40 pointer-events-none' : ''}`}>
             {REVISION_MARKS.map((rm, i) => {
-              const { isRevisionMarkAllowed, isFree } = useSubscriptionLimits();
               const locked = !isRevisionMarkAllowed(rm.value);
               return (
                 <motion.div
