@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity, Crown } from 'lucide-react';
 import { useCountUp } from '@/hooks/useCountUp';
+import { SetupBanner } from '@/components/SetupBanner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -385,6 +386,9 @@ export default function Dashboard() {
 
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
+
+      {/* Setup completion banner */}
+      <SetupBanner />
 
       {/* Bootstrap Admin Button - only shows when no admin exists */}
       {showBootstrap && (
