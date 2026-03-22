@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   Settings, Building2, BookOpen, RotateCcw, Target,
   Download, Upload, Plus, Trash2, Edit2,
-  HelpCircle, AlertTriangle, Bell, Shield, Zap, Play, User, Camera,
+  HelpCircle, AlertTriangle, Bell, Shield, Zap, Play, User, Camera, Lock,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
