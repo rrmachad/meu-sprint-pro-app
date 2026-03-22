@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Progress } from '@/components/ui/progress';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useUpgradeModal } from '@/components/UpgradeModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const PREMIUM_ROUTES = ['/indicadores', '/planejamento', '/edital', '/simulados', '/revisoes'];
 
