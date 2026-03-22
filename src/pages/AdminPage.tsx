@@ -179,6 +179,7 @@ function UsersTab({ adminApi }: { adminApi: (action: string, params?: Record<str
             <TableHeader>
               <TableRow className="border-border/30">
                 <TableHead>Usuário</TableHead>
+                <TableHead>Papel</TableHead>
                 <TableHead>Provedor</TableHead>
                 <TableHead>Plano</TableHead>
                 <TableHead>Cadastro</TableHead>
