@@ -7,11 +7,25 @@ import { Card, CardContent } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
+const DISMISS_KEY = 'setup-banner-dismissed-at';
+
+function isDismissedRecently(): boolean {
+  const ts = localStorage.getItem(DISMISS_KEY);
+  if (!ts) return false;
+  const elapsed = Date.now() - Number(ts);
+  return elapsed < 24 * 60 * 60 * 1000; // 24h
+}
+
 export function SetupBanner() {
   const { isAdmin } = useAdmin();
   const settings = useAppStore((s) => s.settings);
   const navigate = useNavigate();
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(isDismissedRecently);
+
+  const handleDismiss = () => {
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    setDismissed(true);
+  };
 
   // Admin never sees banners
   if (isAdmin) return null;
