@@ -29,6 +29,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ function ProtectedRoutes() {
         <Route path="/edital" element={subscribed ? <Syllabus /> : <Navigate to="/assinatura" replace />} />
         <Route path="/simulados" element={subscribed ? <MockExams /> : <Navigate to="/assinatura" replace />} />
         <Route path="/revisoes" element={subscribed ? <Revisions /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

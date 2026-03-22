@@ -1,9 +1,9 @@
 import {
   Home, BarChart3, CalendarDays, ClipboardList,
   FileText, Settings, Flame, Sun, Moon, LogOut, RotateCcw,
-  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock, Crown, Sparkles,
+  Zap, Route, Brain, Crosshair, FlaskConical, CreditCard, Lock, Crown, Sparkles, Shield,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useTheme } from 'next-themes';
 import { NavLink } from '@/components/NavLink';
@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Progress } from '@/components/ui/progress';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useUpgradeModal } from '@/components/UpgradeModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const PREMIUM_ROUTES = ['/indicadores', '/planejamento', '/edital', '/simulados', '/revisoes'];
 
@@ -56,6 +57,18 @@ export function AppSidebar() {
   const { subscribed, tier } = useSubscription();
   const { showUpgradeModal } = useUpgradeModal();
   const { user } = useAuth();
+
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user?.id]);
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
   const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
@@ -170,6 +183,21 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Admin">
+                    <NavLink
+                      to="/admin"
+                      onClick={() => setOpenMobile(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[44px] text-sm transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground text-red-400/80"
+                      activeClassName="bg-red-500/10 text-red-400 font-semibold"
+                    >
+                      <Shield className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
