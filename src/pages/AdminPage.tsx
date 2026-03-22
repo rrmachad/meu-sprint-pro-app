@@ -1111,7 +1111,7 @@ export default function AdminPage() {
           <RecentSignupsTab adminApi={adminApi} />
         </TabsContent>
         <TabsContent value="users">
-          <UsersTab adminApi={adminApi} />
+          <UsersTab adminApi={adminApi} isAdmin={isAdmin} />
         </TabsContent>
         {isAdmin && (
           <TabsContent value="collaborators">
