@@ -31,13 +31,16 @@ export function SetupBanner() {
   if (isAdmin) return null;
   if (dismissed) return null;
 
-  const missing: string[] = [];
-  if (!settings.contest.candidateName) missing.push('seu nome');
-  if (!settings.contest.name) missing.push('concurso');
-  if (!settings.contest.examDate) missing.push('data da prova');
-  const hasDisciplines = useAppStore.getState().disciplines.length > 0;
-  if (!hasDisciplines) missing.push('disciplinas');
-  if (!settings.weeklyHours || settings.weeklyHours <= 0) missing.push('carga horária');
+  const TOTAL_ITEMS = 5;
+  const checks = [
+    { label: 'Seu nome', done: !!settings.contest.candidateName },
+    { label: 'Concurso', done: !!settings.contest.name },
+    { label: 'Data da prova', done: !!settings.contest.examDate },
+    { label: 'Disciplinas', done: useAppStore.getState().disciplines.length > 0 },
+    { label: 'Carga horária', done: !!(settings.weeklyHours && settings.weeklyHours > 0) },
+  ];
+  const completed = checks.filter((c) => c.done).length;
+  const missing = checks.filter((c) => !c.done);
 
   if (missing.length === 0) return null;
 
