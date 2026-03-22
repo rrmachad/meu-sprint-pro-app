@@ -512,6 +512,7 @@ function DisciplinesTab() {
 function RevisionsTab() {
   const settings = useAppStore((s) => s.settings);
   const updateSettings = useAppStore((s) => s.updateSettings);
+  const { isRevisionMarkAllowed, isFree } = useSubscriptionLimits();
 
   const toggleEnabled = (enabled: boolean) => {
     updateSettings({ revision: { ...settings.revision, enabled } });
