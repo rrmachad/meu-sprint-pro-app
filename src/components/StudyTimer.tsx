@@ -439,21 +439,36 @@ export function StudyTimer() {
                   {entryMode === 'cronometro' ? (
                     <>
                       {!isRunning ? (
-                        <Button size="lg" className="gap-2 flex-1 h-12 text-sm rounded-xl" onClick={startTimer}>
-                          <Play className="h-4 w-4" />
-                          {elapsed > 0 ? 'Continuar' : 'Iniciar Atividade'}
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="lg" className="gap-2 flex-1 h-12 text-sm rounded-xl" onClick={startTimer}>
+                              <Play className="h-4 w-4" />
+                              {elapsed > 0 ? 'Continuar' : 'Iniciar Atividade'}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs">{elapsed > 0 ? 'Continuar cronômetro' : 'Iniciar cronômetro'}</TooltipContent>
+                        </Tooltip>
                       ) : (
-                        <Button size="lg" variant="outline" className="gap-2 flex-1 h-12 text-sm rounded-xl" onClick={pauseTimer}>
-                          <Pause className="h-4 w-4" />
-                          Pausar
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="lg" variant="outline" className="gap-2 flex-1 h-12 text-sm rounded-xl" onClick={pauseTimer}>
+                              <Pause className="h-4 w-4" />
+                              Pausar
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs">Pausar cronômetro</TooltipContent>
+                        </Tooltip>
                       )}
                       {elapsed > 0 && (
-                        <Button size="lg" variant="destructive" className="gap-2 h-12 text-sm rounded-xl" onClick={stopTimer}>
-                          <Square className="h-4 w-4" />
-                          Parar
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="lg" variant="destructive" className="gap-2 h-12 text-sm rounded-xl" onClick={stopTimer}>
+                              <Square className="h-4 w-4" />
+                              Parar
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs">Parar e salvar</TooltipContent>
+                        </Tooltip>
                       )}
                     </>
                   ) : (
