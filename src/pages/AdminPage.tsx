@@ -510,7 +510,10 @@ export default function AdminPage() {
       )}
 
       <Tabs defaultValue="users" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-md">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto gap-1 glass border-border/30 p-1 rounded-xl max-w-lg">
+          <TabsTrigger value="recent" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
+            <Clock className="h-3.5 w-3.5" /> Recentes
+          </TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary">
             <Users className="h-3.5 w-3.5" /> Usuários
           </TabsTrigger>
