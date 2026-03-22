@@ -72,6 +72,7 @@ function ProtectedRoutes() {
         <Route path="/edital" element={subscribed ? <Syllabus /> : <Navigate to="/assinatura" replace />} />
         <Route path="/simulados" element={subscribed ? <MockExams /> : <Navigate to="/assinatura" replace />} />
         <Route path="/revisoes" element={subscribed ? <Revisions /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
