@@ -70,7 +70,7 @@ export function SetupBanner() {
                 Configurar <ArrowRight className="h-3.5 w-3.5" />
               </Button>
               <button
-                onClick={() => setDismissed(true)}
+                onClick={handleDismiss}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
                 aria-label="Dispensar"
               >
