@@ -41,6 +41,8 @@ serve(async (req) => {
     const isAdmin = callerRole === "admin";
 
     // Actions restricted to admin only
+    const { action, ...params } = await req.json();
+
     const adminOnlyActions = [
       "create_license", "toggle_license", "delete_license",
       "grant_role", "revoke_role", "find_user_by_email",
@@ -49,8 +51,6 @@ serve(async (req) => {
     if (!isAdmin && adminOnlyActions.includes(action)) {
       throw new Error("Forbidden: this action requires admin role");
     }
-
-    const { action, ...params } = await req.json();
 
     switch (action) {
       case "list_users": {
