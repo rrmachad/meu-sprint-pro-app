@@ -525,6 +525,9 @@ export default function AdminPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="recent">
+          <RecentSignupsTab adminApi={adminApi} />
+        </TabsContent>
         <TabsContent value="users">
           <UsersTab adminApi={adminApi} />
         </TabsContent>
