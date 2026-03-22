@@ -23,6 +23,18 @@ export function AdminNotificationBell() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [open, setOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const stored = localStorage.getItem('admin-notif-sound');
+    return stored !== 'false';
+  });
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem('admin-notif-sound', String(next));
+      return next;
+    });
+  }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
