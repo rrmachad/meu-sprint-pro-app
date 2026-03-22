@@ -101,12 +101,12 @@ export default function PaymentSuccess() {
       >
         {/* Success icon */}
         <motion.div
-          className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-500/15"
+          className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15 dark:bg-emerald-400/15"
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
         >
-          <CheckCircle2 className="h-10 w-10 text-green-500" />
+          <CheckCircle2 className="h-10 w-10 text-emerald-500 dark:text-emerald-400" />
         </motion.div>
 
         {/* Title */}
