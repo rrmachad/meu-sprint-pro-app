@@ -287,12 +287,19 @@ function DisciplinesTab() {
     setDialogOpen(true);
   };
 
+  const { canAddDiscipline, isFree, maxDisciplines } = useSubscriptionLimits();
+  const navigate = useNavigate();
+
   const handleSave = () => {
     if (!form.name.trim()) { toast.error('Informe o nome da disciplina.'); return; }
     if (editingId) {
       updateDiscipline(editingId, form);
       toast.success('Disciplina atualizada!');
     } else {
+      if (!canAddDiscipline(disciplines.length)) {
+        toast.error(`Limite de ${maxDisciplines} disciplinas no plano gratuito. Faça upgrade para adicionar mais.`);
+        return;
+      }
       const disc: Discipline = { id: crypto.randomUUID(), ...form, order: disciplines.length };
       addDiscipline(disc);
       toast.success('Disciplina adicionada!');
