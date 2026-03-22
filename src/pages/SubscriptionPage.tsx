@@ -32,8 +32,11 @@ const tierFeatures: Record<TierKey, string[]> = {
 
 export default function SubscriptionPage() {
   const { subscribed, tier, subscriptionEnd, loading, checkSubscription, createCheckout, openPortal } = useSubscription();
+  const { session } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
+  const [licenseCode, setLicenseCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
 
   const successParam = searchParams.get('success');
   const canceledParam = searchParams.get('canceled');
