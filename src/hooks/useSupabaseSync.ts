@@ -178,6 +178,7 @@ export function useSupabaseSync() {
         notificationsEnabled: s.notifications_enabled ?? false,
         reminderMinutesBefore: s.reminder_minutes_before ?? 5,
         revisionReminderHour: (s as any).revision_reminder_hour ?? 7,
+        soundEnabled: true,
       };
       store.setState({ settings, streak: s.streak || 0, lastStudyDate: s.last_study_date || null });
     }

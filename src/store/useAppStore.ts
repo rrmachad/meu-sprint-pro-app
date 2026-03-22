@@ -21,6 +21,7 @@ const defaultSettings: AppSettings = {
   setupCompleted: false,
   moduleHints: {},
   notificationsEnabled: false,
+  soundEnabled: true,
   reminderMinutesBefore: 5,
   revisionReminderHour: 7,
 };

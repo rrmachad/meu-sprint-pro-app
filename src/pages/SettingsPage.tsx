@@ -959,6 +959,28 @@ function GoalsTab() {
         </CardContent>
       </Card>
 
+      {/* Sound Card */}
+      <Card className="glass border-border/30 rounded-xl">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <div className="p-1.5 rounded-lg gradient-blue">
+                <Play className="h-4 w-4 text-primary-foreground" />
+              </div>
+              Sons de Feedback
+            </CardTitle>
+            <Switch
+              checked={settings.soundEnabled ?? true}
+              onCheckedChange={(v) => {
+                updateSettings({ soundEnabled: v });
+                toast.success(v ? 'Sons ativados!' : 'Sons desativados!');
+              }}
+            />
+          </div>
+          <CardDescription>Tocar um som ao registrar atividades de estudo.</CardDescription>
+        </CardHeader>
+      </Card>
+
       <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
