@@ -183,7 +183,7 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
-              {isAdmin && (
+              {hasAdminAccess && (
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Admin">
                     <NavLink

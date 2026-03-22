@@ -56,7 +56,7 @@ export function AppLayout() {
               </span>
             </div>
             <div className="ml-auto flex items-center gap-3">
-              {isAdmin && <AdminNotificationBell />}
+              {hasAdminAccess && <AdminNotificationBell />}
               {connectionStatus === 'connected' ? (
                 <div className="flex items-center gap-1.5 text-xs text-neon-green" title="Conectado em tempo real">
                   <span className="relative flex h-2 w-2">
