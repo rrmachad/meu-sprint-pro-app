@@ -116,6 +116,18 @@ Deno.serve(async (req) => {
       },
     })
 
+    // If admin-new-signup, also insert a notification for real-time admin alerts
+    if (template === 'admin-new-signup') {
+      await supabaseService.from('admin_notifications').insert({
+        type: 'new_signup',
+        title: `Novo cadastro: ${data.userName || data.userEmail || 'usuário'}`,
+        message: `${data.userEmail || ''} se cadastrou via ${data.provider === 'google' ? 'Google' : 'e-mail'}.`,
+        metadata: { userName: data.userName, userEmail: data.userEmail, provider: data.provider },
+      }).then(({ error }) => {
+        if (error) console.error('Failed to insert admin notification', error)
+      })
+    }
+
     if (enqueueError) {
       console.error('Failed to enqueue email', enqueueError)
       throw new Error(`Enqueue failed: ${enqueueError.message}`)
