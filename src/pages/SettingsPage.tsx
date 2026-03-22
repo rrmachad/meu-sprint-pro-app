@@ -981,6 +981,7 @@ function GoalsTab() {
         </CardHeader>
       </Card>
 
+      <Card className="glass border-border/30 rounded-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <div className="p-1.5 rounded-lg gradient-blue">
