@@ -859,7 +859,7 @@ function CollaboratorsTab({ adminApi }: { adminApi: (action: string, params?: Re
 
 // ==================== MAIN ADMIN PAGE ====================
 export default function AdminPage() {
-  const { isAdmin, loading, adminApi } = useAdmin();
+  const { isAdmin, isModerator, hasAccess, role, loading, adminApi } = useAdmin();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
 
@@ -876,8 +876,8 @@ export default function AdminPage() {
   }, [adminApi]);
 
   useEffect(() => {
-    if (isAdmin) loadMetrics();
-  }, [isAdmin, loadMetrics]);
+    if (hasAccess) loadMetrics();
+  }, [hasAccess, loadMetrics]);
 
   if (loading) {
     return (
@@ -887,7 +887,7 @@ export default function AdminPage() {
     );
   }
 
-  if (!isAdmin) {
+  if (!hasAccess) {
     return <Navigate to="/" replace />;
   }
 
