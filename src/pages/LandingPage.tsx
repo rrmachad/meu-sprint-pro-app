@@ -353,6 +353,34 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="py-20 md:py-28">
+        <div className="mx-auto max-w-3xl px-4">
+          <motion.div className="text-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
+            <h2 className="text-3xl font-extrabold md:text-4xl">Perguntas <span className="text-primary">frequentes</span></h2>
+            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">Tire suas dúvidas sobre o Meu Sprint Pro.</p>
+          </motion.div>
+          <motion.div className="mt-10" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}>
+            <Accordion type="single" collapsible className="space-y-3">
+              {[
+                { q: 'O plano gratuito é realmente de graça?', a: 'Sim! Você pode usar o plano gratuito por tempo ilimitado, sem precisar de cartão de crédito. Ele inclui até 3 disciplinas, cronômetro de estudos e revisão espaçada de 24h.' },
+                { q: 'Posso mudar de plano a qualquer momento?', a: 'Com certeza. Você pode fazer upgrade ou downgrade a qualquer momento. Se cancelar um plano pago, você mantém acesso até o fim do período já pago.' },
+                { q: 'Como funciona a revisão espaçada?', a: 'Nossa revisão espaçada é baseada em neurociência. Após estudar um conteúdo, o sistema agenda revisões em intervalos estratégicos (24h, 7 dias, 30 dias e 60 dias) para maximizar a retenção na memória de longo prazo.' },
+                { q: 'O app funciona para qualquer concurso?', a: 'Sim! O Meu Sprint Pro é totalmente personalizável. Você cadastra suas disciplinas, pesos e metas de acordo com o edital do seu concurso específico.' },
+                { q: 'Meus dados ficam salvos se eu trocar de celular?', a: 'Sim. Todos os seus dados ficam armazenados na nuvem e sincronizam automaticamente. Basta fazer login em qualquer dispositivo para acessar tudo.' },
+                { q: 'Qual a diferença entre o plano Básico e o Premium?', a: 'O Básico inclui até 10 disciplinas e todas as ferramentas essenciais (ciclo de estudos, simulados, indicadores). O Premium oferece disciplinas ilimitadas, relatórios semanais por e-mail, lembretes de revisão, exportação de dados e suporte prioritário.' },
+                { q: 'Preciso instalar algum aplicativo?', a: 'Não. O Meu Sprint Pro funciona diretamente no navegador do seu celular, tablet ou computador. Nenhuma instalação necessária.' },
+              ].map((item, i) => (
+                <AccordionItem key={i} value={`faq-${i}`} className="rounded-xl border border-border/40 bg-card px-5">
+                  <AccordionTrigger className="text-sm font-semibold text-left hover:no-underline py-4">{item.q}</AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-4">{item.a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Final CTA */}
       <section className="py-20 md:py-28">
         <div className="mx-auto max-w-3xl px-4 text-center">
