@@ -183,6 +183,21 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Admin">
+                    <NavLink
+                      to="/admin"
+                      onClick={() => setOpenMobile(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[44px] text-sm transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground text-red-400/80"
+                      activeClassName="bg-red-500/10 text-red-400 font-semibold"
+                    >
+                      <Shield className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>Admin</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
