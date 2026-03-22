@@ -18,6 +18,8 @@ import { Progress } from '@/components/ui/progress';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useUpgradeModal } from '@/components/UpgradeModal';
 
+const PREMIUM_ROUTES = ['/indicadores', '/planejamento', '/edital', '/simulados', '/revisoes'];
+
 const navItems = [
   { title: 'Dashboard', url: '/', icon: Home },
   { title: 'Indicadores', url: '/indicadores', icon: BarChart3 },
