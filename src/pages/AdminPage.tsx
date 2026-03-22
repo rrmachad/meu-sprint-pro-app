@@ -515,7 +515,7 @@ function RecentSignupsTab({ adminApi }: { adminApi: (action: string, params?: Re
               const rows = filtered.map((u) => {
                 const name = (u.full_name || '').replace(/,/g, ' ');
                 const email = u.email || '';
-                const provider = u.app_metadata?.provider || 'email';
+                const provider = u.provider || 'email';
                 const date = new Date(u.created_at).toLocaleString('pt-BR');
                 return `"${name}","${email}","${provider}","${date}"`;
               }).join('\n');
