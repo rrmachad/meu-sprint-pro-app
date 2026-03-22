@@ -70,6 +70,29 @@ export default function SubscriptionPage() {
     }
   };
 
+  const handleRedeem = async () => {
+    if (!licenseCode.trim()) return;
+    setRedeeming(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('redeem-license', {
+        body: { code: licenseCode.trim() },
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      toast.success(data?.message || 'Código resgatado com sucesso!');
+      setLicenseCode('');
+      checkSubscription();
+    } catch {
+      toast.error('Erro ao resgatar código. Verifique e tente novamente.');
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
