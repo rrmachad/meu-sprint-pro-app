@@ -3,8 +3,11 @@ import { motion } from 'framer-motion';
 import {
   Settings, Building2, BookOpen, RotateCcw, Target,
   Download, Upload, Plus, Trash2, Edit2,
-  HelpCircle, AlertTriangle, Bell, Shield, Zap, Play,
+  HelpCircle, AlertTriangle, Bell, Shield, Zap, Play, User, Camera,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,6 +65,167 @@ const REVISION_MARKS: { label: string; value: RevisionMark; description: string 
   { label: '30 dias', value: '30d', description: 'Revisão um mês após o estudo' },
   { label: '60 dias', value: '60d', description: 'Revisão dois meses após o estudo' },
 ];
+
+// ==================== PROFILE TAB ====================
+function ProfileTab() {
+  const { user } = useAuth();
+  const [fullName, setFullName] = useState(
+    user?.user_metadata?.full_name || user?.user_metadata?.name || ''
+  );
+  const [avatarUrl, setAvatarUrl] = useState(
+    user?.user_metadata?.avatar_url || user?.user_metadata?.picture || ''
+  );
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const initials = fullName
+    ? fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+    : user?.email?.[0]?.toUpperCase() || '?';
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: fullName, avatar_url: avatarUrl },
+      });
+      if (error) throw error;
+      toast.success('Perfil atualizado com sucesso!');
+    } catch {
+      toast.error('Erro ao atualizar perfil.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Selecione um arquivo de imagem.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Imagem deve ter no máximo 2MB.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const filePath = `${user.id}/avatar.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('arquivos')
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('arquivos').getPublicUrl(filePath);
+      const newUrl = `${data.publicUrl}?t=${Date.now()}`;
+      setAvatarUrl(newUrl);
+
+      await supabase.auth.updateUser({ data: { avatar_url: newUrl } });
+      toast.success('Foto atualizada!');
+    } catch {
+      toast.error('Erro ao enviar foto.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <motion.div variants={itemVariants} className="space-y-6">
+      <Card className="glass border-border/30 rounded-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <div className="p-1.5 rounded-lg gradient-neon">
+              <User className="h-4 w-4 text-primary-foreground" />
+            </div>
+            Meu Perfil
+          </CardTitle>
+          <CardDescription>Atualize seu nome e foto de perfil.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Avatar */}
+          <div className="flex items-center gap-5">
+            <div className="relative group">
+              <Avatar className="h-20 w-20 border-2 border-border/40">
+                {avatarUrl && <AvatarImage src={avatarUrl} alt={fullName} />}
+                <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <Camera className="h-5 w-5 text-white" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{fullName || 'Sem nome'}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-1 gap-1 text-xs glass border-border/30"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Upload className="h-3 w-3" />
+                {uploading ? 'Enviando...' : 'Trocar Foto'}
+              </Button>
+            </div>
+          </div>
+
+          <Separator className="bg-border/30" />
+
+          {/* Name */}
+          <div className="space-y-2">
+            <Label htmlFor="profileName" className="text-xs uppercase tracking-wider text-muted-foreground">
+              Nome Completo
+            </Label>
+            <Input
+              id="profileName"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Seu nome completo"
+              className="glass border-border/30 focus:border-primary/50"
+            />
+          </div>
+
+          {/* Email (read-only) */}
+          <div className="space-y-2">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">E-mail</Label>
+            <Input
+              value={user?.email || ''}
+              disabled
+              className="glass border-border/30 opacity-60"
+            />
+            <p className="text-[11px] text-muted-foreground">O e-mail não pode ser alterado por aqui.</p>
+          </div>
+
+          <Button
+            onClick={handleSaveProfile}
+            disabled={saving}
+            className="gradient-neon text-primary-foreground hover:opacity-90"
+          >
+            {saving ? 'Salvando...' : 'Salvar Perfil'}
+          </Button>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
 
 // ==================== CONTEST TAB ====================
 function ContestTab() {
@@ -973,8 +1137,11 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="concurso" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto gap-1 glass border-border/30 p-1 rounded-xl">
+      <Tabs defaultValue="perfil" className="space-y-4">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 h-auto gap-1 glass border-border/30 p-1 rounded-xl">
+          <TabsTrigger value="perfil" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
+            <User className="h-3.5 w-3.5" /> Perfil
+          </TabsTrigger>
           <TabsTrigger value="concurso" className="gap-1.5 text-xs rounded-lg data-[state=active]:bg-primary/15 data-[state=active]:text-primary data-[state=active]:shadow-none">
             <Building2 className="h-3.5 w-3.5" /> Concurso
           </TabsTrigger>
@@ -992,6 +1159,7 @@ export default function SettingsPage() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="perfil"><ProfileTab /></TabsContent>
         <TabsContent value="concurso"><ContestTab /></TabsContent>
         <TabsContent value="disciplinas"><DisciplinesTab /></TabsContent>
         <TabsContent value="revisoes"><RevisionsTab /></TabsContent>
