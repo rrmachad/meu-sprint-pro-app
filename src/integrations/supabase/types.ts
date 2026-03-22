@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      agentes_gpt: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          prompt_base: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          prompt_base?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          prompt_base?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      blocos_pagina: {
+        Row: {
+          ativo: boolean
+          conteudo: Json | null
+          created_at: string
+          id: string
+          obrigatorio: boolean
+          oferta_id: string
+          ordem: number
+          tipo_bloco: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          conteudo?: Json | null
+          created_at?: string
+          id?: string
+          obrigatorio?: boolean
+          oferta_id: string
+          ordem?: number
+          tipo_bloco?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          conteudo?: Json | null
+          created_at?: string
+          id?: string
+          obrigatorio?: boolean
+          oferta_id?: string
+          ordem?: number
+          tipo_bloco?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocos_pagina_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      criativos: {
+        Row: {
+          created_at: string
+          formato: string
+          id: string
+          observacoes: string | null
+          oferta_id: string
+          status: string
+          updated_at: string
+          url_arquivo: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          formato?: string
+          id?: string
+          observacoes?: string | null
+          oferta_id: string
+          status?: string
+          updated_at?: string
+          url_arquivo?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          formato?: string
+          id?: string
+          observacoes?: string | null
+          oferta_id?: string
+          status?: string
+          updated_at?: string
+          url_arquivo?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "criativos_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cycle_blocks: {
         Row: {
           block_number: number
@@ -250,6 +374,255 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      entregaveis: {
+        Row: {
+          concluido: boolean
+          created_at: string
+          id: string
+          link_checkout: string | null
+          link_drive_criativos: string | null
+          link_pagina_vendas: string | null
+          nome: string
+          oferta_id: string
+          tipo: string | null
+          updated_at: string
+          url_arquivo: string | null
+          user_id: string
+        }
+        Insert: {
+          concluido?: boolean
+          created_at?: string
+          id?: string
+          link_checkout?: string | null
+          link_drive_criativos?: string | null
+          link_pagina_vendas?: string | null
+          nome?: string
+          oferta_id: string
+          tipo?: string | null
+          updated_at?: string
+          url_arquivo?: string | null
+          user_id: string
+        }
+        Update: {
+          concluido?: boolean
+          created_at?: string
+          id?: string
+          link_checkout?: string | null
+          link_drive_criativos?: string | null
+          link_pagina_vendas?: string | null
+          nome?: string
+          oferta_id?: string
+          tipo?: string | null
+          updated_at?: string
+          url_arquivo?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entregaveis_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faturamento: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          num_vendas: number
+          oferta_id: string
+          receita_bruta: number
+          taxa_conversao: number
+          ticket_medio: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          id?: string
+          num_vendas?: number
+          oferta_id: string
+          receita_bruta?: number
+          taxa_conversao?: number
+          ticket_medio?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          num_vendas?: number
+          oferta_id?: string
+          receita_bruta?: number
+          taxa_conversao?: number
+          ticket_medio?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faturamento_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metricas_trafego: {
+        Row: {
+          cpc: number
+          created_at: string
+          ctr: number
+          dia: number
+          id: string
+          investimento: number
+          oferta_id: string
+          receita: number
+          updated_at: string
+          user_id: string
+          vendas: number
+        }
+        Insert: {
+          cpc?: number
+          created_at?: string
+          ctr?: number
+          dia?: number
+          id?: string
+          investimento?: number
+          oferta_id: string
+          receita?: number
+          updated_at?: string
+          user_id: string
+          vendas?: number
+        }
+        Update: {
+          cpc?: number
+          created_at?: string
+          ctr?: number
+          dia?: number
+          id?: string
+          investimento?: number
+          oferta_id?: string
+          receita?: number
+          updated_at?: string
+          user_id?: string
+          vendas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metricas_trafego_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ofertas: {
+        Row: {
+          archived: boolean
+          created_at: string
+          desejo: string | null
+          dor: string | null
+          id: string
+          mecanismo_unico: string | null
+          nicho: string | null
+          nivel_consciencia: string | null
+          nome: string
+          nome_oferta: string | null
+          pensamento_interno: string | null
+          persona: string | null
+          status: string
+          subnicho: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          desejo?: string | null
+          dor?: string | null
+          id?: string
+          mecanismo_unico?: string | null
+          nicho?: string | null
+          nivel_consciencia?: string | null
+          nome?: string
+          nome_oferta?: string | null
+          pensamento_interno?: string | null
+          persona?: string | null
+          status?: string
+          subnicho?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          desejo?: string | null
+          dor?: string | null
+          id?: string
+          mecanismo_unico?: string | null
+          nicho?: string | null
+          nivel_consciencia?: string | null
+          nome?: string
+          nome_oferta?: string | null
+          pensamento_interno?: string | null
+          persona?: string | null
+          status?: string
+          subnicho?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      outputs_gpt: {
+        Row: {
+          agente_id: string
+          conteudo: string | null
+          created_at: string
+          id: string
+          oferta_id: string | null
+          user_id: string
+        }
+        Insert: {
+          agente_id: string
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          oferta_id?: string | null
+          user_id: string
+        }
+        Update: {
+          agente_id?: string
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          oferta_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outputs_gpt_agente_id_fkey"
+            columns: ["agente_id"]
+            isOneToOne: false
+            referencedRelation: "agentes_gpt"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outputs_gpt_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       revisions: {
         Row: {
@@ -582,6 +955,50 @@ export type Database = {
             columns: ["discipline_id"]
             isOneToOne: false
             referencedRelation: "disciplines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trafego_config: {
+        Row: {
+          created_at: string
+          id: string
+          link_biblioteca_anuncios: string | null
+          link_checkout: string | null
+          link_pagina_vendas: string | null
+          oferta_id: string
+          tipo_pagina: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link_biblioteca_anuncios?: string | null
+          link_checkout?: string | null
+          link_pagina_vendas?: string | null
+          oferta_id: string
+          tipo_pagina?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link_biblioteca_anuncios?: string | null
+          link_checkout?: string | null
+          link_pagina_vendas?: string | null
+          oferta_id?: string
+          tipo_pagina?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trafego_config_oferta_id_fkey"
+            columns: ["oferta_id"]
+            isOneToOne: false
+            referencedRelation: "ofertas"
             referencedColumns: ["id"]
           },
         ]
