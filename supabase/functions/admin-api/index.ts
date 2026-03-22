@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const adminOnlyActions = [
       "create_license", "toggle_license", "delete_license",
-      "grant_role", "revoke_role", "find_user_by_email",
+      "grant_role", "revoke_role", "find_user_by_email", "change_role",
     ];
 
     if (!isAdmin && adminOnlyActions.includes(action)) {
