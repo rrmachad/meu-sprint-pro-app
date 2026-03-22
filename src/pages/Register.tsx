@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { sendTransactionalEmail } from '@/lib/transactionalEmail';
+import { lovable } from '@/integrations/lovable/index';
 import { Zap, CheckCircle2, Crown } from 'lucide-react';
 
 const FREE_FEATURES = [
