@@ -60,6 +60,7 @@ function ProtectedRoutes() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/assinatura" element={<SubscriptionPage />} />
+        <Route path="/pagamento-sucesso" element={<PaymentSuccess />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
         <Route path="/indicadores" element={subscribed ? <Indicators /> : <Navigate to="/assinatura" replace />} />
         <Route path="/planejamento" element={subscribed ? <Planning /> : <Navigate to="/assinatura" replace />} />
