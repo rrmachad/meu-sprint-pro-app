@@ -146,6 +146,9 @@ export function StudyTimer() {
 
     const discName = disciplines.find((d) => d.id === selectedDiscipline)?.name || '';
     const mins = Math.round(finalElapsed / 60);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 1800);
+
     toast.success(`${mins} min de ${discName} registrados!`, {
       description: 'Toque em "Editar" para adicionar detalhes.',
       action: {
