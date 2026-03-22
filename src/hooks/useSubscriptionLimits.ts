@@ -1,4 +1,5 @@
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAdmin } from '@/hooks/useAdmin';
 
 export const FREE_LIMITS = {
   maxDisciplines: 3,
@@ -7,6 +8,20 @@ export const FREE_LIMITS = {
 
 export function useSubscriptionLimits() {
   const { subscribed, tier, loading } = useSubscription();
+  const { isAdmin, loading: adminLoading } = useAdmin();
+
+  // Admins have everything unlocked
+  if (isAdmin) {
+    return {
+      isFree: false,
+      isPremium: true,
+      loading: loading || adminLoading,
+      maxDisciplines: Infinity,
+      allowedRevisionMarks: ['24h', '7d', '30d', '60d'],
+      canAddDiscipline: () => true,
+      isRevisionMarkAllowed: () => true,
+    };
+  }
 
   const isFree = !subscribed;
   const isPremium = subscribed && tier === 'premium';
@@ -17,7 +32,7 @@ export function useSubscriptionLimits() {
   return {
     isFree,
     isPremium,
-    loading,
+    loading: loading || adminLoading,
     maxDisciplines,
     allowedRevisionMarks,
     canAddDiscipline: (currentCount: number) => currentCount < maxDisciplines,
