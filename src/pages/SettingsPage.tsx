@@ -568,7 +568,7 @@ function RevisionsTab() {
                     checked={settings.revision.marks.includes(rm.value)}
                     onCheckedChange={() => {
                       if (locked) {
-                        toast.error('Marcos de revisão avançados requerem um plano pago.');
+                        showUpgradeModal('Marcos de revisão avançados');
                         return;
                       }
                       toggleMark(rm.value);
