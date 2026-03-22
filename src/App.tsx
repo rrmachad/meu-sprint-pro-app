@@ -28,6 +28,7 @@ const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 
 const queryClient = new QueryClient();
 
