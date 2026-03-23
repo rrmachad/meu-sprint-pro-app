@@ -54,12 +54,19 @@ const tooltipStyle = {
 };
 
 export default function MockExams() {
-  const { simulados, disciplines, addSimulado, removeSimulado } = useAppStore();
+  const { simulados, disciplines, settings, addSimulado, removeSimulado } = useAppStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newDate, setNewDate] = useState('');
   const [newBanca, setNewBanca] = useState('');
   const [newDisciplines, setNewDisciplines] = useState<SimuladoDiscipline[]>([]);
   const [selectedDiscId, setSelectedDiscId] = useState('');
+
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60, weight: 1 }];
+  const getProvaWeight = (prova: string) => phases.find(p => p.name === prova)?.weight ?? 1;
+  const getDiscProvaWeight = (discId: string) => {
+    const disc = disciplines.find(d => d.id === discId);
+    return disc ? getProvaWeight(disc.prova) : 1;
+  };
 
   const sorted = useMemo(
     () => [...simulados].sort((a, b) => a.date.localeCompare(b.date)),
