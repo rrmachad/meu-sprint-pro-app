@@ -334,6 +334,8 @@ export default function MockExams() {
                       <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Tooltip contentStyle={tooltipStyle} />
                       <Line type="monotone" dataKey="aproveitamento" stroke="hsl(var(--neon-green))" strokeWidth={2.5} dot={{ r: 4, fill: 'hsl(var(--neon-green))' }} name="% Acerto" />
+                      <Line type="monotone" dataKey="ponderado" stroke="hsl(var(--electric-blue))" strokeWidth={2} strokeDasharray="5 3" dot={{ r: 3, fill: 'hsl(var(--electric-blue))' }} name="% Ponderado" />
+                      <Legend />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
