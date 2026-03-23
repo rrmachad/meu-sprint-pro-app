@@ -1734,7 +1734,7 @@ function SyllabusContent() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground mb-2">Nenhum resultado para os filtros selecionados.</p>
-            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}>
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setProvaFilter('all'); setSearchQuery(''); }}>
               Limpar filtros
             </Button>
           </CardContent>
