@@ -452,12 +452,15 @@ export default function MockExams() {
                         <CollapsibleContent className="mt-3 space-y-2 border-t border-border/30 pt-3">
                           {s.disciplines.map((d) => {
                             const dpct = d.questions > 0 ? Math.round((d.correct / d.questions) * 100) : 0;
+                            const pw = getDiscProvaWeight(d.disciplineId);
+                            const pts = d.correct * pw;
+                            const maxPts = d.questions * pw;
                             return (
                               <motion.div key={d.disciplineId} className="space-y-1" whileHover={{ x: 4 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
                                 <div className="flex justify-between text-sm">
                                   <span className="font-medium">{discName(d.disciplineId)}</span>
                                   <span className="text-muted-foreground font-mono text-xs">
-                                    {d.correct}/{d.questions} (<span className="text-neon-green font-bold">{dpct}%</span>)
+                                    {d.correct}/{d.questions} (<span className="text-neon-green font-bold">{dpct}%</span>) · <span className="text-electric-blue">{pts}/{maxPts} pts</span>
                                   </span>
                                 </div>
                                 <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
