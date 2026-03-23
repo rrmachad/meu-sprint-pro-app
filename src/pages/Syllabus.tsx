@@ -1054,6 +1054,37 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4 pt-0">
+        {total > 0 && (
+          <div className="flex items-center gap-2 mb-3">
+            {completed < total ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-7"
+                onClick={() => {
+                  allDisciplineTopics.filter(t => !t.completed).forEach(t => updateTopic(t.id, { completed: true }));
+                  toast.success(`Todos os ${total} tópicos de "${discipline.name}" marcados como concluídos!`);
+                }}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Marcar todos como concluídos
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-7"
+                onClick={() => {
+                  allDisciplineTopics.filter(t => t.completed).forEach(t => updateTopic(t.id, { completed: false }));
+                  toast.success(`Todos os tópicos de "${discipline.name}" desmarcados.`);
+                }}
+              >
+                <Circle className="h-3.5 w-3.5" />
+                Desmarcar todos
+              </Button>
+            )}
+          </div>
+        )}
         <div className="space-y-1">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={sortedTopics.map((t) => t.id)} strategy={verticalListSortingStrategy}>
