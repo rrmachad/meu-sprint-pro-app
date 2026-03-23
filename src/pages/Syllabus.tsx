@@ -1593,6 +1593,24 @@ function SyllabusContent() {
                   ))}
                 </div>
 
+                {/* Prova filter */}
+                {(() => {
+                  const provas = [...new Set(disciplines.map(d => d.prova))].sort();
+                  return provas.length > 1 ? (
+                    <Select value={provaFilter} onValueChange={setProvaFilter}>
+                      <SelectTrigger className="w-[120px] h-8 text-xs">
+                        <SelectValue placeholder="Todas as provas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as provas</SelectItem>
+                        {provas.map((p) => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : null;
+                })()}
+
                 {/* Discipline filter */}
                 <Select value={disciplineFilter} onValueChange={setDisciplineFilter}>
                   <SelectTrigger className="w-[200px] h-8 text-xs">
@@ -1600,9 +1618,12 @@ function SyllabusContent() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as disciplinas</SelectItem>
-                    {disciplines.sort((a, b) => a.order - b.order).map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
+                    {disciplines
+                      .filter(d => provaFilter === 'all' || d.prova === provaFilter)
+                      .sort((a, b) => a.order - b.order)
+                      .map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
 
