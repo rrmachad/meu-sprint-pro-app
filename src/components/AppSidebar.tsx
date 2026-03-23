@@ -146,7 +146,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5">
               {navItems.map((item) => {
-                const isLocked = !subscribed && PREMIUM_ROUTES.includes(item.url);
+                const isLocked = !subscribed && !hasAdminAccess && PREMIUM_ROUTES.includes(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild tooltip={item.title}>

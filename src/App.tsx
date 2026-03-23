@@ -11,6 +11,7 @@ import { MobileOnboarding } from '@/components/MobileOnboarding';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { UpgradeModalProvider } from '@/components/UpgradeModal';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
+import { useAdmin } from '@/hooks/useAdmin';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Indicators = lazy(() => import('./pages/Indicators'));
@@ -51,9 +52,13 @@ function ProtectedRoutes() {
   const { user, loading } = useAuth();
   const { syncing } = useSupabaseSync();
   const { subscribed, loading: subLoading } = useSubscription();
+  const { isAdmin, hasAccess: hasAdminAccess, loading: adminLoading } = useAdmin();
 
-  if (loading || syncing || subLoading) return <Loading />;
+  if (loading || syncing || subLoading || adminLoading) return <Loading />;
   if (!user) return <Navigate to="/login" replace />;
+
+  // Admins bypass all subscription gates
+  const hasFullAccess = subscribed || isAdmin;
 
   return (
     <Routes>
@@ -62,11 +67,11 @@ function ProtectedRoutes() {
         <Route path="/assinatura" element={<SubscriptionPage />} />
         <Route path="/pagamento-sucesso" element={<PaymentSuccess />} />
         <Route path="/configuracoes" element={<SettingsPage />} />
-        <Route path="/indicadores" element={subscribed ? <Indicators /> : <Navigate to="/assinatura" replace />} />
-        <Route path="/planejamento" element={subscribed ? <Planning /> : <Navigate to="/assinatura" replace />} />
-        <Route path="/edital" element={subscribed ? <Syllabus /> : <Navigate to="/assinatura" replace />} />
-        <Route path="/simulados" element={subscribed ? <MockExams /> : <Navigate to="/assinatura" replace />} />
-        <Route path="/revisoes" element={subscribed ? <Revisions /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/indicadores" element={hasFullAccess ? <Indicators /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/planejamento" element={hasFullAccess ? <Planning /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/edital" element={hasFullAccess ? <Syllabus /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/simulados" element={hasFullAccess ? <MockExams /> : <Navigate to="/assinatura" replace />} />
+        <Route path="/revisoes" element={hasFullAccess ? <Revisions /> : <Navigate to="/assinatura" replace />} />
         <Route path="/admin" element={<AdminPage />} />
       </Route>
       <Route path="*" element={<NotFound />} />
