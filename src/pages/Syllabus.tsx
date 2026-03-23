@@ -1403,6 +1403,7 @@ function SyllabusContent() {
   const [exportOpen, setExportOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<string>('all');
+  const [provaFilter, setProvaFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const totalTopics = topics.length;
@@ -1486,6 +1487,7 @@ function SyllabusContent() {
   // Filter disciplines
   const filteredDisciplines = disciplines
     .filter((d) => disciplineFilter === 'all' || d.id === disciplineFilter)
+    .filter((d) => provaFilter === 'all' || d.prova === provaFilter)
     .sort((a, b) => a.order - b.order);
 
   // Check if a discipline has visible topics after status filter
@@ -1499,7 +1501,7 @@ function SyllabusContent() {
     });
   };
 
-  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
+  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0) + (provaFilter !== 'all' ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
@@ -1591,6 +1593,24 @@ function SyllabusContent() {
                   ))}
                 </div>
 
+                {/* Prova filter */}
+                {(() => {
+                  const provas = [...new Set(disciplines.map(d => d.prova))].sort();
+                  return provas.length > 1 ? (
+                    <Select value={provaFilter} onValueChange={setProvaFilter}>
+                      <SelectTrigger className="w-[120px] h-8 text-xs">
+                        <SelectValue placeholder="Todas as provas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as provas</SelectItem>
+                        {provas.map((p) => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : null;
+                })()}
+
                 {/* Discipline filter */}
                 <Select value={disciplineFilter} onValueChange={setDisciplineFilter}>
                   <SelectTrigger className="w-[200px] h-8 text-xs">
@@ -1598,9 +1618,12 @@ function SyllabusContent() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as disciplinas</SelectItem>
-                    {disciplines.sort((a, b) => a.order - b.order).map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
+                    {disciplines
+                      .filter(d => provaFilter === 'all' || d.prova === provaFilter)
+                      .sort((a, b) => a.order - b.order)
+                      .map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
 
@@ -1620,7 +1643,7 @@ function SyllabusContent() {
                     variant="ghost"
                     size="sm"
                     className="h-8 text-xs gap-1"
-                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}
+                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setProvaFilter('all'); setSearchQuery(''); }}
                   >
                     <X className="h-3 w-3" /> Limpar filtros
                   </Button>
@@ -1711,7 +1734,7 @@ function SyllabusContent() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Filter className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground mb-2">Nenhum resultado para os filtros selecionados.</p>
-            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}>
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setProvaFilter('all'); setSearchQuery(''); }}>
               Limpar filtros
             </Button>
           </CardContent>
