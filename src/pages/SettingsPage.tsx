@@ -328,7 +328,7 @@ function ContestTab() {
   };
 
   const addPhase = () => {
-    const newPhases = [...phases, { name: `P${phases.length + 1}`, minPercent: 60 }];
+    const newPhases = [...phases, { name: `P${phases.length + 1}`, minPercent: 60, weight: 1 }];
     updatePhases(newPhases);
     toast.success('Fase adicionada!');
   };
