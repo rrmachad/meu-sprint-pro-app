@@ -1410,7 +1410,12 @@ function SyllabusContent() {
   const globalPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
   const handleImportSingle = (disciplineId: string, topicTexts: string[]) => {
-    topicTexts.forEach((text, i) => {
+    const validTexts = topicTexts.map(t => t?.trim()).filter(t => t && t.length > 0);
+    if (validTexts.length === 0) {
+      toast.error('Nenhum tópico válido para importar.');
+      return;
+    }
+    validTexts.forEach((text, i) => {
       const topic: Topic = {
         id: crypto.randomUUID(),
         disciplineId,
@@ -1420,7 +1425,11 @@ function SyllabusContent() {
       };
       addTopic(topic);
     });
-    toast.success(`${topicTexts.length} tópicos importados com sucesso!`);
+    const skipped = topicTexts.length - validTexts.length;
+    const msg = skipped > 0
+      ? `${validTexts.length} tópicos importados (${skipped} vazios ignorados)!`
+      : `${validTexts.length} tópicos importados com sucesso!`;
+    toast.success(msg);
   };
 
   const { canAddDiscipline, maxDisciplines } = useSubscriptionLimits();
@@ -1455,7 +1464,8 @@ function SyllabusContent() {
       }
 
       const existingCount = topics.filter((t) => t.disciplineId === discipline!.id).length;
-      disc.topics.forEach((text, i) => {
+      const validTopics = disc.topics.map(t => t?.trim()).filter(t => t && t.length > 0);
+      validTopics.forEach((text, i) => {
         addTopic({
           id: crypto.randomUUID(),
           disciplineId: discipline!.id,
@@ -1464,7 +1474,7 @@ function SyllabusContent() {
           order: existingCount + i,
         });
       });
-      totalImported += disc.topics.length;
+      totalImported += validTopics.length;
     });
 
     const msg = disciplinesCreated > 0
