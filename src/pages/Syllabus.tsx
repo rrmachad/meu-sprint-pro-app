@@ -1643,7 +1643,7 @@ function SyllabusContent() {
                     variant="ghost"
                     size="sm"
                     className="h-8 text-xs gap-1"
-                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setSearchQuery(''); }}
+                    onClick={() => { setStatusFilter('all'); setDisciplineFilter('all'); setProvaFilter('all'); setSearchQuery(''); }}
                   >
                     <X className="h-3 w-3" /> Limpar filtros
                   </Button>
