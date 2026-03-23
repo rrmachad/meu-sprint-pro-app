@@ -970,7 +970,7 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
   const topics = allDisciplineTopics.filter((t) => {
     if (statusFilter === 'pending' && t.completed) return false;
     if (statusFilter === 'completed' && !t.completed) return false;
-    if (searchQuery.trim() && !t.text.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (searchQuery.trim() && !(t.text || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
   const allTopics = useAppStore((s) => s.topics);
