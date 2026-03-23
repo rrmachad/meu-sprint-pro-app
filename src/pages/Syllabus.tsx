@@ -1487,6 +1487,7 @@ function SyllabusContent() {
   // Filter disciplines
   const filteredDisciplines = disciplines
     .filter((d) => disciplineFilter === 'all' || d.id === disciplineFilter)
+    .filter((d) => provaFilter === 'all' || d.prova === provaFilter)
     .sort((a, b) => a.order - b.order);
 
   // Check if a discipline has visible topics after status filter
