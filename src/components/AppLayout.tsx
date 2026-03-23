@@ -3,11 +3,12 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { StudyTimer } from '@/components/StudyTimer';
 import { AdminNotificationBell } from '@/components/AdminNotificationBell';
 import { useAppStore } from '@/store/useAppStore';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useStudyReminders } from '@/hooks/useStudyReminders';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Wifi, WifiOff, Zap } from 'lucide-react';
+import { Wifi, WifiOff, Zap, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,8 +16,10 @@ import { supabase } from '@/integrations/supabase/client';
 export function AppLayout() {
   const candidateName = useAppStore((s) => s.settings.contest.candidateName);
   const location = useLocation();
+  const navigate = useNavigate();
   const { connectionStatus } = useSupabaseSync();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   useStudyReminders();
 
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
@@ -55,7 +58,16 @@ export function AppLayout() {
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
               </span>
             </div>
-            <div className="ml-auto flex items-center gap-3">
+            <div className="ml-auto flex items-center gap-2 md:gap-3">
+              {hasAdminAccess && isMobile && location.pathname !== '/admin' && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="flex items-center justify-center h-9 w-9 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                  title="Painel Admin"
+                >
+                  <Shield className="h-4 w-4" />
+                </button>
+              )}
               {hasAdminAccess && <AdminNotificationBell />}
               {connectionStatus === 'connected' ? (
                 <div className="flex items-center gap-1.5 text-xs text-neon-green" title="Conectado em tempo real">
