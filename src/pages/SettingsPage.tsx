@@ -311,7 +311,7 @@ function ContestTab() {
   const settings = useAppStore((s) => s.settings);
   const updateSettings = useAppStore((s) => s.updateSettings);
 
-  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60 }];
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60, weight: 1 }];
   const totalMinPercent = settings.contest.totalMinPercent ?? 70;
 
   const update = (field: string, value: string | number) => {
