@@ -11,6 +11,7 @@ import { MobileOnboarding } from '@/components/MobileOnboarding';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { UpgradeModalProvider } from '@/components/UpgradeModal';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
+import { useAdmin } from '@/hooks/useAdmin';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Indicators = lazy(() => import('./pages/Indicators'));
