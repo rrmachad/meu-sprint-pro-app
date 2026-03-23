@@ -389,7 +389,7 @@ export function SetupWizard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setPhases([...phases, { name: `P${phases.length + 1}`, minPercent: 60 }])}
+                        onClick={() => setPhases([...phases, { name: `P${phases.length + 1}`, minPercent: 60, weight: 1 }])}
                       >
                         <Plus className="h-3 w-3 mr-1" /> Adicionar Fase
                       </Button>
