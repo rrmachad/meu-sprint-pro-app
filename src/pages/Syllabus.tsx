@@ -1653,7 +1653,44 @@ function SyllabusContent() {
         </Card>
       )}
 
-      {/* Disciplines */}
+      {/* Progress by Prova */}
+      {totalTopics > 0 && (() => {
+        const provas = [...new Set(disciplines.map(d => d.prova))].sort();
+        if (provas.length <= 1) return null;
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {provas.map(prova => {
+              const provaDiscs = disciplines.filter(d => d.prova === prova);
+              const provaTopics = topics.filter(t => provaDiscs.some(d => d.id === t.disciplineId));
+              const provaCompleted = provaTopics.filter(t => t.completed).length;
+              const provaTotal = provaTopics.length;
+              const provaPct = provaTotal > 0 ? Math.round((provaCompleted / provaTotal) * 100) : 0;
+              if (provaTotal === 0) return null;
+              return (
+                <Card key={prova} className="glass border-border/30">
+                  <CardContent className="py-3 px-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px] font-bold">{prova}</Badge>
+                        <span className="text-xs text-muted-foreground">{provaDiscs.length} disciplina{provaDiscs.length > 1 ? 's' : ''}</span>
+                      </div>
+                      <span className="text-xs font-bold text-primary">{provaPct}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${provaPct}%` }} />
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      {provaCompleted}/{provaTotal} tópicos
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+
       {disciplines.length === 0 ? (
         <Card className="border-dashed glass border-border/30">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
