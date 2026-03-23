@@ -434,7 +434,7 @@ function ContestTab() {
                 </div>
                 Fases da Prova
               </CardTitle>
-              <CardDescription>Configure as fases (P1, P2, P3…) e seus percentuais mínimos.</CardDescription>
+              <CardDescription>Configure as fases (P1, P2, P3…), seus pesos e percentuais mínimos.</CardDescription>
             </div>
             <Button onClick={addPhase} size="sm" className="gap-1 gradient-neon text-primary-foreground hover:opacity-90">
               <Plus className="h-4 w-4" /> Adicionar Fase
