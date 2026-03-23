@@ -513,13 +513,17 @@ function DisciplinesTab() {
   const [form, setForm] = useState({
     name: '',
     category: 'humanas' as DisciplineCategory,
-    weight: 10,
     prova: 'P1' as string,
     defaultQuestions: 10,
   });
 
+  const getProvaWeight = (prova: string) => {
+    const phase = phases.find(p => p.name === prova);
+    return phase?.weight ?? 1;
+  };
+
   const resetForm = () => {
-    setForm({ name: '', category: 'humanas', weight: 10, prova: 'P1', defaultQuestions: 10 });
+    setForm({ name: '', category: 'humanas', prova: 'P1', defaultQuestions: 10 });
     setEditingId(null);
   };
 
