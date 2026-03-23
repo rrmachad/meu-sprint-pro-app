@@ -129,14 +129,20 @@ export default function MockExams() {
       const totalQ = s.disciplines.reduce((a, d) => a + d.questions, 0);
       const totalC = s.disciplines.reduce((a, d) => a + d.correct, 0);
       const pct = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
+      const totalWeightedPoints = s.disciplines.reduce((a, d) => a + d.correct * getDiscProvaWeight(d.disciplineId), 0);
+      const totalMaxPoints = s.disciplines.reduce((a, d) => a + d.questions * getDiscProvaWeight(d.disciplineId), 0);
+      const weightedPct = totalMaxPoints > 0 ? Math.round((totalWeightedPoints / totalMaxPoints) * 100) : 0;
       return {
         label: format(parseISO(s.date), 'dd/MM/yy'),
         aproveitamento: pct,
+        ponderado: weightedPct,
         questoes: totalQ,
         acertos: totalC,
+        pontos: totalWeightedPoints,
+        maxPontos: totalMaxPoints,
       };
     });
-  }, [sorted]);
+  }, [sorted, disciplines, phases]);
 
   const allDiscIds = useMemo(() => {
     const ids = new Set<string>();
