@@ -1464,7 +1464,8 @@ function SyllabusContent() {
       }
 
       const existingCount = topics.filter((t) => t.disciplineId === discipline!.id).length;
-      disc.topics.forEach((text, i) => {
+      const validTopics = disc.topics.map(t => t?.trim()).filter(t => t && t.length > 0);
+      validTopics.forEach((text, i) => {
         addTopic({
           id: crypto.randomUUID(),
           disciplineId: discipline!.id,
@@ -1473,7 +1474,7 @@ function SyllabusContent() {
           order: existingCount + i,
         });
       });
-      totalImported += disc.topics.length;
+      totalImported += validTopics.length;
     });
 
     const msg = disciplinesCreated > 0
