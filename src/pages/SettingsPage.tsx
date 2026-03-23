@@ -459,6 +459,16 @@ function ContestTab() {
                 />
               </div>
               <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Peso</Label>
+                <Input
+                  type="number"
+                  value={phase.weight}
+                  onChange={(e) => updatePhase(i, 'weight', Math.max(1, Number(e.target.value)))}
+                  min={1} max={10}
+                  className="h-8 w-16 text-sm glass border-border/30"
+                />
+              </div>
+              <div className="space-y-1">
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Mínimo (%)</Label>
                 <Input
                   type="number"
