@@ -1483,7 +1483,7 @@ function SyllabusContent() {
     return discTopics.some((t) => {
       if (statusFilter === 'pending' && t.completed) return false;
       if (statusFilter === 'completed' && !t.completed) return false;
-      if (searchQuery.trim() && !t.text.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (searchQuery.trim() && !(t.text || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
   };
