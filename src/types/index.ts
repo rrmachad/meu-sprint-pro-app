@@ -122,6 +122,7 @@ export interface Simulado {
 export interface ProvaPhase {
   name: string; // P1, P2, P3...
   minPercent: number;
+  weight: number; // peso da prova (1, 2, 3...)
 }
 
 export interface ContestInfo {
