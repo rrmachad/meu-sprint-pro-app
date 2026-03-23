@@ -3,6 +3,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { StudyTimer } from '@/components/StudyTimer';
 import { AdminNotificationBell } from '@/components/AdminNotificationBell';
 import { useAppStore } from '@/store/useAppStore';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useStudyReminders } from '@/hooks/useStudyReminders';
 import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 import { Outlet, useLocation } from 'react-router-dom';
