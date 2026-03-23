@@ -54,12 +54,19 @@ const tooltipStyle = {
 };
 
 export default function MockExams() {
-  const { simulados, disciplines, addSimulado, removeSimulado } = useAppStore();
+  const { simulados, disciplines, settings, addSimulado, removeSimulado } = useAppStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newDate, setNewDate] = useState('');
   const [newBanca, setNewBanca] = useState('');
   const [newDisciplines, setNewDisciplines] = useState<SimuladoDiscipline[]>([]);
   const [selectedDiscId, setSelectedDiscId] = useState('');
+
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60, weight: 1 }];
+  const getProvaWeight = (prova: string) => phases.find(p => p.name === prova)?.weight ?? 1;
+  const getDiscProvaWeight = (discId: string) => {
+    const disc = disciplines.find(d => d.id === discId);
+    return disc ? getProvaWeight(disc.prova) : 1;
+  };
 
   const sorted = useMemo(
     () => [...simulados].sort((a, b) => a.date.localeCompare(b.date)),
@@ -122,14 +129,20 @@ export default function MockExams() {
       const totalQ = s.disciplines.reduce((a, d) => a + d.questions, 0);
       const totalC = s.disciplines.reduce((a, d) => a + d.correct, 0);
       const pct = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
+      const totalWeightedPoints = s.disciplines.reduce((a, d) => a + d.correct * getDiscProvaWeight(d.disciplineId), 0);
+      const totalMaxPoints = s.disciplines.reduce((a, d) => a + d.questions * getDiscProvaWeight(d.disciplineId), 0);
+      const weightedPct = totalMaxPoints > 0 ? Math.round((totalWeightedPoints / totalMaxPoints) * 100) : 0;
       return {
         label: format(parseISO(s.date), 'dd/MM/yy'),
         aproveitamento: pct,
+        ponderado: weightedPct,
         questoes: totalQ,
         acertos: totalC,
+        pontos: totalWeightedPoints,
+        maxPontos: totalMaxPoints,
       };
     });
-  }, [sorted]);
+  }, [sorted, disciplines, phases]);
 
   const allDiscIds = useMemo(() => {
     const ids = new Set<string>();
@@ -321,6 +334,8 @@ export default function MockExams() {
                       <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Tooltip contentStyle={tooltipStyle} />
                       <Line type="monotone" dataKey="aproveitamento" stroke="hsl(var(--neon-green))" strokeWidth={2.5} dot={{ r: 4, fill: 'hsl(var(--neon-green))' }} name="% Acerto" />
+                      <Line type="monotone" dataKey="ponderado" stroke="hsl(var(--electric-blue))" strokeWidth={2} strokeDasharray="5 3" dot={{ r: 3, fill: 'hsl(var(--electric-blue))' }} name="% Ponderado" />
+                      <Legend />
                     </LineChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -405,6 +420,9 @@ export default function MockExams() {
                 const totalQ = s.disciplines.reduce((a, d) => a + d.questions, 0);
                 const totalC = s.disciplines.reduce((a, d) => a + d.correct, 0);
                 const pct = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
+                const totalWeightedPoints = s.disciplines.reduce((a, d) => a + d.correct * getDiscProvaWeight(d.disciplineId), 0);
+                const totalMaxPoints = s.disciplines.reduce((a, d) => a + d.questions * getDiscProvaWeight(d.disciplineId), 0);
+                const weightedPct = totalMaxPoints > 0 ? Math.round((totalWeightedPoints / totalMaxPoints) * 100) : 0;
                 return (
                   <Collapsible key={s.id}>
                     <motion.div
@@ -423,6 +441,7 @@ export default function MockExams() {
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 {totalQ} questões · {totalC} acertos · <span className="font-bold text-neon-green">{pct}%</span>
+                                {' · '}<span className="font-bold text-electric-blue">{totalWeightedPoints}/{totalMaxPoints} pts ({weightedPct}%)</span>
                               </p>
                             </div>
                           </CollapsibleTrigger>
@@ -433,12 +452,15 @@ export default function MockExams() {
                         <CollapsibleContent className="mt-3 space-y-2 border-t border-border/30 pt-3">
                           {s.disciplines.map((d) => {
                             const dpct = d.questions > 0 ? Math.round((d.correct / d.questions) * 100) : 0;
+                            const pw = getDiscProvaWeight(d.disciplineId);
+                            const pts = d.correct * pw;
+                            const maxPts = d.questions * pw;
                             return (
                               <motion.div key={d.disciplineId} className="space-y-1" whileHover={{ x: 4 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
                                 <div className="flex justify-between text-sm">
                                   <span className="font-medium">{discName(d.disciplineId)}</span>
                                   <span className="text-muted-foreground font-mono text-xs">
-                                    {d.correct}/{d.questions} (<span className="text-neon-green font-bold">{dpct}%</span>)
+                                    {d.correct}/{d.questions} (<span className="text-neon-green font-bold">{dpct}%</span>) · <span className="text-electric-blue">{pts}/{maxPts} pts</span>
                                   </span>
                                 </div>
                                 <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
