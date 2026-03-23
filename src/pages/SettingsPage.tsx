@@ -613,8 +613,9 @@ function DisciplinesTab() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>Peso: {d.weight}%</span>
+                      <span>Peso: {getProvaWeight(d.prova)}</span>
                       <span>Questões: {d.defaultQuestions}</span>
+                      <span>Pontos: {d.defaultQuestions * getProvaWeight(d.prova)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
