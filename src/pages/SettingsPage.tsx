@@ -661,6 +661,57 @@ function DisciplinesTab() {
         </CardContent>
       </Card>
 
+      {/* Resumo de Pontuação por Prova */}
+      {disciplines.length > 0 && (() => {
+        const provaStats = phases.map(phase => {
+          const provaDiscs = disciplines.filter(d => d.prova === phase.name);
+          const totalQuestions = provaDiscs.reduce((sum, d) => sum + d.defaultQuestions, 0);
+          const totalPoints = totalQuestions * phase.weight;
+          return { name: phase.name, weight: phase.weight, disciplines: provaDiscs.length, totalQuestions, totalPoints };
+        }).filter(p => p.disciplines > 0);
+
+        const grandTotalPoints = provaStats.reduce((sum, p) => sum + p.totalPoints, 0);
+        const grandTotalQuestions = provaStats.reduce((sum, p) => sum + p.totalQuestions, 0);
+
+        return (
+          <Card className="glass border-border/30 rounded-xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <div className="p-1.5 rounded-lg gradient-blue">
+                  <Target className="h-4 w-4 text-primary-foreground" />
+                </div>
+                Resumo de Pontuação
+              </CardTitle>
+              <CardDescription>Pontuação total por fase da prova</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                {provaStats.map(p => (
+                  <div key={p.name} className="p-3 rounded-xl glass border-border/30">
+                    <div className="flex items-center justify-between mb-1">
+                      <Badge variant="outline" className="text-xs border-primary/40 text-primary">{p.name}</Badge>
+                      <span className="text-xs text-muted-foreground">Peso {p.weight}</span>
+                    </div>
+                    <div className="text-2xl font-bold text-primary">{p.totalPoints} <span className="text-sm font-normal text-muted-foreground">pts</span></div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {p.disciplines} disciplina{p.disciplines !== 1 ? 's' : ''} · {p.totalQuestions} questões
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Separator className="bg-border/30 mb-3" />
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Total Geral</span>
+                <div className="text-right">
+                  <span className="text-lg font-bold text-foreground">{grandTotalPoints} pontos</span>
+                  <span className="text-xs text-muted-foreground ml-2">({grandTotalQuestions} questões)</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md glass-strong border-border/30 rounded-xl">
