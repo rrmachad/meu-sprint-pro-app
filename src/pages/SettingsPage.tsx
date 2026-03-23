@@ -530,7 +530,7 @@ function DisciplinesTab() {
   const openNew = () => { resetForm(); setDialogOpen(true); };
 
   const openEdit = (d: Discipline) => {
-    setForm({ name: d.name, category: d.category, weight: d.weight, prova: d.prova, defaultQuestions: d.defaultQuestions });
+    setForm({ name: d.name, category: d.category, prova: d.prova, defaultQuestions: d.defaultQuestions });
     setEditingId(d.id);
     setDialogOpen(true);
   };
