@@ -312,8 +312,10 @@ export const useAppStore = create<AppState & AppActions>()(
     },
 
     addTopic: (t) => {
-      set((s) => ({ topics: [...s.topics, t] }));
-      persistTopic(t);
+      if (!t.text || !t.text.trim()) return; // skip empty topics
+      const sanitized = { ...t, text: t.text.trim() };
+      set((s) => ({ topics: [...s.topics, sanitized] }));
+      persistTopic(sanitized);
     },
     updateTopic: (id, t) => {
       set((s) => ({ topics: s.topics.map((x) => (x.id === id ? { ...x, ...t } : x)) }));
