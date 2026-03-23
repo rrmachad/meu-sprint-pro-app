@@ -1344,8 +1344,57 @@ function ExportPdfDialog({
   );
 }
 
+// ========== ERROR BOUNDARY ==========
+import { Component, ErrorInfo, ReactNode } from 'react';
+
+class SyllabusErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Syllabus error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+          </div>
+          <h3 className="text-lg font-semibold">Erro ao carregar o Edital</h3>
+          <p className="text-sm text-muted-foreground max-w-md">
+            Ocorreu um erro inesperado. Tente recarregar a página.
+          </p>
+          <p className="text-xs text-muted-foreground/60 font-mono max-w-md break-all">
+            {this.state.error?.message}
+          </p>
+          <Button onClick={() => { this.setState({ hasError: false, error: null }); }} className="gap-2">
+            Tentar Novamente
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ========== MAIN PAGE ==========
 export default function Syllabus() {
+  return (
+    <SyllabusErrorBoundary>
+      <SyllabusContent />
+    </SyllabusErrorBoundary>
+  );
+}
+
+function SyllabusContent() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
   const { addTopic, addDiscipline, clearTopicsByDiscipline, clearAllTopics } = useAppStore();
