@@ -1501,7 +1501,7 @@ function SyllabusContent() {
     });
   };
 
-  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
+  const activeFilterCount = (statusFilter !== 'all' ? 1 : 0) + (disciplineFilter !== 'all' ? 1 : 0) + (provaFilter !== 'all' ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
 
   return (
     <motion.div variants={pageVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
