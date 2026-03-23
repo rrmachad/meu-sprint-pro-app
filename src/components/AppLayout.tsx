@@ -16,8 +16,10 @@ import { supabase } from '@/integrations/supabase/client';
 export function AppLayout() {
   const candidateName = useAppStore((s) => s.settings.contest.candidateName);
   const location = useLocation();
+  const navigate = useNavigate();
   const { connectionStatus } = useSupabaseSync();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   useStudyReminders();
 
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
