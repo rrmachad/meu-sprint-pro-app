@@ -540,15 +540,16 @@ function DisciplinesTab() {
 
   const handleSave = () => {
     if (!form.name.trim()) { toast.error('Informe o nome da disciplina.'); return; }
+    const weight = getProvaWeight(form.prova);
     if (editingId) {
-      updateDiscipline(editingId, form);
+      updateDiscipline(editingId, { ...form, weight });
       toast.success('Disciplina atualizada!');
     } else {
       if (!canAddDiscipline(disciplines.length)) {
         showUpgradeModal('Adicionar mais disciplinas');
         return;
       }
-      const disc: Discipline = { id: crypto.randomUUID(), ...form, order: disciplines.length };
+      const disc: Discipline = { id: crypto.randomUUID(), ...form, weight, order: disciplines.length };
       addDiscipline(disc);
       toast.success('Disciplina adicionada!');
     }
