@@ -311,7 +311,7 @@ function ContestTab() {
   const settings = useAppStore((s) => s.settings);
   const updateSettings = useAppStore((s) => s.updateSettings);
 
-  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60 }];
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60, weight: 1 }];
   const totalMinPercent = settings.contest.totalMinPercent ?? 70;
 
   const update = (field: string, value: string | number) => {
@@ -328,7 +328,7 @@ function ContestTab() {
   };
 
   const addPhase = () => {
-    const newPhases = [...phases, { name: `P${phases.length + 1}`, minPercent: 60 }];
+    const newPhases = [...phases, { name: `P${phases.length + 1}`, minPercent: 60, weight: 1 }];
     updatePhases(newPhases);
     toast.success('Fase adicionada!');
   };
@@ -434,7 +434,7 @@ function ContestTab() {
                 </div>
                 Fases da Prova
               </CardTitle>
-              <CardDescription>Configure as fases (P1, P2, P3…) e seus percentuais mínimos.</CardDescription>
+              <CardDescription>Configure as fases (P1, P2, P3…), seus pesos e percentuais mínimos.</CardDescription>
             </div>
             <Button onClick={addPhase} size="sm" className="gap-1 gradient-neon text-primary-foreground hover:opacity-90">
               <Plus className="h-4 w-4" /> Adicionar Fase
@@ -456,6 +456,16 @@ function ContestTab() {
                   onChange={(e) => updatePhase(i, 'name', e.target.value)}
                   className="h-8 text-sm glass border-border/30"
                   placeholder="Ex: P1"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Peso</Label>
+                <Input
+                  type="number"
+                  value={phase.weight}
+                  onChange={(e) => updatePhase(i, 'weight', Math.max(1, Number(e.target.value)))}
+                  min={1} max={10}
+                  className="h-8 w-16 text-sm glass border-border/30"
                 />
               </div>
               <div className="space-y-1">
@@ -502,7 +512,7 @@ function ContestTab() {
 // ==================== DISCIPLINES TAB ====================
 function DisciplinesTab() {
   const settings = useAppStore((s) => s.settings);
-  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60 }];
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60, weight: 1 }];
   const disciplines = useAppStore((s) => s.disciplines);
   const addDiscipline = useAppStore((s) => s.addDiscipline);
   const updateDiscipline = useAppStore((s) => s.updateDiscipline);
@@ -513,20 +523,24 @@ function DisciplinesTab() {
   const [form, setForm] = useState({
     name: '',
     category: 'humanas' as DisciplineCategory,
-    weight: 10,
     prova: 'P1' as string,
     defaultQuestions: 10,
   });
 
+  const getProvaWeight = (prova: string) => {
+    const phase = phases.find(p => p.name === prova);
+    return phase?.weight ?? 1;
+  };
+
   const resetForm = () => {
-    setForm({ name: '', category: 'humanas', weight: 10, prova: 'P1', defaultQuestions: 10 });
+    setForm({ name: '', category: 'humanas', prova: 'P1', defaultQuestions: 10 });
     setEditingId(null);
   };
 
   const openNew = () => { resetForm(); setDialogOpen(true); };
 
   const openEdit = (d: Discipline) => {
-    setForm({ name: d.name, category: d.category, weight: d.weight, prova: d.prova, defaultQuestions: d.defaultQuestions });
+    setForm({ name: d.name, category: d.category, prova: d.prova, defaultQuestions: d.defaultQuestions });
     setEditingId(d.id);
     setDialogOpen(true);
   };
@@ -536,15 +550,16 @@ function DisciplinesTab() {
 
   const handleSave = () => {
     if (!form.name.trim()) { toast.error('Informe o nome da disciplina.'); return; }
+    const weight = getProvaWeight(form.prova);
     if (editingId) {
-      updateDiscipline(editingId, form);
+      updateDiscipline(editingId, { ...form, weight });
       toast.success('Disciplina atualizada!');
     } else {
       if (!canAddDiscipline(disciplines.length)) {
         showUpgradeModal('Adicionar mais disciplinas');
         return;
       }
-      const disc: Discipline = { id: crypto.randomUUID(), ...form, order: disciplines.length };
+      const disc: Discipline = { id: crypto.randomUUID(), ...form, weight, order: disciplines.length };
       addDiscipline(disc);
       toast.success('Disciplina adicionada!');
     }
@@ -608,8 +623,9 @@ function DisciplinesTab() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>Peso: {d.weight}%</span>
+                      <span>Peso: {getProvaWeight(d.prova)}</span>
                       <span>Questões: {d.defaultQuestions}</span>
+                      <span>Pontos: {d.defaultQuestions * getProvaWeight(d.prova)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -698,24 +714,20 @@ function DisciplinesTab() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-1">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Peso (%)</Label>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Peso da Prova</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="glass-strong border-border/30">
-                      <p className="text-xs max-w-48">Percentual de questões desta disciplina no edital.</p>
+                      <p className="text-xs max-w-48">Peso definido pela fase/prova selecionada. Configure nas Fases da Prova (aba Concurso).</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30"
-                    onClick={() => setForm({ ...form, weight: Math.max(0, form.weight - 1) })}>-</Button>
-                  <Input type="number" value={form.weight} min={0} max={100}
-                    onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-                    className="w-16 text-center glass border-border/30" />
-                  <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30"
-                    onClick={() => setForm({ ...form, weight: Math.min(100, form.weight + 1) })}>+</Button>
+                  <Input type="number" value={getProvaWeight(form.prova)} disabled
+                    className="w-16 text-center glass border-border/30 opacity-60" />
+                  <span className="text-xs text-muted-foreground">({form.defaultQuestions * getProvaWeight(form.prova)} pts)</span>
                 </div>
               </div>
               <div className="space-y-2">

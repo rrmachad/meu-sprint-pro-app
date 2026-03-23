@@ -161,7 +161,7 @@ export function useSupabaseSync() {
     // Map settings
     const s = settingsRows?.[0];
     if (s) {
-      const phases = Array.isArray(s.phases) ? s.phases : [{ name: 'P1', minPercent: 60 }];
+      const phases = Array.isArray(s.phases) ? s.phases.map((p: any) => ({ name: p.name, minPercent: p.minPercent, weight: p.weight ?? 1 })) : [{ name: 'P1', minPercent: 60, weight: 1 }];
       const settings: AppSettings = {
         contest: {
           name: s.contest_name || '', organ: s.contest_organ || '', examDate: s.exam_date || '',

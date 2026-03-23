@@ -61,7 +61,7 @@ export function SetupWizard() {
   const [disciplines, setDisciplines] = useState<DisciplineForm[]>([
     { name: '', category: 'humanas', questions: 10, weightPerQuestion: 1, prova: 'P1' },
   ]);
-  const [phases, setPhases] = useState<ProvaPhase[]>([{ name: 'P1', minPercent: 60 }]);
+  const [phases, setPhases] = useState<ProvaPhase[]>([{ name: 'P1', minPercent: 60, weight: 1 }]);
   const [totalMin, setTotalMin] = useState(70);
   const [cannotZeroIndices, setCannotZeroIndices] = useState<number[]>([]);
   const [weeklyHours, setWeeklyHours] = useState(40);
@@ -389,7 +389,7 @@ export function SetupWizard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setPhases([...phases, { name: `P${phases.length + 1}`, minPercent: 60 }])}
+                        onClick={() => setPhases([...phases, { name: `P${phases.length + 1}`, minPercent: 60, weight: 1 }])}
                       >
                         <Plus className="h-3 w-3 mr-1" /> Adicionar Fase
                       </Button>
@@ -407,6 +407,20 @@ export function SetupWizard() {
                             className="w-20 text-sm"
                             placeholder="Nome"
                           />
+                          <div className="flex items-center gap-1.5">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Peso</Label>
+                            <Input
+                              type="number"
+                              value={phase.weight}
+                              onChange={(e) => {
+                                const updated = [...phases];
+                                updated[i] = { ...updated[i], weight: Math.max(1, Number(e.target.value)) };
+                                setPhases(updated);
+                              }}
+                              min={1} max={10}
+                              className="w-16 text-sm"
+                            />
+                          </div>
                           <div className="flex items-center gap-1.5">
                             <Label className="text-xs text-muted-foreground whitespace-nowrap">Mínimo (%)</Label>
                             <Input
