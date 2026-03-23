@@ -408,6 +408,20 @@ export function SetupWizard() {
                             placeholder="Nome"
                           />
                           <div className="flex items-center gap-1.5">
+                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Peso</Label>
+                            <Input
+                              type="number"
+                              value={phase.weight}
+                              onChange={(e) => {
+                                const updated = [...phases];
+                                updated[i] = { ...updated[i], weight: Math.max(1, Number(e.target.value)) };
+                                setPhases(updated);
+                              }}
+                              min={1} max={10}
+                              className="w-16 text-sm"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5">
                             <Label className="text-xs text-muted-foreground whitespace-nowrap">Mínimo (%)</Label>
                             <Input
                               type="number"

@@ -502,7 +502,7 @@ function ContestTab() {
 // ==================== DISCIPLINES TAB ====================
 function DisciplinesTab() {
   const settings = useAppStore((s) => s.settings);
-  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60 }];
+  const phases = settings.contest.phases || [{ name: 'P1', minPercent: 60, weight: 1 }];
   const disciplines = useAppStore((s) => s.disciplines);
   const addDiscipline = useAppStore((s) => s.addDiscipline);
   const updateDiscipline = useAppStore((s) => s.updateDiscipline);
