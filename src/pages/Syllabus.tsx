@@ -1345,7 +1345,7 @@ function ExportPdfDialog({
 }
 
 // ========== ERROR BOUNDARY ==========
-import { Component, ErrorInfo, ReactNode } from 'react';
+
 
 class SyllabusErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
