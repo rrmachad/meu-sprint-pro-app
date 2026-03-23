@@ -703,24 +703,20 @@ function DisciplinesTab() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-1">
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Peso (%)</Label>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Peso da Prova</Label>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="glass-strong border-border/30">
-                      <p className="text-xs max-w-48">Percentual de questões desta disciplina no edital.</p>
+                      <p className="text-xs max-w-48">Peso definido pela fase/prova selecionada. Configure nas Fases da Prova (aba Concurso).</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30"
-                    onClick={() => setForm({ ...form, weight: Math.max(0, form.weight - 1) })}>-</Button>
-                  <Input type="number" value={form.weight} min={0} max={100}
-                    onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-                    className="w-16 text-center glass border-border/30" />
-                  <Button variant="outline" size="icon" className="h-9 w-9 glass border-border/30"
-                    onClick={() => setForm({ ...form, weight: Math.min(100, form.weight + 1) })}>+</Button>
+                  <Input type="number" value={getProvaWeight(form.prova)} disabled
+                    className="w-16 text-center glass border-border/30 opacity-60" />
+                  <span className="text-xs text-muted-foreground">({form.defaultQuestions * getProvaWeight(form.prova)} pts)</span>
                 </div>
               </div>
               <div className="space-y-2">
