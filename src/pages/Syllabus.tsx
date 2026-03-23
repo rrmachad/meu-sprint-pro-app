@@ -829,6 +829,7 @@ function ImportDialog({
 
 // Helper to highlight search matches
 function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!text) return null;
   if (!query.trim()) return <>{text}</>;
   const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
   const parts = text.split(regex);
