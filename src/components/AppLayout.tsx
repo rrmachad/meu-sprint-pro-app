@@ -58,7 +58,16 @@ export function AppLayout() {
                 {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
               </span>
             </div>
-            <div className="ml-auto flex items-center gap-3">
+            <div className="ml-auto flex items-center gap-2 md:gap-3">
+              {hasAdminAccess && isMobile && location.pathname !== '/admin' && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="flex items-center justify-center h-9 w-9 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                  title="Painel Admin"
+                >
+                  <Shield className="h-4 w-4" />
+                </button>
+              )}
               {hasAdminAccess && <AdminNotificationBell />}
               {connectionStatus === 'connected' ? (
                 <div className="flex items-center gap-1.5 text-xs text-neon-green" title="Conectado em tempo real">
