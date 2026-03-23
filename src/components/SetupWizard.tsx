@@ -61,7 +61,7 @@ export function SetupWizard() {
   const [disciplines, setDisciplines] = useState<DisciplineForm[]>([
     { name: '', category: 'humanas', questions: 10, weightPerQuestion: 1, prova: 'P1' },
   ]);
-  const [phases, setPhases] = useState<ProvaPhase[]>([{ name: 'P1', minPercent: 60 }]);
+  const [phases, setPhases] = useState<ProvaPhase[]>([{ name: 'P1', minPercent: 60, weight: 1 }]);
   const [totalMin, setTotalMin] = useState(70);
   const [cannotZeroIndices, setCannotZeroIndices] = useState<number[]>([]);
   const [weeklyHours, setWeeklyHours] = useState(40);
