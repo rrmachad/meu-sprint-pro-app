@@ -1403,6 +1403,7 @@ function SyllabusContent() {
   const [exportOpen, setExportOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [disciplineFilter, setDisciplineFilter] = useState<string>('all');
+  const [provaFilter, setProvaFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   const totalTopics = topics.length;
