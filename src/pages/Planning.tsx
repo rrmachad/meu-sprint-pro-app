@@ -1148,7 +1148,7 @@ function CycleView({
           </div>
         </div>
         <CardDescription className="text-xs font-mono">
-          {cycle.weeklyHours}h/semana • {cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
+          {cycle.weeklyHours}h/semana • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
           {cycle.weekStart && cycle.weekEnd && (
             <span> • Semanas {cycle.weekStart}–{cycle.weekEnd}</span>
           )}
