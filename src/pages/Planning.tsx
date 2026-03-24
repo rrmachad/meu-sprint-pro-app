@@ -889,6 +889,7 @@ function EditCycleDialog({
       name: cycleName,
       weekStart,
       weekEnd,
+      phase,
       selectedDisciplineIds: selectedIds,
       blocks: filteredBlocks,
       disciplines: filteredDisciplines,
