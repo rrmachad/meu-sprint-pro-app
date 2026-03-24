@@ -250,28 +250,20 @@ function GenerateDialog({
   existingCycles: StudyCycle[];
   onGenerate: (cycle: StudyCycle) => void;
 }) {
+  const nextNum = existingCycles.length + 1;
+  const maxWeekEnd = existingCycles.length > 0 ? Math.max(...existingCycles.map((c) => c.weekEnd || 0), 0) : 0;
+
   const [weeklyHours, setWeeklyHours] = useState(settings.weeklyHours || 20);
   const [studyDays, setStudyDays] = useState<number[]>(settings.studyDays.length > 0 ? settings.studyDays : [1, 2, 3, 4, 5]);
-  const [cycleName, setCycleName] = useState('Ciclo 1');
+  const [cycleName, setCycleName] = useState(`Ciclo ${nextNum}`);
   const [showConfig, setShowConfig] = useState(false);
-  const [weekStart, setWeekStart] = useState(1);
-  const [weekEnd, setWeekEnd] = useState(4);
+  const [weekStart, setWeekStart] = useState(maxWeekEnd + 1);
+  const [weekEnd, setWeekEnd] = useState(maxWeekEnd + 4);
 
   // Selected disciplines for this cycle
   const [selectedDiscIds, setSelectedDiscIds] = useState<string[]>(() =>
     disciplines.map((d) => d.id)
   );
-
-  // Auto-calculate next cycle name and week range
-  useState(() => {
-    if (existingCycles.length > 0) {
-      const num = existingCycles.length + 1;
-      setCycleName(`Ciclo ${num}`);
-      const maxWeekEnd = Math.max(...existingCycles.map((c) => c.weekEnd || 0), 0);
-      setWeekStart(maxWeekEnd + 1);
-      setWeekEnd(maxWeekEnd + 4);
-    }
-  });
 
   const toggleDisc = (id: string) => {
     setSelectedDiscIds((prev) =>
