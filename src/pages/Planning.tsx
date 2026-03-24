@@ -302,6 +302,8 @@ function GenerateDialog({
   };
 
   const discsWithTopics = disciplines.filter((d) => {
+    const isSelected = selectedDiscIds.includes(d.id);
+    if (!isSelected) return false;
     const dTopics = topics.filter((t) => t.disciplineId === d.id);
     return dTopics.length > 0 || d.weight > 0;
   });
