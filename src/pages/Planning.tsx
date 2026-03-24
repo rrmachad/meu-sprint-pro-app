@@ -1071,6 +1071,13 @@ function CycleView({
         </Button>
       </CardContent>
     </Card>
+    <EditCycleDialog
+      open={editDialogOpen}
+      onOpenChange={setEditDialogOpen}
+      cycle={cycle}
+      allDisciplines={disciplines}
+      onSave={onUpdateCycle}
+    />
     </motion.div>
   );
 }
