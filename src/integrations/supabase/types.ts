@@ -958,6 +958,7 @@ export type Database = {
         Row: {
           active: boolean
           created_at: string
+          current_block_index: number
           id: string
           name: string
           study_days: number[]
@@ -968,6 +969,7 @@ export type Database = {
         Insert: {
           active?: boolean
           created_at?: string
+          current_block_index?: number
           id?: string
           name: string
           study_days?: number[]
@@ -978,6 +980,7 @@ export type Database = {
         Update: {
           active?: boolean
           created_at?: string
+          current_block_index?: number
           id?: string
           name?: string
           study_days?: number[]
