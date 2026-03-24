@@ -1441,7 +1441,6 @@ function SyllabusContent() {
   const topics = useAppStore((s) => s.topics);
   const addTopic = useAppStore((s) => s.addTopic);
   const addDiscipline = useAppStore((s) => s.addDiscipline);
-  const clearTopicsByDiscipline = useAppStore((s) => s.clearTopicsByDiscipline);
   const clearAllTopics = useAppStore((s) => s.clearAllTopics);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
