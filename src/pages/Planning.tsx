@@ -410,6 +410,73 @@ function GenerateDialog({
             )}
           </div>
 
+          {/* Cycle name & week range */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Nome do ciclo</Label>
+              <input
+                type="text"
+                value={cycleName}
+                onChange={(e) => setCycleName(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Semana inicial</Label>
+              <input
+                type="number"
+                min={1}
+                max={52}
+                value={weekStart}
+                onChange={(e) => setWeekStart(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Semana final</Label>
+              <input
+                type="number"
+                min={1}
+                max={52}
+                value={weekEnd}
+                onChange={(e) => setWeekEnd(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Este ciclo será utilizado nas semanas {weekStart} a {weekEnd} ({weekEnd - weekStart + 1} semana{weekEnd - weekStart !== 0 ? 's' : ''}).
+          </p>
+
+          {/* Discipline selection */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Disciplinas do ciclo</Label>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={selectAllDiscs}>Todas</Button>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={deselectAllDiscs}>Nenhuma</Button>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/30 glass p-3 max-h-[180px] overflow-y-auto space-y-1">
+              {disciplines.map((d) => (
+                <label
+                  key={d.id}
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent/40 cursor-pointer transition-colors"
+                >
+                  <Checkbox
+                    checked={selectedDiscIds.includes(d.id)}
+                    onCheckedChange={() => toggleDisc(d.id)}
+                  />
+                  <span className="text-sm flex-1 truncate">{d.name}</span>
+                  <Badge variant="outline" className="text-[10px] border-border/40">{d.prova || '—'}</Badge>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {selectedDiscIds.length} de {disciplines.length} disciplinas selecionadas
+            </p>
+          </div>
+
           {/* Per-discipline configuration */}
           {discsWithTopics.length > 0 && (
             <div className="space-y-2">
