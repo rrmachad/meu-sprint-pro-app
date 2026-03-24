@@ -950,6 +950,37 @@ function EditCycleDialog({
             Semanas {weekStart} a {weekEnd} ({weekEnd - weekStart + 1} semana{weekEnd - weekStart !== 0 ? 's' : ''})
           </p>
 
+          {/* Study Phase */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Fase de estudo</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: 'basica' as StudyPhase, label: 'Básica', desc: '90-120min', icon: '📖' },
+                { value: 'intermediaria' as StudyPhase, label: 'Intermediária', desc: '60-75min', icon: '⚖️' },
+                { value: 'avancada' as StudyPhase, label: 'Avançada', desc: '45-60min', icon: '⚡' },
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setPhase(opt.value)}
+                  className={`relative flex flex-col items-center gap-1 rounded-xl border p-2.5 text-center transition-all ${
+                    phase === opt.value
+                      ? 'border-primary bg-primary/10 shadow-neon ring-1 ring-primary/30'
+                      : 'border-border/40 bg-muted/20 hover:bg-muted/40 hover:border-border'
+                  }`}
+                >
+                  <span className="text-lg">{opt.icon}</span>
+                  <span className="text-xs font-semibold">{opt.label}</span>
+                  <span className="text-[10px] text-muted-foreground">{opt.desc}</span>
+                  {phase === opt.value && (
+                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Discipline selection */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
