@@ -211,6 +211,7 @@ export default function Dashboard() {
           const next = prev + 1;
           if (next >= timerTotal) {
             setTimerRunning(false);
+            playSuccessChime();
             toast.success('⏰ Tempo do bloco finalizado!', { description: 'Você pode concluir e avançar para o próximo bloco.' });
             return timerTotal;
           }
