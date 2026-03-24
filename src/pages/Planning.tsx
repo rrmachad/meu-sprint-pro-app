@@ -1251,6 +1251,11 @@ export default function Planning() {
         </Card>
       )}
 
+      {/* Timeline visualization */}
+      {cycles.length > 0 && cycles.some((c) => c.weekStart && c.weekEnd) && (
+        <CyclesTimeline cycles={cycles} />
+      )}
+
       {/* Cycles list */}
       {cycles.length > 0 ? (
         <div className="space-y-4">
