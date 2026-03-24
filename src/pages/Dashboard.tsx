@@ -756,8 +756,9 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Performance Line Chart */}
-      <motion.div variants={itemVariants}>
+      {/* Charts Grid: Performance + Blocks */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Performance Line Chart */}
         <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
@@ -771,23 +772,10 @@ export default function Dashboard() {
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={weeklyPerformanceData} margin={{ left: 0, right: 10, top: 10, bottom: 5 }}>
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value}h`, 'Horas']} />
-                <Line
-                  type="monotone"
-                  dataKey="horas"
-                  stroke="hsl(var(--neon-green))"
-                  strokeWidth={3}
+                <Line type="monotone" dataKey="horas" stroke="hsl(var(--neon-green))" strokeWidth={3}
                   dot={{ r: 4, fill: 'hsl(var(--neon-green))', stroke: 'hsl(var(--card))', strokeWidth: 2 }}
                   activeDot={{ r: 6, fill: 'hsl(var(--neon-green))', stroke: 'hsl(var(--neon-green))', strokeWidth: 2 }}
                   filter="url(#glow)"
@@ -795,13 +783,33 @@ export default function Dashboard() {
                 <defs>
                   <filter id="glow">
                     <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                    <feMerge>
-                      <feMergeNode in="coloredBlur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
+                    <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
                   </filter>
                 </defs>
               </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Weekly Blocks Chart */}
+        <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+              <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-chart-3/20">
+                <div className="absolute inset-0 rounded-lg bg-chart-3/20 blur-md opacity-40" />
+                <Zap className="h-3.5 w-3.5 text-chart-3 relative z-10" />
+              </div>
+              Blocos Concluídos na Semana
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={weeklyBlocksData} margin={{ left: 0, right: 10, top: 10, bottom: 5 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value}`, 'Blocos']} />
+                <Bar dataKey="blocos" fill="hsl(var(--chart-3))" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
