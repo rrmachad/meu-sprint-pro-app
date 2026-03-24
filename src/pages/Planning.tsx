@@ -1330,6 +1330,8 @@ function CycleView({
       onOpenChange={setEditDialogOpen}
       cycle={cycle}
       allDisciplines={disciplines}
+      topics={topics}
+      studyRecords={studyRecords}
       onSave={onUpdateCycle}
     />
     </motion.div>
