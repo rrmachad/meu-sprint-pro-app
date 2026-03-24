@@ -147,6 +147,7 @@ export function useSupabaseSync() {
         studyDays: Array.isArray(c.study_days) ? c.study_days : [1, 2, 3, 4, 5],
         createdAt: c.created_at,
         active: c.active,
+        currentBlockIndex: (c as any).current_block_index || 0,
         blocks: cycleBlocks
           .filter((b) => b.cycle_id === c.id)
           .sort((a: any, b: any) => a.block_number - b.block_number)

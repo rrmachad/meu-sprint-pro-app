@@ -201,7 +201,7 @@ function persistCycle(c: StudyCycle) {
   if (!uid) return;
   supabase.from('study_cycles').upsert({
     id: c.id, user_id: uid, name: c.name, weekly_hours: c.weeklyHours,
-    study_days: c.studyDays, active: c.active,
+    study_days: c.studyDays, active: c.active, current_block_index: c.currentBlockIndex || 0,
   }).then(async ({ error }) => {
     if (error) { showDbError('Ciclo', error); return; }
     // Sync blocks
@@ -375,7 +375,19 @@ export const useAppStore = create<AppState & AppActions>()(
     updateCycle: (id, c) => {
       set((s) => ({ cycles: s.cycles.map((x) => (x.id === id ? { ...x, ...c } : x)) }));
       const updated = get().cycles.find(x => x.id === id);
-      if (updated) persistCycle(updated);
+      if (!updated) return;
+      // If only currentBlockIndex changed, do a lightweight update
+      const keys = Object.keys(c);
+      if (keys.length === 1 && keys[0] === 'currentBlockIndex') {
+        const uid = getUid();
+        if (uid) {
+          supabase.from('study_cycles').update({ current_block_index: c.currentBlockIndex }).eq('id', id).then(({ error }) => {
+            if (error) showDbError('Ciclo progresso', error);
+          });
+        }
+      } else {
+        persistCycle(updated);
+      }
     },
     removeCycle: (id) => {
       set((s) => ({ cycles: s.cycles.filter((x) => x.id !== id) }));
