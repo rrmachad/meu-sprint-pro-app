@@ -238,6 +238,7 @@ function GenerateDialog({
   studyRecords,
   existingCycleDisciplines,
   settings,
+  existingCycles,
   onGenerate,
 }: {
   open: boolean;
