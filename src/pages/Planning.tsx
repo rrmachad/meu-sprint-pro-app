@@ -985,6 +985,9 @@ function CycleView({
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-primary" onClick={() => setEditDialogOpen(true)} title="Editar ciclo">
               <Edit2 className="h-3.5 w-3.5" />
             </Button>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-primary" onClick={onDuplicate} title="Duplicar ciclo">
+              <Copy className="h-3.5 w-3.5" />
+            </Button>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-primary" onClick={exportToPdf} title="Exportar PDF">
               <Download className="h-3.5 w-3.5" />
             </Button>
