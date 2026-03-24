@@ -236,7 +236,48 @@ export default function Dashboard() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Block completion tracking (localStorage-based)
+  const BLOCK_LOG_KEY = 'msp_block_completions';
+  const getBlockLog = useCallback((): Record<string, number> => {
+    try {
+      return JSON.parse(localStorage.getItem(BLOCK_LOG_KEY) || '{}');
+    } catch { return {}; }
+  }, []);
+
+  const [blockLog, setBlockLog] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem(BLOCK_LOG_KEY) || '{}'); } catch { return {}; }
+  });
+
+  const logBlockCompletion = useCallback(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    setBlockLog((prev) => {
+      const updated = { ...prev, [todayStr]: (prev[todayStr] || 0) + 1 };
+      localStorage.setItem(BLOCK_LOG_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   const today = new Date().toISOString().split('T')[0];
+  const todayBlocks = blockLog[today] || 0;
+
+  const weeklyBlocksData = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+    return weekDays.map((label, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      return { name: label, blocos: blockLog[dateStr] || 0 };
+    });
+  }, [blockLog]);
+
   const todayRecords = studyRecords.filter((r) => r.date === today);
   const todaySeconds = todayRecords.reduce((a, r) => a + r.durationSeconds, 0);
   const todayQuestions = todayRecords.reduce((a, r) => a + r.correctAnswers + r.wrongAnswers + r.blankAnswers, 0);
