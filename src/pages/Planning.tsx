@@ -56,6 +56,7 @@ interface DisciplineScore {
   weight: number;
   allocatedMinutes: number;
   cannotZero: boolean;
+  category: string;
   breakdown: {
     weightScore: number;
     importanceScore: number;
