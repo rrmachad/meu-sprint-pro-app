@@ -146,19 +146,17 @@ function generateBlocks(
 
   const totalScore = scores.reduce((a, s) => a + s.score, 0);
 
-  // Allocate minutes proportionally, ensuring total == totalWeeklyMinutes
+  // ── Step 1: Allocate minutes proportionally to score ──
   const rawAllocations = scores.map((s) => ({
     ...s,
     rawMinutes: (s.score / totalScore) * totalWeeklyMinutes,
   }));
 
-  // Round to nearest 5min, minimum 30min per discipline
   let allocated = rawAllocations.map((s) => ({
     ...s,
     allocatedMinutes: Math.max(30, Math.round(s.rawMinutes / 5) * 5),
   }));
 
-  // Adjust to exactly match totalWeeklyMinutes
   let currentTotal = allocated.reduce((a, s) => a + s.allocatedMinutes, 0);
   let diff = totalWeeklyMinutes - currentTotal;
   const sorted = [...allocated].sort((a, b) => b.score - a.score);
@@ -180,16 +178,17 @@ function generateBlocks(
     idx++;
   }
 
-  // Generate blocks per discipline (30-90min each)
+  // ── Step 2: Generate blocks (prefer smaller blocks for better weekly spread) ──
   interface AllocBlock { disciplineId: string; durationMinutes: number; category: string; score: number }
   const allBlocks: AllocBlock[] = [];
   for (const disc of allocated.sort((a, b) => b.score - a.score)) {
     let remaining = disc.allocatedMinutes;
+    // Calculate ideal block size to maximize number of blocks (more blocks = better spread)
+    const idealNumBlocks = Math.max(2, Math.ceil(remaining / 60));
+    const idealBlockSize = Math.max(30, Math.min(90, Math.ceil(remaining / idealNumBlocks)));
     while (remaining >= 30) {
-      let duration: number;
-      if (remaining >= 120) duration = 90;
-      else if (remaining >= 60) duration = Math.min(remaining, 90);
-      else duration = remaining;
+      const duration = Math.min(idealBlockSize, remaining, 90);
+      if (duration < 30) break;
       allBlocks.push({
         disciplineId: disc.disciplineId,
         durationMinutes: duration,
@@ -198,67 +197,135 @@ function generateBlocks(
       });
       remaining -= duration;
     }
+    // If leftover < 30, distribute to last block
+    if (remaining > 0 && allBlocks.length > 0) {
+      const lastBlock = allBlocks[allBlocks.length - 1];
+      if (lastBlock.disciplineId === disc.disciplineId && lastBlock.durationMinutes + remaining <= 90) {
+        lastBlock.durationMinutes += remaining;
+      }
+    }
   }
 
-  // ========== DAY-AWARE DISTRIBUTION ==========
-  // Goal: spread each discipline across as many days as possible,
-  // alternate categories within each day, minimize gaps between
-  // appearances of the same discipline.
-
+  // ── Step 3: Spaced distribution across days (anti-clustering) ──
   const dailyMinutes = Math.round(totalWeeklyMinutes / daysCount);
   const days: AllocBlock[][] = Array.from({ length: daysCount }, () => []);
   const dayMinutes: number[] = new Array(daysCount).fill(0);
 
-  // Group blocks by discipline
   const blocksByDisc: Record<string, AllocBlock[]> = {};
   for (const b of allBlocks) {
     if (!blocksByDisc[b.disciplineId]) blocksByDisc[b.disciplineId] = [];
     blocksByDisc[b.disciplineId].push(b);
   }
 
-  // Sort disciplines by number of blocks descending (spread those with more blocks first)
+  // Sort disciplines by block count DESC (spread those with most blocks first)
   const discIds = Object.keys(blocksByDisc).sort(
     (a, b) => blocksByDisc[b].length - blocksByDisc[a].length
   );
 
-  // For each discipline, spread its blocks across days as evenly as possible
-  // choosing the day with least total minutes that doesn't already have this disc
-  // (if possible), to maximize spread
+  // For each discipline, compute ideal evenly-spaced day positions
   for (const discId of discIds) {
     const blocks = blocksByDisc[discId];
     const numBlocks = blocks.length;
 
-    // Calculate ideal spacing: which days should get a block of this discipline
-    // Prefer days that don't have it yet & have the least minutes
+    // Calculate ideal day indices with maximum spacing
+    const idealDays: number[] = [];
+    if (numBlocks >= daysCount) {
+      for (let d = 0; d < daysCount; d++) idealDays.push(d);
+      for (let extra = daysCount; extra < numBlocks; extra++) {
+        idealDays.push(
+          dayMinutes.reduce((best, mins, i) => mins < dayMinutes[best] ? i : best, 0)
+        );
+      }
+    } else {
+      // Evenly space across days (e.g., 3 blocks in 7 days → days 0, 2, 5)
+      const spacing = daysCount / numBlocks;
+      for (let i = 0; i < numBlocks; i++) {
+        idealDays.push(Math.round(i * spacing) % daysCount);
+      }
+    }
+
+    // Assign each block to the best nearby day
     for (let bi = 0; bi < numBlocks; bi++) {
-      // Find best day: prioritize days without this discipline, then by least minutes
-      let bestDay = -1;
-      let bestScore = Infinity;
+      const idealDay = idealDays[bi];
+      let bestDay = 0;
+      let bestS = Infinity;
       for (let d = 0; d < daysCount; d++) {
         const hasSameDisc = days[d].some((b) => b.disciplineId === discId);
-        // Penalize days that already have this discipline heavily
-        const penalty = hasSameDisc ? 100000 : 0;
-        // Penalize overfull days
+        const distFromIdeal = Math.min(
+          Math.abs(d - idealDay),
+          daysCount - Math.abs(d - idealDay)
+        );
+        // Heavy penalty for same disc on same day (prevents clustering)
+        const samePenalty = hasSameDisc ? 200000 : 0;
+        // Moderate penalty for overloaded days
         const overflowPenalty = dayMinutes[d] > dailyMinutes + 30 ? 50000 : 0;
-        const s = penalty + overflowPenalty + dayMinutes[d];
-        if (s < bestScore) {
-          bestScore = s;
-          bestDay = d;
-        }
+        // Prefer days closer to ideal position
+        const distPenalty = distFromIdeal * 1000;
+        // Tiebreaker: least loaded day
+        const loadPenalty = dayMinutes[d];
+        const s = samePenalty + overflowPenalty + distPenalty + loadPenalty;
+        if (s < bestS) { bestS = s; bestDay = d; }
       }
-      if (bestDay < 0) bestDay = 0;
       days[bestDay].push(blocks[bi]);
       dayMinutes[bestDay] += blocks[bi].durationMinutes;
     }
   }
 
-  // Within each day, reorder blocks to alternate categories
-  // (exatas, humanas, juridicas, mista) and avoid consecutive same-discipline
+  // ── Step 4: Gap minimization validation ──
+  // Check max gap between sessions of each discipline and redistribute if too large
+  const MAX_GAP_THRESHOLD = Math.max(2, Math.ceil(daysCount / 2));
+
+  for (let iteration = 0; iteration < 5; iteration++) {
+    let improved = false;
+    for (const discId of discIds) {
+      const presenceDays = days
+        .map((dayBlocks, dayIdx) => dayBlocks.some((b) => b.disciplineId === discId) ? dayIdx : -1)
+        .filter((d) => d >= 0)
+        .sort((a, b) => a - b);
+
+      if (presenceDays.length <= 1) continue;
+
+      // Find the largest gap
+      let maxGap = 0;
+      let gapAfterDay = -1;
+      for (let i = 1; i < presenceDays.length; i++) {
+        const gap = presenceDays[i] - presenceDays[i - 1];
+        if (gap > maxGap) { maxGap = gap; gapAfterDay = presenceDays[i - 1]; }
+      }
+      // Wrap-around gap (last day → first day of next week)
+      const wrapGap = daysCount - presenceDays[presenceDays.length - 1] + presenceDays[0];
+      if (wrapGap > maxGap) { maxGap = wrapGap; gapAfterDay = presenceDays[presenceDays.length - 1]; }
+
+      if (maxGap <= MAX_GAP_THRESHOLD) continue;
+
+      // Find midpoint of the gap
+      const midGap = (gapAfterDay + Math.floor(maxGap / 2)) % daysCount;
+
+      // Find a donor day that has 2+ blocks of this discipline
+      const donorDay = days.findIndex(
+        (dayBlocks) => dayBlocks.filter((b) => b.disciplineId === discId).length >= 2
+      );
+      if (donorDay < 0 || donorDay === midGap) continue;
+
+      // Move one block from donor to midGap
+      const blockIdx = days[donorDay].findIndex((b) => b.disciplineId === discId);
+      if (blockIdx < 0) continue;
+
+      const [movedBlock] = days[donorDay].splice(blockIdx, 1);
+      dayMinutes[donorDay] -= movedBlock.durationMinutes;
+      days[midGap].push(movedBlock);
+      dayMinutes[midGap] += movedBlock.durationMinutes;
+      improved = true;
+    }
+    if (!improved) break;
+  }
+
+  // ── Step 5: Smart intra-day interleaving (category alternation) ──
   for (let d = 0; d < daysCount; d++) {
     days[d] = reorderDayBlocks(days[d]);
   }
 
-  // Flatten to final block list with proper numbering
+  // ── Step 6: Flatten to final block list ──
   const result: CycleBlock[] = [];
   let blockNum = 1;
   for (const dayBlocks of days) {
@@ -275,9 +342,12 @@ function generateBlocks(
   return result;
 }
 
-/** Reorder blocks within a single day to alternate categories and avoid same-discipline consecutively */
+/** Reorder blocks within a single day to strictly alternate categories and avoid same-discipline consecutively */
 function reorderDayBlocks(blocks: { disciplineId: string; durationMinutes: number; category: string; score: number }[]) {
   if (blocks.length <= 1) return blocks;
+
+  const categories = [...new Set(blocks.map((b) => b.category))];
+  const hasMultipleCategories = categories.length > 1;
 
   const pool = [...blocks];
   const result: typeof blocks = [];
@@ -285,12 +355,12 @@ function reorderDayBlocks(blocks: { disciplineId: string; durationMinutes: numbe
   let lastDisc = '';
 
   while (pool.length > 0) {
-    // Best: different discipline AND different category
+    // Priority 1: Different discipline AND different category (best interleaving)
     let nextIdx = pool.findIndex((b) => b.disciplineId !== lastDisc && b.category !== lastCategory);
-    // Fallback: different discipline, same category ok
+    // Priority 2: Different discipline at least
     if (nextIdx < 0) nextIdx = pool.findIndex((b) => b.disciplineId !== lastDisc);
-    // Fallback: different category
-    if (nextIdx < 0) nextIdx = pool.findIndex((b) => b.category !== lastCategory);
+    // Priority 3: Different category at least
+    if (nextIdx < 0 && hasMultipleCategories) nextIdx = pool.findIndex((b) => b.category !== lastCategory);
     // Last resort
     if (nextIdx < 0) nextIdx = 0;
 
