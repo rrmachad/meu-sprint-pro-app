@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  CalendarDays, Sparkles, Clock, BookOpen, AlertTriangle,
+  CalendarDays, Sparkles, Clock, BookOpen, AlertTriangle, Target,
   RotateCcw, Check, ChevronDown, ChevronRight, Trash2, Settings2,
   Edit2, Plus, GripVertical, Download, Copy,
 } from 'lucide-react';
