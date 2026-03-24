@@ -56,6 +56,7 @@ interface DisciplineScore {
   weight: number;
   allocatedMinutes: number;
   cannotZero: boolean;
+  category: string;
   breakdown: {
     weightScore: number;
     importanceScore: number;
@@ -65,7 +66,7 @@ interface DisciplineScore {
 }
 
 function computeScores(
-  disciplines: { id: string; name: string; weight: number; cannotZero?: boolean }[],
+  disciplines: { id: string; name: string; weight: number; cannotZero?: boolean; category?: string }[],
   topics: { disciplineId: string; completed: boolean }[],
   cycleDisciplines: CycleDiscipline[],
   studyRecords: { disciplineId: string; durationSeconds: number }[],
@@ -130,6 +131,7 @@ function computeScores(
       weight: d.weight,
       allocatedMinutes: 0,
       cannotZero: !!d.cannotZero,
+      category: (d as any).category || 'mista',
       breakdown: { weightScore, importanceScore, situationScore, difficultyScore },
     };
   }).filter((d) => d.totalTopics > 0 || d.weight > 0);
@@ -159,8 +161,6 @@ function generateBlocks(
   // Adjust to exactly match totalWeeklyMinutes
   let currentTotal = allocated.reduce((a, s) => a + s.allocatedMinutes, 0);
   let diff = totalWeeklyMinutes - currentTotal;
-
-  // Sort by score descending to adjust highest-priority disciplines first
   const sorted = [...allocated].sort((a, b) => b.score - a.score);
   let idx = 0;
   while (diff !== 0 && idx < sorted.length * 3) {
@@ -180,53 +180,127 @@ function generateBlocks(
     idx++;
   }
 
-  // Generate blocks (30-120min each)
-  const blocks: CycleBlock[] = [];
-  let blockNum = 1;
-
+  // Generate blocks per discipline (30-90min each)
+  interface AllocBlock { disciplineId: string; durationMinutes: number; category: string; score: number }
+  const allBlocks: AllocBlock[] = [];
   for (const disc of allocated.sort((a, b) => b.score - a.score)) {
     let remaining = disc.allocatedMinutes;
     while (remaining >= 30) {
       let duration: number;
-      if (remaining >= 120) {
-        duration = 90;
-      } else if (remaining >= 60) {
-        duration = Math.min(remaining, 90);
-      } else {
-        duration = remaining;
-      }
-      blocks.push({
-        id: crypto.randomUUID(),
-        number: blockNum++,
+      if (remaining >= 120) duration = 90;
+      else if (remaining >= 60) duration = Math.min(remaining, 90);
+      else duration = remaining;
+      allBlocks.push({
         disciplineId: disc.disciplineId,
         durationMinutes: duration,
+        category: disc.category,
+        score: disc.score,
       });
       remaining -= duration;
     }
   }
 
-  // Smart reorder: alternate disciplines
-  const reordered: CycleBlock[] = [];
+  // ========== DAY-AWARE DISTRIBUTION ==========
+  // Goal: spread each discipline across as many days as possible,
+  // alternate categories within each day, minimize gaps between
+  // appearances of the same discipline.
+
+  const dailyMinutes = Math.round(totalWeeklyMinutes / daysCount);
+  const days: AllocBlock[][] = Array.from({ length: daysCount }, () => []);
+  const dayMinutes: number[] = new Array(daysCount).fill(0);
+
+  // Group blocks by discipline
+  const blocksByDisc: Record<string, AllocBlock[]> = {};
+  for (const b of allBlocks) {
+    if (!blocksByDisc[b.disciplineId]) blocksByDisc[b.disciplineId] = [];
+    blocksByDisc[b.disciplineId].push(b);
+  }
+
+  // Sort disciplines by number of blocks descending (spread those with more blocks first)
+  const discIds = Object.keys(blocksByDisc).sort(
+    (a, b) => blocksByDisc[b].length - blocksByDisc[a].length
+  );
+
+  // For each discipline, spread its blocks across days as evenly as possible
+  // choosing the day with least total minutes that doesn't already have this disc
+  // (if possible), to maximize spread
+  for (const discId of discIds) {
+    const blocks = blocksByDisc[discId];
+    const numBlocks = blocks.length;
+
+    // Calculate ideal spacing: which days should get a block of this discipline
+    // Prefer days that don't have it yet & have the least minutes
+    for (let bi = 0; bi < numBlocks; bi++) {
+      // Find best day: prioritize days without this discipline, then by least minutes
+      let bestDay = -1;
+      let bestScore = Infinity;
+      for (let d = 0; d < daysCount; d++) {
+        const hasSameDisc = days[d].some((b) => b.disciplineId === discId);
+        // Penalize days that already have this discipline heavily
+        const penalty = hasSameDisc ? 100000 : 0;
+        // Penalize overfull days
+        const overflowPenalty = dayMinutes[d] > dailyMinutes + 30 ? 50000 : 0;
+        const s = penalty + overflowPenalty + dayMinutes[d];
+        if (s < bestScore) {
+          bestScore = s;
+          bestDay = d;
+        }
+      }
+      if (bestDay < 0) bestDay = 0;
+      days[bestDay].push(blocks[bi]);
+      dayMinutes[bestDay] += blocks[bi].durationMinutes;
+    }
+  }
+
+  // Within each day, reorder blocks to alternate categories
+  // (exatas, humanas, juridicas, mista) and avoid consecutive same-discipline
+  for (let d = 0; d < daysCount; d++) {
+    days[d] = reorderDayBlocks(days[d]);
+  }
+
+  // Flatten to final block list with proper numbering
+  const result: CycleBlock[] = [];
+  let blockNum = 1;
+  for (const dayBlocks of days) {
+    for (const b of dayBlocks) {
+      result.push({
+        id: crypto.randomUUID(),
+        number: blockNum++,
+        disciplineId: b.disciplineId,
+        durationMinutes: b.durationMinutes,
+      });
+    }
+  }
+
+  return result;
+}
+
+/** Reorder blocks within a single day to alternate categories and avoid same-discipline consecutively */
+function reorderDayBlocks(blocks: { disciplineId: string; durationMinutes: number; category: string; score: number }[]) {
+  if (blocks.length <= 1) return blocks;
+
   const pool = [...blocks];
-  let lastDiscipline = '';
-  let secondLastDiscipline = '';
+  const result: typeof blocks = [];
+  let lastCategory = '';
+  let lastDisc = '';
 
   while (pool.length > 0) {
-    let nextIdx = pool.findIndex((b) =>
-      b.disciplineId !== lastDiscipline && b.disciplineId !== secondLastDiscipline
-    );
-    if (nextIdx < 0) {
-      nextIdx = pool.findIndex((b) => b.disciplineId !== lastDiscipline);
-    }
+    // Best: different discipline AND different category
+    let nextIdx = pool.findIndex((b) => b.disciplineId !== lastDisc && b.category !== lastCategory);
+    // Fallback: different discipline, same category ok
+    if (nextIdx < 0) nextIdx = pool.findIndex((b) => b.disciplineId !== lastDisc);
+    // Fallback: different category
+    if (nextIdx < 0) nextIdx = pool.findIndex((b) => b.category !== lastCategory);
+    // Last resort
     if (nextIdx < 0) nextIdx = 0;
 
     const block = pool.splice(nextIdx, 1)[0];
-    reordered.push({ ...block, number: reordered.length + 1 });
-    secondLastDiscipline = lastDiscipline;
-    lastDiscipline = block.disciplineId;
+    result.push(block);
+    lastCategory = block.category;
+    lastDisc = block.disciplineId;
   }
 
-  return reordered;
+  return result;
 }
 
 // ========== CONFIG DIALOG ==========
