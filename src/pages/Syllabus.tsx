@@ -988,6 +988,7 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
   const completed = allDisciplineTopics.filter((t) => t.completed).length;
   const total = allDisciplineTopics.length;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const provaLabel = discipline.prova?.trim() ? discipline.prova.trim() : 'Sem prova';
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -1037,7 +1038,7 @@ function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-sm">{discipline.name}</span>
-              <Badge variant="outline" className="text-[10px] rounded-full border-border/40">{discipline.prova}</Badge>
+              <Badge variant="outline" className="text-[10px] rounded-full border-border/40">{provaLabel}</Badge>
               {discipline.cannotZero && (
                 <Badge variant="destructive" className="text-[10px] rounded-full">Não pode zerar</Badge>
               )}
@@ -1441,6 +1442,15 @@ function SyllabusContent() {
   const completedTopics = topics.filter((t) => t.completed).length;
   const globalPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
+  const normalizeProvaValue = (prova?: string | null) => {
+    const value = typeof prova === 'string' ? prova.trim() : '';
+    return value.length > 0 ? value : '__SEM_PROVA__';
+  };
+
+  const formatProvaLabel = (provaValue: string) => (
+    provaValue === '__SEM_PROVA__' ? 'Sem prova' : provaValue
+  );
+
   const handleImportSingle = (disciplineId: string, topicTexts: string[]) => {
     const validTexts = topicTexts.map(t => t?.trim()).filter(t => t && t.length > 0);
     if (validTexts.length === 0) {
@@ -1518,7 +1528,7 @@ function SyllabusContent() {
   // Filter disciplines
   const filteredDisciplines = disciplines
     .filter((d) => disciplineFilter === 'all' || d.id === disciplineFilter)
-    .filter((d) => provaFilter === 'all' || d.prova === provaFilter)
+    .filter((d) => provaFilter === 'all' || normalizeProvaValue(d.prova) === provaFilter)
     .sort((a, b) => a.order - b.order);
 
   // Check if a discipline has visible topics after status filter
@@ -1626,7 +1636,7 @@ function SyllabusContent() {
 
                 {/* Prova filter */}
                 {(() => {
-                  const provas = [...new Set(disciplines.map(d => d.prova))].sort();
+                  const provas = [...new Set(disciplines.map((d) => normalizeProvaValue(d.prova)))].sort();
                   return provas.length > 1 ? (
                     <Select value={provaFilter} onValueChange={setProvaFilter}>
                       <SelectTrigger className="w-[120px] h-8 text-xs">
@@ -1635,7 +1645,7 @@ function SyllabusContent() {
                       <SelectContent>
                         <SelectItem value="all">Todas as provas</SelectItem>
                         {provas.map((p) => (
-                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                          <SelectItem key={p} value={p}>{formatProvaLabel(p)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -1650,7 +1660,7 @@ function SyllabusContent() {
                   <SelectContent>
                     <SelectItem value="all">Todas as disciplinas</SelectItem>
                     {disciplines
-                      .filter(d => provaFilter === 'all' || d.prova === provaFilter)
+                      .filter((d) => provaFilter === 'all' || normalizeProvaValue(d.prova) === provaFilter)
                       .sort((a, b) => a.order - b.order)
                       .map((d) => (
                         <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
@@ -1709,12 +1719,12 @@ function SyllabusContent() {
 
       {/* Progress by Prova */}
       {totalTopics > 0 && (() => {
-        const provas = [...new Set(disciplines.map(d => d.prova))].sort();
+        const provas = [...new Set(disciplines.map((d) => normalizeProvaValue(d.prova)))].sort();
         if (provas.length <= 1) return null;
         return (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {provas.map(prova => {
-              const provaDiscs = disciplines.filter(d => d.prova === prova);
+              const provaDiscs = disciplines.filter((d) => normalizeProvaValue(d.prova) === prova);
               const provaTopics = topics.filter(t => provaDiscs.some(d => d.id === t.disciplineId));
               const provaCompleted = provaTopics.filter(t => t.completed).length;
               const provaTotal = provaTopics.length;
@@ -1725,7 +1735,7 @@ function SyllabusContent() {
                   <CardContent className="py-3 px-4">
                     <div className="flex items-center justify-between mb-1.5">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px] font-bold">{prova}</Badge>
+                        <Badge variant="outline" className="text-[10px] font-bold">{formatProvaLabel(prova)}</Badge>
                         <span className="text-xs text-muted-foreground">{provaDiscs.length} disciplina{provaDiscs.length > 1 ? 's' : ''}</span>
                       </div>
                       <span className="text-xs font-bold text-primary">{provaPct}%</span>
