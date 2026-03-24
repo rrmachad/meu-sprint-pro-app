@@ -1081,33 +1081,22 @@ function CycleView({
     }
     y += 4;
 
-    // Daily schedule
-    const sortedDays = [...cycle.studyDays].sort((a, b) => ((a === 0 ? 7 : a) - (b === 0 ? 7 : b)));
-    for (let dayIdx = 0; dayIdx < dailyBlocks.length; dayIdx++) {
-      const dayBlocksArr = dailyBlocks[dayIdx];
-      const dayName = sortedDays[dayIdx] !== undefined
-        ? DAY_FULL[sortedDays[dayIdx]]
-        : `Dia ${dayIdx + 1}`;
-      const dayMinutes = dayBlocksArr.reduce((a, b) => a + b.durationMinutes, 0);
+    // Linear block list
+    doc.setFontSize(12);
+    doc.text('Ciclo de Estudos', 14, y);
+    y += 2;
+    doc.setDrawColor(200);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 5;
 
-      if (y > 260) { doc.addPage(); y = 20; }
-
-      doc.setFontSize(11);
-      doc.text(`${dayName} — ${Math.floor(dayMinutes / 60)}h${String(dayMinutes % 60).padStart(2, '0')}min`, 14, y);
-      y += 2;
-      doc.setDrawColor(200);
-      doc.line(14, y, pageWidth - 14, y);
+    doc.setFontSize(9);
+    for (let i = 0; i < cycle.blocks.length; i++) {
+      const block = cycle.blocks[i];
+      const num = String(i + 1).padStart(2, ' ');
+      doc.text(`${num}    ${getDisciplineName(block.disciplineId).toUpperCase()}`, 18, y);
+      doc.text(`${block.durationMinutes} min`, pageWidth - 18, y, { align: 'right' });
       y += 5;
-
-      doc.setFontSize(9);
-      for (let bi = 0; bi < dayBlocksArr.length; bi++) {
-        const block = dayBlocksArr[bi];
-        doc.text(`B${bi + 1}  ${getDisciplineName(block.disciplineId)}`, 18, y);
-        doc.text(`${block.durationMinutes}min`, pageWidth - 18, y, { align: 'right' });
-        y += 5;
-        if (y > 275) { doc.addPage(); y = 20; }
-      }
-      y += 4;
+      if (y > 275) { doc.addPage(); y = 20; }
     }
 
     doc.save(`${cycle.name.replace(/\s+/g, '_')}.pdf`);
