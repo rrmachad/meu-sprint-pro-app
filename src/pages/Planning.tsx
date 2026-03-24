@@ -1172,6 +1172,97 @@ function SortableBlock({
 }
 
 // ========== MAIN PAGE ==========
+// ========== CYCLES TIMELINE ==========
+const TIMELINE_COLORS = [
+  'bg-primary', 'bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5',
+];
+
+function CyclesTimeline({ cycles }: { cycles: StudyCycle[] }) {
+  const sortedCycles = [...cycles]
+    .filter((c) => c.weekStart && c.weekEnd)
+    .sort((a, b) => (a.weekStart || 0) - (b.weekStart || 0));
+
+  if (sortedCycles.length === 0) return null;
+
+  const minWeek = Math.min(...sortedCycles.map((c) => c.weekStart || 1));
+  const maxWeek = Math.max(...sortedCycles.map((c) => c.weekEnd || 1));
+  const totalWeeks = maxWeek - minWeek + 1;
+
+  // Generate week labels
+  const weeks = Array.from({ length: totalWeeks }, (_, i) => minWeek + i);
+
+  return (
+    <Card className="glass border-border/30">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <CalendarDays className="h-4 w-4 text-primary" />
+          Timeline de Ciclos
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pb-4">
+        <div className="space-y-3">
+          {/* Week labels */}
+          <div className="flex">
+            <div className="w-28 shrink-0" />
+            <div className="flex-1 flex">
+              {weeks.map((w) => (
+                <div
+                  key={w}
+                  className="flex-1 text-center text-[10px] text-muted-foreground font-mono"
+                  style={{ minWidth: 0 }}
+                >
+                  S{w}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Cycle bars */}
+          {sortedCycles.map((cycle, idx) => {
+            const startOffset = ((cycle.weekStart || 1) - minWeek) / totalWeeks * 100;
+            const width = ((cycle.weekEnd || 1) - (cycle.weekStart || 1) + 1) / totalWeeks * 100;
+            const colorClass = TIMELINE_COLORS[idx % TIMELINE_COLORS.length];
+
+            return (
+              <div key={cycle.id} className="flex items-center gap-0">
+                <div className="w-28 shrink-0 truncate text-xs font-medium pr-2 text-right">
+                  {cycle.name}
+                </div>
+                <div className="flex-1 relative h-7 rounded-lg bg-muted/20 border border-border/20">
+                  <div
+                    className={`absolute top-0 h-full rounded-lg ${colorClass} opacity-80 flex items-center justify-center transition-all`}
+                    style={{ left: `${startOffset}%`, width: `${width}%` }}
+                  >
+                    <span className="text-[10px] font-bold text-primary-foreground truncate px-1">
+                      S{cycle.weekStart}–S{cycle.weekEnd}
+                    </span>
+                  </div>
+                  {cycle.active && (
+                    <Badge className="absolute -top-2 -right-1 text-[8px] h-4 rounded-full bg-primary/90 text-primary-foreground border-0">
+                      Ativo
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Legend */}
+          <div className="flex flex-wrap gap-3 mt-2">
+            {sortedCycles.map((cycle, idx) => (
+              <div key={cycle.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className={`w-2.5 h-2.5 rounded-sm ${TIMELINE_COLORS[idx % TIMELINE_COLORS.length]}`} />
+                <span>{cycle.name}: {(cycle.weekEnd || 0) - (cycle.weekStart || 0) + 1} sem • {cycle.selectedDisciplineIds?.length || '?'} disc</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ========== MAIN PAGE ==========
 export default function Planning() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
