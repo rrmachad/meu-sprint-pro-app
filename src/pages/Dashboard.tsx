@@ -169,9 +169,16 @@ export default function Dashboard() {
   const revisions = useAppStore((s) => s.revisions);
   const completeRevision = useAppStore((s) => s.completeRevision);
   const candidateName = useAppStore((s) => s.settings.contest.candidateName);
+  const cycles = useAppStore((s) => s.cycles);
+  const updateCycle = useAppStore((s) => s.updateCycle);
   const { isFree } = useSubscriptionLimits();
   const navigate = useNavigate();
   const { session } = useAuth();
+
+  const activeCycle = cycles.find((c) => c.active);
+  const nextBlockIndex = activeCycle?.currentBlockIndex || 0;
+  const nextBlock = activeCycle?.blocks[nextBlockIndex];
+  const nextBlockDisc = nextBlock ? disciplines.find((d) => d.id === nextBlock.disciplineId) : null;
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
