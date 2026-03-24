@@ -180,6 +180,62 @@ export default function Dashboard() {
   const nextBlock = activeCycle?.blocks[nextBlockIndex];
   const nextBlockDisc = nextBlock ? disciplines.find((d) => d.id === nextBlock.disciplineId) : null;
 
+  // Block timer state
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerElapsed, setTimerElapsed] = useState(0); // seconds elapsed
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const timerTotal = nextBlock ? nextBlock.durationMinutes * 60 : 0;
+  const timerRemaining = Math.max(0, timerTotal - timerElapsed);
+  const timerPercent = timerTotal > 0 ? Math.min(100, Math.round((timerElapsed / timerTotal) * 100)) : 0;
+
+  const startTimer = useCallback(() => {
+    setTimerRunning(true);
+  }, []);
+
+  const pauseTimer = useCallback(() => {
+    setTimerRunning(false);
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    setTimerRunning(false);
+    setTimerElapsed(0);
+  }, []);
+
+  // Timer tick
+  useEffect(() => {
+    if (timerRunning) {
+      timerRef.current = setInterval(() => {
+        setTimerElapsed((prev) => {
+          const next = prev + 1;
+          if (next >= timerTotal) {
+            setTimerRunning(false);
+            toast.success('⏰ Tempo do bloco finalizado!', { description: 'Você pode concluir e avançar para o próximo bloco.' });
+            return timerTotal;
+          }
+          return next;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [timerRunning, timerTotal]);
+
+  // Reset timer when block changes
+  useEffect(() => {
+    setTimerElapsed(0);
+    setTimerRunning(false);
+  }, [nextBlockIndex, activeCycle?.id]);
+
+  const formatTimer = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
   const todaySeconds = todayRecords.reduce((a, r) => a + r.durationSeconds, 0);
