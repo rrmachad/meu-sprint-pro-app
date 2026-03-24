@@ -1079,6 +1079,7 @@ export default function Planning() {
                 <p className="text-xs text-muted-foreground font-mono">
                   {activeCycle.weeklyHours}h/semana • {activeCycle.blocks.length} blocos •{' '}
                   {activeCycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')}
+                  {activeCycle.weekStart && activeCycle.weekEnd && ` • Semanas ${activeCycle.weekStart}–${activeCycle.weekEnd}`}
                 </p>
               </div>
               <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-border/40 hover:border-primary/40" onClick={() => setGenerateOpen(true)}>
