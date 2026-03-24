@@ -1062,8 +1062,9 @@ function CycleView({
   onDuplicate,
 }: {
   cycle: StudyCycle;
-  disciplines: { id: string; name: string; prova?: string }[];
+  disciplines: { id: string; name: string; weight: number; category: string; cannotZero?: boolean; prova?: string }[];
   topics: { disciplineId: string; completed: boolean }[];
+  studyRecords: { disciplineId: string; durationSeconds: number }[];
   onDelete: () => void;
   onActivate: () => void;
   onUpdateBlocks: (blocks: CycleBlock[]) => void;
