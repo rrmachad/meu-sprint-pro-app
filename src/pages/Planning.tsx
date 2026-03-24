@@ -185,17 +185,19 @@ function generateBlocks(
     idx++;
   }
 
-  // ── Step 2: Generate blocks (prefer smaller blocks for better weekly spread) ──
+  // ── Step 2: Generate blocks using phase-specific durations ──
+  const { min: phaseMin, max: phaseMax } = PHASE_BLOCK_RANGES[phase];
   interface AllocBlock { disciplineId: string; durationMinutes: number; category: string; score: number }
   const allBlocks: AllocBlock[] = [];
   for (const disc of allocated.sort((a, b) => b.score - a.score)) {
     let remaining = disc.allocatedMinutes;
-    // Calculate ideal block size to maximize number of blocks (more blocks = better spread)
-    const idealNumBlocks = Math.max(2, Math.ceil(remaining / 60));
-    const idealBlockSize = Math.max(30, Math.min(90, Math.ceil(remaining / idealNumBlocks)));
-    while (remaining >= 30) {
-      const duration = Math.min(idealBlockSize, remaining, 90);
-      if (duration < 30) break;
+    // Calculate ideal block count based on phase block size
+    const avgBlockSize = Math.round((phaseMin + phaseMax) / 2);
+    const idealNumBlocks = Math.max(1, Math.round(remaining / avgBlockSize));
+    const idealBlockSize = Math.max(phaseMin, Math.min(phaseMax, Math.ceil(remaining / idealNumBlocks)));
+    while (remaining >= phaseMin) {
+      const duration = Math.min(idealBlockSize, remaining, phaseMax);
+      if (duration < phaseMin) break;
       allBlocks.push({
         disciplineId: disc.disciplineId,
         durationMinutes: duration,
@@ -204,10 +206,10 @@ function generateBlocks(
       });
       remaining -= duration;
     }
-    // If leftover < 30, distribute to last block
+    // If leftover < phaseMin, distribute to last block of same discipline
     if (remaining > 0 && allBlocks.length > 0) {
-      const lastBlock = allBlocks[allBlocks.length - 1];
-      if (lastBlock.disciplineId === disc.disciplineId && lastBlock.durationMinutes + remaining <= 90) {
+      const lastBlock = [...allBlocks].reverse().find((b) => b.disciplineId === disc.disciplineId);
+      if (lastBlock && lastBlock.durationMinutes + remaining <= phaseMax + 15) {
         lastBlock.durationMinutes += remaining;
       }
     }
