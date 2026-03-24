@@ -131,6 +131,7 @@ function computeScores(
       weight: d.weight,
       allocatedMinutes: 0,
       cannotZero: !!d.cannotZero,
+      category: (d as any).category || 'mista',
       breakdown: { weightScore, importanceScore, situationScore, difficultyScore },
     };
   }).filter((d) => d.totalTopics > 0 || d.weight > 0);
