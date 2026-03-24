@@ -1524,8 +1524,7 @@ export default function Planning() {
               <div className="flex-1">
                 <p className="text-sm font-semibold">Ciclo ativo: {activeCycle.name}</p>
                 <p className="text-xs text-muted-foreground font-mono">
-                  {activeCycle.weeklyHours}h/semana • {activeCycle.blocks.length} blocos •{' '}
-                  {activeCycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')}
+                  {activeCycle.weeklyHours}h/semana • {activeCycle.blocks.length} blocos sequenciais
                   {activeCycle.weekStart && activeCycle.weekEnd && ` • Semanas ${activeCycle.weekStart}–${activeCycle.weekEnd}`}
                 </p>
               </div>
