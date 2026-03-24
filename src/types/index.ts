@@ -8,6 +8,7 @@ export type Difficulty = 'muita_facilidade' | 'leve_facilidade' | 'normal' | 'le
 export type ActivityType = 'estudo' | 'revisao' | 'exercicios' | 'leitura';
 export type Turno = 'madrugada' | 'manha' | 'tarde' | 'noite';
 export type RevisionMark = '24h' | '7d' | '30d' | '60d';
+export type StudyPhase = 'basica' | 'intermediaria' | 'avancada';
 
 // ============ CORE MODELS ============
 
