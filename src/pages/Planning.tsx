@@ -1176,6 +1176,59 @@ function CycleView({
           ))}
         </div>
 
+        {/* Progress indicator */}
+        {cycle.active && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                <Target className="h-3.5 w-3.5 text-primary" />
+                Progresso do Ciclo
+              </Label>
+              <span className="text-xs font-mono text-muted-foreground">
+                {currentIdx}/{cycle.blocks.length} blocos
+              </span>
+            </div>
+            <Progress value={progressPercent} className="h-2" />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                className="gap-1.5 text-xs rounded-xl flex-1"
+                onClick={() => {
+                  if (currentIdx < cycle.blocks.length) {
+                    onUpdateCycle({ currentBlockIndex: currentIdx + 1 });
+                    if (currentIdx + 1 >= cycle.blocks.length) {
+                      toast.success('🎉 Ciclo completo! Recomeçando do início.');
+                      onUpdateCycle({ currentBlockIndex: 0 });
+                    } else {
+                      toast.success(`Bloco ${currentIdx + 1} concluído!`);
+                    }
+                  }
+                }}
+              >
+                <Check className="h-3.5 w-3.5" />
+                {currentIdx < cycle.blocks.length
+                  ? `Concluir Bloco ${currentIdx + 1}`
+                  : 'Ciclo Completo'}
+              </Button>
+              {currentIdx > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs rounded-xl border-border/40"
+                  onClick={() => {
+                    onUpdateCycle({ currentBlockIndex: 0 });
+                    toast.info('Progresso reiniciado.');
+                  }}
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reiniciar
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         <Separator />
 
         {/* Linear numbered block list */}
@@ -1188,6 +1241,8 @@ function CycleView({
                   block={block}
                   index={i}
                   isEditing={editingBlockId === block.id}
+                  isCurrent={i === currentIdx && cycle.active}
+                  isCompleted={i < currentIdx && cycle.active}
                   disciplines={disciplines}
                   getDisciplineName={getDisciplineName}
                   onEdit={() => setEditingBlockId(block.id)}
