@@ -1073,6 +1073,7 @@ export default function Planning() {
         studyRecords={studyRecords}
         existingCycleDisciplines={activeCycleDisciplines}
         settings={settings}
+        existingCycles={cycles}
         onGenerate={handleGenerate}
       />
     </motion.div>
