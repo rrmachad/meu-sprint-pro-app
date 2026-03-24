@@ -413,6 +413,7 @@ function GenerateDialog({
   const [showConfig, setShowConfig] = useState(false);
   const [weekStart, setWeekStart] = useState(maxWeekEnd + 1);
   const [weekEnd, setWeekEnd] = useState(maxWeekEnd + 4);
+  const [phase, setPhase] = useState<StudyPhase>('intermediaria');
 
   // Selected disciplines for this cycle
   const [selectedDiscIds, setSelectedDiscIds] = useState<string[]>(() =>
