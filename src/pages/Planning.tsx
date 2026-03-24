@@ -1673,6 +1673,7 @@ export default function Planning() {
                 cycle={cycle}
                 disciplines={disciplines}
                 topics={topics}
+                studyRecords={studyRecords}
                 onDelete={() => handleDelete(cycle.id)}
                 onActivate={() => setActiveCycle(cycle.id)}
                 onUpdateBlocks={(blocks) => updateCycle(cycle.id, { blocks })}
