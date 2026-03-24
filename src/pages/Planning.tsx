@@ -481,7 +481,7 @@ function GenerateDialog({
       return;
     }
 
-    const blocks = generateBlocks(scores, weeklyHours * 60, studyDays.length);
+    const blocks = generateBlocks(scores, weeklyHours * 60, studyDays.length, phase);
 
     const cycle: StudyCycle = {
       id: crypto.randomUUID(),
@@ -495,6 +495,7 @@ function GenerateDialog({
       selectedDisciplineIds: selectedDiscIds,
       weekStart,
       weekEnd,
+      phase,
     };
 
     onGenerate(cycle);
