@@ -478,6 +478,17 @@ export default function Dashboard() {
       iconColor: 'text-primary-foreground',
       glowClass: '',
     },
+    {
+      label: 'Blocos Hoje',
+      numericValue: todayBlocks,
+      formatFn: (v: number) => v.toString(),
+      subtitle: activeCycle ? `de ${activeCycle.blocks.length} no ciclo` : undefined,
+      icon: Zap,
+      gradient: 'from-chart-3/15 to-chart-3/5',
+      iconBg: 'bg-chart-3',
+      iconColor: 'text-primary-foreground',
+      glowClass: '',
+    },
   ];
 
   const mastery = getMasteryLabel(globalPercent);
@@ -509,7 +520,7 @@ export default function Dashboard() {
       )}
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {statCards.map((stat) => (
           <StatCard key={stat.label} stat={stat} />
         ))}
