@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity, Crown, Zap } from 'lucide-react';
 import { useCountUp } from '@/hooks/useCountUp';
 import { SetupBanner } from '@/components/SetupBanner';
+import { playSuccessChime } from '@/lib/sounds';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -210,6 +211,7 @@ export default function Dashboard() {
           const next = prev + 1;
           if (next >= timerTotal) {
             setTimerRunning(false);
+            playSuccessChime();
             toast.success('⏰ Tempo do bloco finalizado!', { description: 'Você pode concluir e avançar para o próximo bloco.' });
             return timerTotal;
           }
