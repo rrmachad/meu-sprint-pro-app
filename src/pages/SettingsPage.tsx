@@ -526,6 +526,23 @@ function DisciplinesTab() {
   const addDiscipline = useAppStore((s) => s.addDiscipline);
   const updateDiscipline = useAppStore((s) => s.updateDiscipline);
   const removeDiscipline = useAppStore((s) => s.removeDiscipline);
+  const reorderDisciplines = useAppStore((s) => s.reorderDisciplines);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = disciplines.findIndex((d) => d.id === active.id);
+      const newIndex = disciplines.findIndex((d) => d.id === over.id);
+      const reordered = arrayMove(disciplines, oldIndex, newIndex).map((d, i) => ({ ...d, order: i }));
+      reorderDisciplines(reordered);
+      toast.success('Ordem atualizada!');
+    }
+  }, [disciplines, reorderDisciplines]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
