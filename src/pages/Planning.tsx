@@ -839,7 +839,15 @@ function CycleView({
         </div>
         <CardDescription className="text-xs font-mono">
           {cycle.weeklyHours}h/semana • {cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
+          {cycle.weekStart && cycle.weekEnd && (
+            <span> • Semanas {cycle.weekStart}–{cycle.weekEnd}</span>
+          )}
         </CardDescription>
+        {cycle.selectedDisciplineIds && (
+          <p className="text-[10px] text-muted-foreground mt-1">
+            {cycle.selectedDisciplineIds.length} disciplinas: {cycle.selectedDisciplineIds.map((id) => disciplines.find((d) => d.id === id)?.name).filter(Boolean).join(', ')}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
