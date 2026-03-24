@@ -321,8 +321,16 @@ function GenerateDialog({
       toast.error('Selecione pelo menos um dia de estudo.');
       return;
     }
+    if (selectedDiscIds.length === 0) {
+      toast.error('Selecione pelo menos uma disciplina para o ciclo.');
+      return;
+    }
     if (scores.length === 0) {
       toast.error('Nenhuma disciplina com tópicos para gerar o cronograma.');
+      return;
+    }
+    if (weekStart > weekEnd) {
+      toast.error('A semana inicial deve ser menor ou igual à semana final.');
       return;
     }
 
@@ -331,12 +339,15 @@ function GenerateDialog({
     const cycle: StudyCycle = {
       id: crypto.randomUUID(),
       name: cycleName,
-      disciplines: discConfigs,
+      disciplines: discConfigs.filter((dc) => selectedDiscIds.includes(dc.disciplineId)),
       blocks,
       weeklyHours,
       studyDays,
       createdAt: new Date().toISOString(),
       active: true,
+      selectedDisciplineIds: selectedDiscIds,
+      weekStart,
+      weekEnd,
     };
 
     onGenerate(cycle);
