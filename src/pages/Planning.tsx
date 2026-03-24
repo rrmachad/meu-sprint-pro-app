@@ -1265,6 +1265,7 @@ export default function Planning() {
                 onDelete={() => handleDelete(cycle.id)}
                 onActivate={() => setActiveCycle(cycle.id)}
                 onUpdateBlocks={(blocks) => updateCycle(cycle.id, { blocks })}
+                onUpdateCycle={(updates) => updateCycle(cycle.id, updates)}
               />
             ))}
         </div>
