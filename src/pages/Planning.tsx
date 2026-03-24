@@ -1336,6 +1336,23 @@ export default function Planning() {
     toast.success('Ciclo removido.');
   };
 
+  const handleDuplicate = (cycle: StudyCycle) => {
+    const maxWeekEnd = Math.max(...cycles.map((c) => c.weekEnd || 0), 0);
+    const weekSpan = (cycle.weekEnd || 1) - (cycle.weekStart || 1) + 1;
+    const newCycle: StudyCycle = {
+      ...cycle,
+      id: crypto.randomUUID(),
+      name: `${cycle.name} (cópia)`,
+      active: false,
+      createdAt: new Date().toISOString(),
+      weekStart: maxWeekEnd + 1,
+      weekEnd: maxWeekEnd + weekSpan,
+      blocks: cycle.blocks.map((b) => ({ ...b, id: crypto.randomUUID() })),
+    };
+    addCycle(newCycle);
+    toast.success(`Ciclo "${newCycle.name}" duplicado!`);
+  };
+
   const hasDisciplinesWithTopics = disciplines.some((d) =>
     topics.some((t) => t.disciplineId === d.id)
   );
