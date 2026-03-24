@@ -11,7 +11,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   CalendarDays, Sparkles, Clock, BookOpen, AlertTriangle,
   RotateCcw, Check, ChevronDown, ChevronRight, Trash2, Settings2,
-  Edit2, Plus, GripVertical, Download,
+  Edit2, Plus, GripVertical, Download, Copy,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
