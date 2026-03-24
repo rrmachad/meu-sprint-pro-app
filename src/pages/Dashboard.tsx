@@ -2,7 +2,7 @@ import { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity, Crown } from 'lucide-react';
+import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity, Crown, Zap } from 'lucide-react';
 import { useCountUp } from '@/hooks/useCountUp';
 import { SetupBanner } from '@/components/SetupBanner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -236,7 +236,48 @@ export default function Dashboard() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Block completion tracking (localStorage-based)
+  const BLOCK_LOG_KEY = 'msp_block_completions';
+  const getBlockLog = useCallback((): Record<string, number> => {
+    try {
+      return JSON.parse(localStorage.getItem(BLOCK_LOG_KEY) || '{}');
+    } catch { return {}; }
+  }, []);
+
+  const [blockLog, setBlockLog] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem(BLOCK_LOG_KEY) || '{}'); } catch { return {}; }
+  });
+
+  const logBlockCompletion = useCallback(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    setBlockLog((prev) => {
+      const updated = { ...prev, [todayStr]: (prev[todayStr] || 0) + 1 };
+      localStorage.setItem(BLOCK_LOG_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   const today = new Date().toISOString().split('T')[0];
+  const todayBlocks = blockLog[today] || 0;
+
+  const weeklyBlocksData = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+    return weekDays.map((label, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      return { name: label, blocos: blockLog[dateStr] || 0 };
+    });
+  }, [blockLog]);
+
   const todayRecords = studyRecords.filter((r) => r.date === today);
   const todaySeconds = todayRecords.reduce((a, r) => a + r.durationSeconds, 0);
   const todayQuestions = todayRecords.reduce((a, r) => a + r.correctAnswers + r.wrongAnswers + r.blankAnswers, 0);
@@ -437,6 +478,17 @@ export default function Dashboard() {
       iconColor: 'text-primary-foreground',
       glowClass: '',
     },
+    {
+      label: 'Blocos Hoje',
+      numericValue: todayBlocks,
+      formatFn: (v: number) => v.toString(),
+      subtitle: activeCycle ? `de ${activeCycle.blocks.length} no ciclo` : undefined,
+      icon: Zap,
+      gradient: 'from-chart-3/15 to-chart-3/5',
+      iconBg: 'bg-chart-3',
+      iconColor: 'text-primary-foreground',
+      glowClass: '',
+    },
   ];
 
   const mastery = getMasteryLabel(globalPercent);
@@ -468,7 +520,7 @@ export default function Dashboard() {
       )}
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {statCards.map((stat) => (
           <StatCard key={stat.label} stat={stat} />
         ))}
@@ -569,6 +621,7 @@ export default function Dashboard() {
                         className="gap-2 rounded-xl font-bold flex-1 sm:flex-none"
                         variant={timerRemaining === 0 && timerElapsed > 0 ? 'default' : 'secondary'}
                         onClick={() => {
+                          logBlockCompletion();
                           resetTimer();
                           const newIdx = nextBlockIndex + 1;
                           if (newIdx >= activeCycle.blocks.length) {
@@ -703,8 +756,9 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Performance Line Chart */}
-      <motion.div variants={itemVariants}>
+      {/* Charts Grid: Performance + Blocks */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Performance Line Chart */}
         <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
@@ -718,23 +772,10 @@ export default function Dashboard() {
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={weeklyPerformanceData} margin={{ left: 0, right: 10, top: 10, bottom: 5 }}>
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                 <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value}h`, 'Horas']} />
-                <Line
-                  type="monotone"
-                  dataKey="horas"
-                  stroke="hsl(var(--neon-green))"
-                  strokeWidth={3}
+                <Line type="monotone" dataKey="horas" stroke="hsl(var(--neon-green))" strokeWidth={3}
                   dot={{ r: 4, fill: 'hsl(var(--neon-green))', stroke: 'hsl(var(--card))', strokeWidth: 2 }}
                   activeDot={{ r: 6, fill: 'hsl(var(--neon-green))', stroke: 'hsl(var(--neon-green))', strokeWidth: 2 }}
                   filter="url(#glow)"
@@ -742,13 +783,33 @@ export default function Dashboard() {
                 <defs>
                   <filter id="glow">
                     <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                    <feMerge>
-                      <feMergeNode in="coloredBlur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
+                    <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
                   </filter>
                 </defs>
               </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Weekly Blocks Chart */}
+        <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
+              <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-chart-3/20">
+                <div className="absolute inset-0 rounded-lg bg-chart-3/20 blur-md opacity-40" />
+                <Zap className="h-3.5 w-3.5 text-chart-3 relative z-10" />
+              </div>
+              Blocos Concluídos na Semana
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={weeklyBlocksData} margin={{ left: 0, right: 10, top: 10, bottom: 5 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value}`, 'Blocos']} />
+                <Bar dataKey="blocos" fill="hsl(var(--chart-3))" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
