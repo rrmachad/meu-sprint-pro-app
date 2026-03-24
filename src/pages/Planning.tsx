@@ -1177,7 +1177,8 @@ const TIMELINE_COLORS = [
   'bg-primary', 'bg-chart-1', 'bg-chart-2', 'bg-chart-3', 'bg-chart-4', 'bg-chart-5',
 ];
 
-function CyclesTimeline({ cycles }: { cycles: StudyCycle[] }) {
+function CyclesTimeline({ cycles, disciplines }: { cycles: StudyCycle[]; disciplines: { id: string; name: string }[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const sortedCycles = [...cycles]
     .filter((c) => c.weekStart && c.weekEnd)
     .sort((a, b) => (a.weekStart || 0) - (b.weekStart || 0));
@@ -1187,9 +1188,8 @@ function CyclesTimeline({ cycles }: { cycles: StudyCycle[] }) {
   const minWeek = Math.min(...sortedCycles.map((c) => c.weekStart || 1));
   const maxWeek = Math.max(...sortedCycles.map((c) => c.weekEnd || 1));
   const totalWeeks = maxWeek - minWeek + 1;
-
-  // Generate week labels
   const weeks = Array.from({ length: totalWeeks }, (_, i) => minWeek + i);
+  const getDisciplineName = (id: string) => disciplines.find((d) => d.id === id)?.name || 'Disciplina';
 
   return (
     <Card className="glass border-border/30">
@@ -1206,11 +1206,7 @@ function CyclesTimeline({ cycles }: { cycles: StudyCycle[] }) {
             <div className="w-28 shrink-0" />
             <div className="flex-1 flex">
               {weeks.map((w) => (
-                <div
-                  key={w}
-                  className="flex-1 text-center text-[10px] text-muted-foreground font-mono"
-                  style={{ minWidth: 0 }}
-                >
+                <div key={w} className="flex-1 text-center text-[10px] text-muted-foreground font-mono" style={{ minWidth: 0 }}>
                   S{w}
                 </div>
               ))}
@@ -1222,27 +1218,72 @@ function CyclesTimeline({ cycles }: { cycles: StudyCycle[] }) {
             const startOffset = ((cycle.weekStart || 1) - minWeek) / totalWeeks * 100;
             const width = ((cycle.weekEnd || 1) - (cycle.weekStart || 1) + 1) / totalWeeks * 100;
             const colorClass = TIMELINE_COLORS[idx % TIMELINE_COLORS.length];
+            const isExpanded = expandedId === cycle.id;
+            const totalMinutes = cycle.blocks.reduce((a, b) => a + b.durationMinutes, 0);
+
+            // Discipline summary for expanded view
+            const discMap: Record<string, number> = {};
+            cycle.blocks.forEach((b) => { discMap[b.disciplineId] = (discMap[b.disciplineId] || 0) + b.durationMinutes; });
+            const discSummary = Object.entries(discMap)
+              .map(([id, mins]) => ({ name: getDisciplineName(id), minutes: mins }))
+              .sort((a, b) => b.minutes - a.minutes);
 
             return (
-              <div key={cycle.id} className="flex items-center gap-0">
-                <div className="w-28 shrink-0 truncate text-xs font-medium pr-2 text-right">
-                  {cycle.name}
-                </div>
-                <div className="flex-1 relative h-7 rounded-lg bg-muted/20 border border-border/20">
-                  <div
-                    className={`absolute top-0 h-full rounded-lg ${colorClass} opacity-80 flex items-center justify-center transition-all`}
-                    style={{ left: `${startOffset}%`, width: `${width}%` }}
-                  >
-                    <span className="text-[10px] font-bold text-primary-foreground truncate px-1">
-                      S{cycle.weekStart}–S{cycle.weekEnd}
-                    </span>
+              <div key={cycle.id} className="space-y-0">
+                <div
+                  className="flex items-center gap-0 cursor-pointer group"
+                  onClick={() => setExpandedId(isExpanded ? null : cycle.id)}
+                >
+                  <div className="w-28 shrink-0 truncate text-xs font-medium pr-2 text-right flex items-center justify-end gap-1">
+                    {isExpanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+                    {cycle.name}
                   </div>
-                  {cycle.active && (
-                    <Badge className="absolute -top-2 -right-1 text-[8px] h-4 rounded-full bg-primary/90 text-primary-foreground border-0">
-                      Ativo
-                    </Badge>
-                  )}
+                  <div className="flex-1 relative h-7 rounded-lg bg-muted/20 border border-border/20 group-hover:border-primary/30 transition-colors">
+                    <div
+                      className={`absolute top-0 h-full rounded-lg ${colorClass} opacity-80 flex items-center justify-center transition-all group-hover:opacity-100`}
+                      style={{ left: `${startOffset}%`, width: `${width}%` }}
+                    >
+                      <span className="text-[10px] font-bold text-primary-foreground truncate px-1">
+                        S{cycle.weekStart}–S{cycle.weekEnd}
+                      </span>
+                    </div>
+                    {cycle.active && (
+                      <Badge className="absolute -top-2 -right-1 text-[8px] h-4 rounded-full bg-primary/90 text-primary-foreground border-0">
+                        Ativo
+                      </Badge>
+                    )}
+                  </div>
                 </div>
+
+                {/* Expanded details */}
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="ml-28 mt-1 rounded-xl border border-border/20 glass p-3 space-y-2"
+                  >
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span>{cycle.weeklyHours}h/semana</span>
+                      <span>{cycle.blocks.length} blocos</span>
+                      <span>{Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total</span>
+                      <span>{cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')}</span>
+                    </div>
+                    <Separator />
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Disciplinas</p>
+                      {discSummary.map((d, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <span className="truncate max-w-[65%]">{d.name}</span>
+                          <span className="text-muted-foreground">
+                            {Math.floor(d.minutes / 60)}h{String(d.minutes % 60).padStart(2, '0')}min
+                            ({Math.round((d.minutes / totalMinutes) * 100)}%)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
               </div>
             );
           })}
