@@ -146,10 +146,10 @@ const PHASE_BLOCK_RANGES: Record<StudyPhase, { min: number; max: number }> = {
 function generateBlocks(
   scores: DisciplineScore[],
   totalWeeklyMinutes: number,
-  daysCount: number,
+  _daysCount: number,
   phase: StudyPhase = 'avancada',
 ): CycleBlock[] {
-  if (scores.length === 0 || daysCount === 0) return [];
+  if (scores.length === 0) return [];
 
   const totalScore = scores.reduce((a, s) => a + s.score, 0);
 
@@ -188,17 +188,16 @@ function generateBlocks(
   // ── Step 2: Generate blocks using phase-specific durations ──
   const { min: phaseMin, max: phaseMax } = PHASE_BLOCK_RANGES[phase];
   interface AllocBlock { disciplineId: string; durationMinutes: number; category: string; score: number }
-  const allBlocks: AllocBlock[] = [];
+  const blockPool: AllocBlock[] = [];
   for (const disc of allocated.sort((a, b) => b.score - a.score)) {
     let remaining = disc.allocatedMinutes;
-    // Calculate ideal block count based on phase block size
     const avgBlockSize = Math.round((phaseMin + phaseMax) / 2);
     const idealNumBlocks = Math.max(1, Math.round(remaining / avgBlockSize));
     const idealBlockSize = Math.max(phaseMin, Math.min(phaseMax, Math.ceil(remaining / idealNumBlocks)));
     while (remaining >= phaseMin) {
       const duration = Math.min(idealBlockSize, remaining, phaseMax);
       if (duration < phaseMin) break;
-      allBlocks.push({
+      blockPool.push({
         disciplineId: disc.disciplineId,
         durationMinutes: duration,
         category: disc.category,
@@ -206,149 +205,82 @@ function generateBlocks(
       });
       remaining -= duration;
     }
-    // If leftover < phaseMin, distribute to last block of same discipline
-    if (remaining > 0 && allBlocks.length > 0) {
-      const lastBlock = [...allBlocks].reverse().find((b) => b.disciplineId === disc.disciplineId);
+    if (remaining > 0 && blockPool.length > 0) {
+      const lastBlock = [...blockPool].reverse().find((b) => b.disciplineId === disc.disciplineId);
       if (lastBlock && lastBlock.durationMinutes + remaining <= phaseMax + 15) {
         lastBlock.durationMinutes += remaining;
       }
     }
   }
 
-  // ── Step 3: Spaced distribution across days (anti-clustering) ──
-  const dailyMinutes = Math.round(totalWeeklyMinutes / daysCount);
-  const days: AllocBlock[][] = Array.from({ length: daysCount }, () => []);
-  const dayMinutes: number[] = new Array(daysCount).fill(0);
-
-  const blocksByDisc: Record<string, AllocBlock[]> = {};
-  for (const b of allBlocks) {
-    if (!blocksByDisc[b.disciplineId]) blocksByDisc[b.disciplineId] = [];
-    blocksByDisc[b.disciplineId].push(b);
+  // ── Step 3: Build linear sequence with spaced distribution + category interleaving ──
+  // Group blocks by discipline
+  const byDisc: Record<string, AllocBlock[]> = {};
+  for (const b of blockPool) {
+    if (!byDisc[b.disciplineId]) byDisc[b.disciplineId] = [];
+    byDisc[b.disciplineId].push(b);
   }
 
-  // Sort disciplines by block count DESC (spread those with most blocks first)
-  const discIds = Object.keys(blocksByDisc).sort(
-    (a, b) => blocksByDisc[b].length - blocksByDisc[a].length
-  );
+  // Sort disciplines by number of blocks DESC (spread those with most blocks first)
+  const discQueues = Object.entries(byDisc)
+    .sort(([, a], [, b]) => b.length - a.length)
+    .map(([id, blocks]) => ({ id, blocks: [...blocks], category: blocks[0].category }));
 
-  // For each discipline, compute ideal evenly-spaced day positions
-  for (const discId of discIds) {
-    const blocks = blocksByDisc[discId];
-    const numBlocks = blocks.length;
+  const totalBlocks = blockPool.length;
+  const sequence: AllocBlock[] = [];
+  let lastCategory = '';
+  let lastDiscId = '';
 
-    // Calculate ideal day indices with maximum spacing
-    const idealDays: number[] = [];
-    if (numBlocks >= daysCount) {
-      for (let d = 0; d < daysCount; d++) idealDays.push(d);
-      for (let extra = daysCount; extra < numBlocks; extra++) {
-        idealDays.push(
-          dayMinutes.reduce((best, mins, i) => mins < dayMinutes[best] ? i : best, 0)
-        );
-      }
-    } else {
-      // Evenly space across days (e.g., 3 blocks in 7 days → days 0, 2, 5)
-      const spacing = daysCount / numBlocks;
-      for (let i = 0; i < numBlocks; i++) {
-        idealDays.push(Math.round(i * spacing) % daysCount);
-      }
-    }
+  // Round-robin with category interleaving
+  while (sequence.length < totalBlocks) {
+    // Sort queues: prefer different category from last, then different disc, then most remaining
+    discQueues.sort((a, b) => {
+      if (a.blocks.length === 0 && b.blocks.length === 0) return 0;
+      if (a.blocks.length === 0) return 1;
+      if (b.blocks.length === 0) return -1;
 
-    // Assign each block to the best nearby day
-    for (let bi = 0; bi < numBlocks; bi++) {
-      const idealDay = idealDays[bi];
-      let bestDay = 0;
-      let bestS = Infinity;
-      for (let d = 0; d < daysCount; d++) {
-        const hasSameDisc = days[d].some((b) => b.disciplineId === discId);
-        const distFromIdeal = Math.min(
-          Math.abs(d - idealDay),
-          daysCount - Math.abs(d - idealDay)
-        );
-        // Heavy penalty for same disc on same day (prevents clustering)
-        const samePenalty = hasSameDisc ? 200000 : 0;
-        // Moderate penalty for overloaded days
-        const overflowPenalty = dayMinutes[d] > dailyMinutes + 30 ? 50000 : 0;
-        // Prefer days closer to ideal position
-        const distPenalty = distFromIdeal * 1000;
-        // Tiebreaker: least loaded day
-        const loadPenalty = dayMinutes[d];
-        const s = samePenalty + overflowPenalty + distPenalty + loadPenalty;
-        if (s < bestS) { bestS = s; bestDay = d; }
+      const aDiffCat = a.category !== lastCategory ? 1 : 0;
+      const bDiffCat = b.category !== lastCategory ? 1 : 0;
+      if (aDiffCat !== bDiffCat) return bDiffCat - aDiffCat;
+
+      const aDiffDisc = a.id !== lastDiscId ? 1 : 0;
+      const bDiffDisc = b.id !== lastDiscId ? 1 : 0;
+      if (aDiffDisc !== bDiffDisc) return bDiffDisc - aDiffDisc;
+
+      // Prefer the one with more blocks remaining (spread evenly)
+      return b.blocks.length - a.blocks.length;
+    });
+
+    const queue = discQueues.find((q) => q.blocks.length > 0);
+    if (!queue) break;
+
+    const block = queue.blocks.shift()!;
+    sequence.push(block);
+    lastCategory = block.category;
+    lastDiscId = block.disciplineId;
+  }
+
+  // ── Step 4: Final gap check — ensure same discipline isn't clustered ──
+  // Simple swap pass: if same discipline appears consecutively, try to swap with next different one
+  for (let i = 1; i < sequence.length - 1; i++) {
+    if (sequence[i].disciplineId === sequence[i - 1].disciplineId) {
+      // Find nearest different discipline ahead to swap
+      for (let j = i + 1; j < Math.min(i + 5, sequence.length); j++) {
+        if (sequence[j].disciplineId !== sequence[i].disciplineId && sequence[j].disciplineId !== sequence[i - 1].disciplineId) {
+          [sequence[i], sequence[j]] = [sequence[j], sequence[i]];
+          break;
+        }
       }
-      days[bestDay].push(blocks[bi]);
-      dayMinutes[bestDay] += blocks[bi].durationMinutes;
     }
   }
 
-  // ── Step 4: Gap minimization validation ──
-  // Check max gap between sessions of each discipline and redistribute if too large
-  const MAX_GAP_THRESHOLD = Math.max(2, Math.ceil(daysCount / 2));
-
-  for (let iteration = 0; iteration < 5; iteration++) {
-    let improved = false;
-    for (const discId of discIds) {
-      const presenceDays = days
-        .map((dayBlocks, dayIdx) => dayBlocks.some((b) => b.disciplineId === discId) ? dayIdx : -1)
-        .filter((d) => d >= 0)
-        .sort((a, b) => a - b);
-
-      if (presenceDays.length <= 1) continue;
-
-      // Find the largest gap
-      let maxGap = 0;
-      let gapAfterDay = -1;
-      for (let i = 1; i < presenceDays.length; i++) {
-        const gap = presenceDays[i] - presenceDays[i - 1];
-        if (gap > maxGap) { maxGap = gap; gapAfterDay = presenceDays[i - 1]; }
-      }
-      // Wrap-around gap (last day → first day of next week)
-      const wrapGap = daysCount - presenceDays[presenceDays.length - 1] + presenceDays[0];
-      if (wrapGap > maxGap) { maxGap = wrapGap; gapAfterDay = presenceDays[presenceDays.length - 1]; }
-
-      if (maxGap <= MAX_GAP_THRESHOLD) continue;
-
-      // Find midpoint of the gap
-      const midGap = (gapAfterDay + Math.floor(maxGap / 2)) % daysCount;
-
-      // Find a donor day that has 2+ blocks of this discipline
-      const donorDay = days.findIndex(
-        (dayBlocks) => dayBlocks.filter((b) => b.disciplineId === discId).length >= 2
-      );
-      if (donorDay < 0 || donorDay === midGap) continue;
-
-      // Move one block from donor to midGap
-      const blockIdx = days[donorDay].findIndex((b) => b.disciplineId === discId);
-      if (blockIdx < 0) continue;
-
-      const [movedBlock] = days[donorDay].splice(blockIdx, 1);
-      dayMinutes[donorDay] -= movedBlock.durationMinutes;
-      days[midGap].push(movedBlock);
-      dayMinutes[midGap] += movedBlock.durationMinutes;
-      improved = true;
-    }
-    if (!improved) break;
-  }
-
-  // ── Step 5: Smart intra-day interleaving (category alternation) ──
-  for (let d = 0; d < daysCount; d++) {
-    days[d] = reorderDayBlocks(days[d]);
-  }
-
-  // ── Step 6: Flatten to final block list ──
-  const result: CycleBlock[] = [];
-  let blockNum = 1;
-  for (const dayBlocks of days) {
-    for (const b of dayBlocks) {
-      result.push({
-        id: crypto.randomUUID(),
-        number: blockNum++,
-        disciplineId: b.disciplineId,
-        durationMinutes: b.durationMinutes,
-      });
-    }
-  }
-
-  return result;
+  // ── Step 5: Convert to CycleBlock[] ──
+  return sequence.map((b, i) => ({
+    id: crypto.randomUUID(),
+    number: i + 1,
+    disciplineId: b.disciplineId,
+    durationMinutes: b.durationMinutes,
+  }));
 }
 
 /** Reorder blocks within a single day to strictly alternate categories and avoid same-discipline consecutively */
@@ -1077,24 +1009,7 @@ function CycleView({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const getDisciplineName = (id: string) => disciplines.find((d) => d.id === id)?.name || 'Disciplina';
 
-  const dailyBlocks = useMemo(() => {
-    const days: CycleBlock[][] = [];
-    if (cycle.studyDays.length === 0) return days;
-    const dailyMinutes = Math.round((cycle.weeklyHours * 60) / cycle.studyDays.length);
-    let currentDay: CycleBlock[] = [];
-    let currentDayMinutes = 0;
-    for (const block of cycle.blocks) {
-      if (currentDayMinutes + block.durationMinutes > dailyMinutes + 30 && currentDay.length > 0) {
-        days.push(currentDay);
-        currentDay = [];
-        currentDayMinutes = 0;
-      }
-      currentDay.push(block);
-      currentDayMinutes += block.durationMinutes;
-    }
-    if (currentDay.length > 0) days.push(currentDay);
-    return days;
-  }, [cycle]);
+  // No longer needed: dailyBlocks computation removed (linear cycle model)
 
   const totalMinutes = cycle.blocks.reduce((a, b) => a + b.durationMinutes, 0);
 
@@ -1146,7 +1061,7 @@ function CycleView({
     y += 8;
     doc.setFontSize(10);
     doc.text(
-      `${cycle.weeklyHours}h/semana • ${cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • ${cycle.blocks.length} blocos`,
+      `${cycle.weeklyHours}h/semana • ${cycle.blocks.length} blocos sequenciais`,
       pageWidth / 2, y, { align: 'center' }
     );
     y += 10;
@@ -1166,33 +1081,22 @@ function CycleView({
     }
     y += 4;
 
-    // Daily schedule
-    const sortedDays = [...cycle.studyDays].sort((a, b) => ((a === 0 ? 7 : a) - (b === 0 ? 7 : b)));
-    for (let dayIdx = 0; dayIdx < dailyBlocks.length; dayIdx++) {
-      const dayBlocksArr = dailyBlocks[dayIdx];
-      const dayName = sortedDays[dayIdx] !== undefined
-        ? DAY_FULL[sortedDays[dayIdx]]
-        : `Dia ${dayIdx + 1}`;
-      const dayMinutes = dayBlocksArr.reduce((a, b) => a + b.durationMinutes, 0);
+    // Linear block list
+    doc.setFontSize(12);
+    doc.text('Ciclo de Estudos', 14, y);
+    y += 2;
+    doc.setDrawColor(200);
+    doc.line(14, y, pageWidth - 14, y);
+    y += 5;
 
-      if (y > 260) { doc.addPage(); y = 20; }
-
-      doc.setFontSize(11);
-      doc.text(`${dayName} — ${Math.floor(dayMinutes / 60)}h${String(dayMinutes % 60).padStart(2, '0')}min`, 14, y);
-      y += 2;
-      doc.setDrawColor(200);
-      doc.line(14, y, pageWidth - 14, y);
+    doc.setFontSize(9);
+    for (let i = 0; i < cycle.blocks.length; i++) {
+      const block = cycle.blocks[i];
+      const num = String(i + 1).padStart(2, ' ');
+      doc.text(`${num}    ${getDisciplineName(block.disciplineId).toUpperCase()}`, 18, y);
+      doc.text(`${block.durationMinutes} min`, pageWidth - 18, y, { align: 'right' });
       y += 5;
-
-      doc.setFontSize(9);
-      for (let bi = 0; bi < dayBlocksArr.length; bi++) {
-        const block = dayBlocksArr[bi];
-        doc.text(`B${bi + 1}  ${getDisciplineName(block.disciplineId)}`, 18, y);
-        doc.text(`${block.durationMinutes}min`, pageWidth - 18, y, { align: 'right' });
-        y += 5;
-        if (y > 275) { doc.addPage(); y = 20; }
-      }
-      y += 4;
+      if (y > 275) { doc.addPage(); y = 20; }
     }
 
     doc.save(`${cycle.name.replace(/\s+/g, '_')}.pdf`);
@@ -1244,7 +1148,7 @@ function CycleView({
           </div>
         </div>
         <CardDescription className="text-xs font-mono">
-          {cycle.weeklyHours}h/semana • {cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
+          {cycle.weeklyHours}h/semana • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
           {cycle.weekStart && cycle.weekEnd && (
             <span> • Semanas {cycle.weekStart}–{cycle.weekEnd}</span>
           )}
@@ -1274,51 +1178,27 @@ function CycleView({
 
         <Separator />
 
-        <Accordion type="multiple" className="space-y-1">
-          {dailyBlocks.map((dayBlocks, dayIdx) => {
-            const sortedStudyDays = [...cycle.studyDays].sort((a, b) => ((a === 0 ? 7 : a) - (b === 0 ? 7 : b)));
-            const dayName = sortedStudyDays[dayIdx] !== undefined
-              ? DAY_FULL[sortedStudyDays[dayIdx]]
-              : `Dia ${dayIdx + 1}`;
-            const dayMinutes = dayBlocks.reduce((a, b) => a + b.durationMinutes, 0);
-
-            return (
-              <AccordionItem key={dayIdx} value={`day-${dayIdx}`} className="border border-border/30 rounded-xl px-3 glass">
-                <AccordionTrigger className="py-2 text-sm hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                    <span className="font-medium">{dayName}</span>
-                    <Badge variant="outline" className="text-[10px] rounded-full border-border/40">
-                      {dayBlocks.length} blocos • {Math.floor(dayMinutes / 60)}h{String(dayMinutes % 60).padStart(2, '0')}min
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-3">
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={dayBlocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-1.5">
-                        {dayBlocks.map((block, bi) => (
-                          <SortableBlock
-                            key={block.id}
-                            block={block}
-                            index={bi}
-                            isEditing={editingBlockId === block.id}
-                            disciplines={disciplines}
-                            getDisciplineName={getDisciplineName}
-                            onEdit={() => setEditingBlockId(block.id)}
-                            onStopEdit={() => setEditingBlockId(null)}
-                            onUpdate={(updates) => updateBlock(block.id, updates)}
-                            onRemove={() => removeBlock(block.id)}
-                          />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
+        {/* Linear numbered block list */}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={cycle.blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-1">
+              {cycle.blocks.map((block, i) => (
+                <SortableBlock
+                  key={block.id}
+                  block={block}
+                  index={i}
+                  isEditing={editingBlockId === block.id}
+                  disciplines={disciplines}
+                  getDisciplineName={getDisciplineName}
+                  onEdit={() => setEditingBlockId(block.id)}
+                  onStopEdit={() => setEditingBlockId(null)}
+                  onUpdate={(updates) => updateBlock(block.id, updates)}
+                  onRemove={() => removeBlock(block.id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs rounded-xl border-border/40 hover:border-primary/40" onClick={addBlock}>
           <Plus className="h-3.5 w-3.5" />
@@ -1644,8 +1524,7 @@ export default function Planning() {
               <div className="flex-1">
                 <p className="text-sm font-semibold">Ciclo ativo: {activeCycle.name}</p>
                 <p className="text-xs text-muted-foreground font-mono">
-                  {activeCycle.weeklyHours}h/semana • {activeCycle.blocks.length} blocos •{' '}
-                  {activeCycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')}
+                  {activeCycle.weeklyHours}h/semana • {activeCycle.blocks.length} blocos sequenciais
                   {activeCycle.weekStart && activeCycle.weekEnd && ` • Semanas ${activeCycle.weekStart}–${activeCycle.weekEnd}`}
                 </p>
               </div>
