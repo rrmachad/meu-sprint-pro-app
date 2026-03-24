@@ -474,57 +474,121 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Next Block Card */}
+      {/* Next Block Card with Timer */}
       {activeCycle && nextBlock && nextBlockDisc && (
         <motion.div variants={itemVariants}>
-          <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+          <Card className={`bg-slate-800/60 backdrop-blur-md border transition-all duration-500 ${timerRunning ? 'border-primary/60 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.3)]' : 'border-slate-700/50'} bg-gradient-to-r from-primary/10 via-primary/5 to-transparent`}>
             <CardContent className="p-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative flex h-12 w-12 items-center justify-center rounded-xl gradient-neon shadow-neon shrink-0">
-                    <div className="absolute inset-0 rounded-xl gradient-neon blur-md opacity-40" />
-                    <BookOpen className="h-6 w-6 text-neon-green-foreground relative z-10" />
+              <div className="flex flex-col gap-4">
+                {/* Top: Block info + Timer display */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className={`relative flex h-12 w-12 items-center justify-center rounded-xl shrink-0 ${timerRunning ? 'gradient-blue shadow-[0_0_20px_-3px_hsl(var(--primary)/0.5)]' : 'gradient-neon shadow-neon'}`}>
+                      <div className={`absolute inset-0 rounded-xl blur-md opacity-40 ${timerRunning ? 'gradient-blue' : 'gradient-neon'}`} />
+                      {timerRunning ? (
+                        <Timer className="h-6 w-6 text-primary-foreground relative z-10 animate-pulse" />
+                      ) : (
+                        <BookOpen className="h-6 w-6 text-neon-green-foreground relative z-10" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                        {timerRunning ? 'Estudando Agora' : 'Próximo Bloco'}
+                      </p>
+                      <p className="text-lg font-bold text-foreground">{nextBlockDisc.name}</p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-xs text-muted-foreground font-mono">
+                          Bloco {nextBlockIndex + 1} de {activeCycle.blocks.length}
+                        </span>
+                        <span className="text-xs text-muted-foreground">•</span>
+                        <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {nextBlock.durationMinutes}min
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Próximo Bloco</p>
-                    <p className="text-lg font-bold text-foreground">{nextBlockDisc.name}</p>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-xs text-muted-foreground font-mono">
-                        Bloco {nextBlockIndex + 1} de {activeCycle.blocks.length}
-                      </span>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {nextBlock.durationMinutes}min
-                      </span>
+
+                  {/* Timer display */}
+                  <div className="flex flex-col items-center gap-1 sm:items-end">
+                    <motion.span
+                      className={`text-3xl font-mono font-extrabold tabular-nums tracking-tight ${timerRemaining === 0 && timerElapsed > 0 ? 'text-emerald-400' : timerRunning ? 'text-primary' : 'text-foreground'}`}
+                      key={timerRemaining}
+                      initial={{ scale: 1.05 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      {formatTimer(timerRemaining)}
+                    </motion.span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
+                      {timerRemaining === 0 && timerElapsed > 0 ? 'Tempo esgotado' : 'Tempo restante'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Timer progress bar */}
+                <div className="space-y-2">
+                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                    <motion.div
+                      className={`h-full rounded-full ${timerRemaining === 0 && timerElapsed > 0 ? 'bg-emerald-500' : 'bg-primary'}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${timerPercent}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {!timerRunning && timerElapsed === 0 && (
+                        <Button onClick={startTimer} className="gap-2 rounded-xl font-bold">
+                          <Timer className="h-4 w-4" />
+                          Iniciar Bloco
+                        </Button>
+                      )}
+                      {timerRunning && (
+                        <Button onClick={pauseTimer} variant="outline" className="gap-2 rounded-xl font-bold">
+                          <Clock className="h-4 w-4" />
+                          Pausar
+                        </Button>
+                      )}
+                      {!timerRunning && timerElapsed > 0 && timerRemaining > 0 && (
+                        <Button onClick={startTimer} className="gap-2 rounded-xl font-bold">
+                          <Timer className="h-4 w-4" />
+                          Retomar
+                        </Button>
+                      )}
+                      {timerElapsed > 0 && (
+                        <Button onClick={resetTimer} variant="ghost" size="sm" className="text-xs text-muted-foreground">
+                          Reiniciar Timer
+                        </Button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        className="gap-2 rounded-xl font-bold flex-1 sm:flex-none"
+                        variant={timerRemaining === 0 && timerElapsed > 0 ? 'default' : 'secondary'}
+                        onClick={() => {
+                          resetTimer();
+                          const newIdx = nextBlockIndex + 1;
+                          if (newIdx >= activeCycle.blocks.length) {
+                            updateCycle(activeCycle.id, { currentBlockIndex: 0 });
+                            toast.success('🎉 Ciclo completo! Recomeçando do início.');
+                          } else {
+                            updateCycle(activeCycle.id, { currentBlockIndex: newIdx });
+                            toast.success(`Bloco ${nextBlockIndex + 1} concluído! Próximo: ${disciplines.find(d => d.id === activeCycle.blocks[newIdx]?.disciplineId)?.name || ''}`);
+                          }
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Concluir e Avançar
+                      </Button>
+                      <Badge variant="outline" className="text-xs border-primary/30 text-primary shrink-0">
+                        {Math.round((nextBlockIndex / activeCycle.blocks.length) * 100)}%
+                      </Badge>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button
-                    className="gap-2 rounded-xl font-bold flex-1 sm:flex-none"
-                    onClick={() => {
-                      const newIdx = nextBlockIndex + 1;
-                      if (newIdx >= activeCycle.blocks.length) {
-                        updateCycle(activeCycle.id, { currentBlockIndex: 0 });
-                        toast.success('🎉 Ciclo completo! Recomeçando do início.');
-                      } else {
-                        updateCycle(activeCycle.id, { currentBlockIndex: newIdx });
-                        toast.success(`Bloco ${nextBlockIndex + 1} concluído! Próximo: ${disciplines.find(d => d.id === activeCycle.blocks[newIdx]?.disciplineId)?.name || ''}`);
-                      }
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    Concluir e Avançar
-                  </Button>
-                  <Badge variant="outline" className="text-xs border-primary/30 text-primary shrink-0">
-                    {Math.round((nextBlockIndex / activeCycle.blocks.length) * 100)}%
-                  </Badge>
-                </div>
-              </div>
-              {/* Mini progress bar */}
-              <div className="mt-3">
-                <Progress value={Math.round((nextBlockIndex / activeCycle.blocks.length) * 100)} className="h-1.5" />
               </div>
             </CardContent>
           </Card>
