@@ -79,6 +79,9 @@ export interface StudyCycle {
   studyDays: number[]; // 0=Sunday ... 6=Saturday
   createdAt: string;
   active: boolean;
+  selectedDisciplineIds?: string[]; // disciplines included in this cycle
+  weekStart?: number; // starting week number (1-based)
+  weekEnd?: number; // ending week number (1-based)
 }
 
 // ============ SCHEDULE ============

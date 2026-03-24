@@ -238,21 +238,42 @@ function GenerateDialog({
   studyRecords,
   existingCycleDisciplines,
   settings,
+  existingCycles,
   onGenerate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  disciplines: { id: string; name: string; weight: number; category: string; cannotZero?: boolean }[];
+  disciplines: { id: string; name: string; weight: number; category: string; cannotZero?: boolean; prova?: string }[];
   topics: { disciplineId: string; completed: boolean }[];
   studyRecords: { disciplineId: string; durationSeconds: number }[];
   existingCycleDisciplines: CycleDiscipline[];
   settings: { weeklyHours: number; studyDays: number[] };
+  existingCycles: StudyCycle[];
   onGenerate: (cycle: StudyCycle) => void;
 }) {
+  const nextNum = existingCycles.length + 1;
+  const maxWeekEnd = existingCycles.length > 0 ? Math.max(...existingCycles.map((c) => c.weekEnd || 0), 0) : 0;
+
   const [weeklyHours, setWeeklyHours] = useState(settings.weeklyHours || 20);
   const [studyDays, setStudyDays] = useState<number[]>(settings.studyDays.length > 0 ? settings.studyDays : [1, 2, 3, 4, 5]);
-  const [cycleName, setCycleName] = useState('Ciclo Automático');
+  const [cycleName, setCycleName] = useState(`Ciclo ${nextNum}`);
   const [showConfig, setShowConfig] = useState(false);
+  const [weekStart, setWeekStart] = useState(maxWeekEnd + 1);
+  const [weekEnd, setWeekEnd] = useState(maxWeekEnd + 4);
+
+  // Selected disciplines for this cycle
+  const [selectedDiscIds, setSelectedDiscIds] = useState<string[]>(() =>
+    disciplines.map((d) => d.id)
+  );
+
+  const toggleDisc = (id: string) => {
+    setSelectedDiscIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllDiscs = () => setSelectedDiscIds(disciplines.map((d) => d.id));
+  const deselectAllDiscs = () => setSelectedDiscIds([]);
 
   // Per-discipline config state
   const [discConfigs, setDiscConfigs] = useState<CycleDiscipline[]>(() => {
@@ -274,6 +295,8 @@ function GenerateDialog({
   };
 
   const discsWithTopics = disciplines.filter((d) => {
+    const isSelected = selectedDiscIds.includes(d.id);
+    if (!isSelected) return false;
     const dTopics = topics.filter((t) => t.disciplineId === d.id);
     return dTopics.length > 0 || d.weight > 0;
   });
@@ -291,8 +314,16 @@ function GenerateDialog({
       toast.error('Selecione pelo menos um dia de estudo.');
       return;
     }
+    if (selectedDiscIds.length === 0) {
+      toast.error('Selecione pelo menos uma disciplina para o ciclo.');
+      return;
+    }
     if (scores.length === 0) {
       toast.error('Nenhuma disciplina com tópicos para gerar o cronograma.');
+      return;
+    }
+    if (weekStart > weekEnd) {
+      toast.error('A semana inicial deve ser menor ou igual à semana final.');
       return;
     }
 
@@ -301,12 +332,15 @@ function GenerateDialog({
     const cycle: StudyCycle = {
       id: crypto.randomUUID(),
       name: cycleName,
-      disciplines: discConfigs,
+      disciplines: discConfigs.filter((dc) => selectedDiscIds.includes(dc.disciplineId)),
       blocks,
       weeklyHours,
       studyDays,
       createdAt: new Date().toISOString(),
       active: true,
+      selectedDisciplineIds: selectedDiscIds,
+      weekStart,
+      weekEnd,
     };
 
     onGenerate(cycle);
@@ -374,6 +408,73 @@ function GenerateDialog({
                 ≈ {Math.floor(dailyMinutes / 60)}h{String(dailyMinutes % 60).padStart(2, '0')}min por dia
               </p>
             )}
+          </div>
+
+          {/* Cycle name & week range */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Nome do ciclo</Label>
+              <input
+                type="text"
+                value={cycleName}
+                onChange={(e) => setCycleName(e.target.value)}
+                className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Semana inicial</Label>
+              <input
+                type="number"
+                min={1}
+                max={52}
+                value={weekStart}
+                onChange={(e) => setWeekStart(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Semana final</Label>
+              <input
+                type="number"
+                min={1}
+                max={52}
+                value={weekEnd}
+                onChange={(e) => setWeekEnd(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Este ciclo será utilizado nas semanas {weekStart} a {weekEnd} ({weekEnd - weekStart + 1} semana{weekEnd - weekStart !== 0 ? 's' : ''}).
+          </p>
+
+          {/* Discipline selection */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Disciplinas do ciclo</Label>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={selectAllDiscs}>Todas</Button>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={deselectAllDiscs}>Nenhuma</Button>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/30 glass p-3 max-h-[180px] overflow-y-auto space-y-1">
+              {disciplines.map((d) => (
+                <label
+                  key={d.id}
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent/40 cursor-pointer transition-colors"
+                >
+                  <Checkbox
+                    checked={selectedDiscIds.includes(d.id)}
+                    onCheckedChange={() => toggleDisc(d.id)}
+                  />
+                  <span className="text-sm flex-1 truncate">{d.name}</span>
+                  <Badge variant="outline" className="text-[10px] border-border/40">{d.prova || '—'}</Badge>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {selectedDiscIds.length} de {disciplines.length} disciplinas selecionadas
+            </p>
           </div>
 
           {/* Per-discipline configuration */}
@@ -738,7 +839,15 @@ function CycleView({
         </div>
         <CardDescription className="text-xs font-mono">
           {cycle.weeklyHours}h/semana • {cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
+          {cycle.weekStart && cycle.weekEnd && (
+            <span> • Semanas {cycle.weekStart}–{cycle.weekEnd}</span>
+          )}
         </CardDescription>
+        {cycle.selectedDisciplineIds && (
+          <p className="text-[10px] text-muted-foreground mt-1">
+            {cycle.selectedDisciplineIds.length} disciplinas: {cycle.selectedDisciplineIds.map((id) => disciplines.find((d) => d.id === id)?.name).filter(Boolean).join(', ')}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -970,6 +1079,7 @@ export default function Planning() {
                 <p className="text-xs text-muted-foreground font-mono">
                   {activeCycle.weeklyHours}h/semana • {activeCycle.blocks.length} blocos •{' '}
                   {activeCycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')}
+                  {activeCycle.weekStart && activeCycle.weekEnd && ` • Semanas ${activeCycle.weekStart}–${activeCycle.weekEnd}`}
                 </p>
               </div>
               <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-border/40 hover:border-primary/40" onClick={() => setGenerateOpen(true)}>
@@ -1032,6 +1142,7 @@ export default function Planning() {
         studyRecords={studyRecords}
         existingCycleDisciplines={activeCycleDisciplines}
         settings={settings}
+        existingCycles={cycles}
         onGenerate={handleGenerate}
       />
     </motion.div>
