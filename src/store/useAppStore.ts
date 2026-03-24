@@ -201,7 +201,7 @@ function persistCycle(c: StudyCycle) {
   if (!uid) return;
   supabase.from('study_cycles').upsert({
     id: c.id, user_id: uid, name: c.name, weekly_hours: c.weeklyHours,
-    study_days: c.studyDays, active: c.active,
+    study_days: c.studyDays, active: c.active, current_block_index: c.currentBlockIndex || 0,
   }).then(async ({ error }) => {
     if (error) { showDbError('Ciclo', error); return; }
     // Sync blocks
