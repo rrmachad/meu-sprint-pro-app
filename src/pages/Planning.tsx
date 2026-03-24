@@ -1224,6 +1224,8 @@ function SortableBlock({
   block,
   index,
   isEditing,
+  isCurrent,
+  isCompleted,
   disciplines,
   getDisciplineName,
   onEdit,
@@ -1234,6 +1236,8 @@ function SortableBlock({
   block: CycleBlock;
   index: number;
   isEditing: boolean;
+  isCurrent: boolean;
+  isCompleted: boolean;
   disciplines: { id: string; name: string }[];
   getDisciplineName: (id: string) => string;
   onEdit: () => void;
@@ -1249,8 +1253,14 @@ function SortableBlock({
     zIndex: isDragging ? 10 : undefined,
   };
 
+  const borderClass = isCurrent
+    ? 'border-primary/60 bg-primary/10 shadow-neon ring-1 ring-primary/20'
+    : isCompleted
+      ? 'border-border/10 bg-muted/10 opacity-60'
+      : 'border-border/20 bg-muted/20';
+
   return (
-    <div ref={setNodeRef} style={style} className="rounded-xl bg-muted/20 glass border border-border/20 px-3 py-2 hover:border-primary/20 transition-all">
+    <div ref={setNodeRef} style={style} className={`rounded-xl glass px-3 py-2 transition-all border ${borderClass}`}>
       {isEditing ? (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -1288,14 +1298,25 @@ function SortableBlock({
           <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground shrink-0 touch-none">
             <GripVertical className="h-4 w-4" />
           </button>
+          {isCompleted && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+          {isCurrent && (
+            <div className="relative flex h-5 w-5 items-center justify-center shrink-0">
+              <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+            </div>
+          )}
           <div
             className="flex items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={onEdit}
             title="Clique para editar"
           >
-            <span className="text-xs text-muted-foreground w-6 shrink-0">B{index + 1}</span>
-            <BookOpen className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="text-sm flex-1 truncate">{getDisciplineName(block.disciplineId)}</span>
+            <span className={`text-xs w-6 shrink-0 font-mono ${isCurrent ? 'text-primary font-bold' : 'text-muted-foreground'}`}>
+              {index + 1}
+            </span>
+            <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isCurrent ? 'text-primary' : isCompleted ? 'text-muted-foreground/50' : 'text-primary'}`} />
+            <span className={`text-sm flex-1 truncate ${isCompleted ? 'line-through text-muted-foreground' : ''} ${isCurrent ? 'font-semibold text-foreground' : ''}`}>
+              {getDisciplineName(block.disciplineId)}
+            </span>
             <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
               <Clock className="h-3 w-3" />
               {block.durationMinutes}min
