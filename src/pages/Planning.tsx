@@ -1385,7 +1385,7 @@ export default function Planning() {
 
       {/* Timeline visualization */}
       {cycles.length > 0 && cycles.some((c) => c.weekStart && c.weekEnd) && (
-        <CyclesTimeline cycles={cycles} />
+        <CyclesTimeline cycles={cycles} disciplines={disciplines} />
       )}
 
       {/* Cycles list */}
