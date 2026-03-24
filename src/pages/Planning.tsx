@@ -1061,7 +1061,7 @@ function CycleView({
     y += 8;
     doc.setFontSize(10);
     doc.text(
-      `${cycle.weeklyHours}h/semana • ${cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • ${cycle.blocks.length} blocos`,
+      `${cycle.weeklyHours}h/semana • ${cycle.blocks.length} blocos sequenciais`,
       pageWidth / 2, y, { align: 'center' }
     );
     y += 10;
