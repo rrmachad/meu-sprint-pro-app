@@ -1009,24 +1009,7 @@ function CycleView({
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const getDisciplineName = (id: string) => disciplines.find((d) => d.id === id)?.name || 'Disciplina';
 
-  const dailyBlocks = useMemo(() => {
-    const days: CycleBlock[][] = [];
-    if (cycle.studyDays.length === 0) return days;
-    const dailyMinutes = Math.round((cycle.weeklyHours * 60) / cycle.studyDays.length);
-    let currentDay: CycleBlock[] = [];
-    let currentDayMinutes = 0;
-    for (const block of cycle.blocks) {
-      if (currentDayMinutes + block.durationMinutes > dailyMinutes + 30 && currentDay.length > 0) {
-        days.push(currentDay);
-        currentDay = [];
-        currentDayMinutes = 0;
-      }
-      currentDay.push(block);
-      currentDayMinutes += block.durationMinutes;
-    }
-    if (currentDay.length > 0) days.push(currentDay);
-    return days;
-  }, [cycle]);
+  // No longer needed: dailyBlocks computation removed (linear cycle model)
 
   const totalMinutes = cycle.blocks.reduce((a, b) => a + b.durationMinutes, 0);
 
