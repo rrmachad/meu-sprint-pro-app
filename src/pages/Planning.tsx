@@ -66,7 +66,7 @@ interface DisciplineScore {
 }
 
 function computeScores(
-  disciplines: { id: string; name: string; weight: number; cannotZero?: boolean }[],
+  disciplines: { id: string; name: string; weight: number; cannotZero?: boolean; category?: string }[],
   topics: { disciplineId: string; completed: boolean }[],
   cycleDisciplines: CycleDiscipline[],
   studyRecords: { disciplineId: string; durationSeconds: number }[],
