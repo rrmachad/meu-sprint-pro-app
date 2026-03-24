@@ -12,15 +12,32 @@ import type {
 
 // Map DB rows to app types
 function mapDiscipline(row: any): Discipline {
+  const numericWeight = Number(row?.weight);
+  const numericQuestions = Number(row?.default_questions);
+  const numericOrder = Number(row?.sort_order);
+  const rawProva = typeof row?.prova === 'string' ? row.prova.trim() : '';
+
   return {
-    id: row.id, name: row.name, category: row.category, weight: Number(row.weight),
-    prova: row.prova, defaultQuestions: row.default_questions, order: row.sort_order,
-    cannotZero: row.cannot_zero,
+    id: row.id,
+    name: row.name,
+    category: row.category || 'mista',
+    weight: Number.isFinite(numericWeight) ? numericWeight : 0,
+    prova: rawProva || 'Sem prova',
+    defaultQuestions: Number.isFinite(numericQuestions) ? numericQuestions : 0,
+    order: Number.isFinite(numericOrder) ? numericOrder : 0,
+    cannotZero: Boolean(row.cannot_zero),
   };
 }
 
 function mapTopic(row: any): Topic {
-  return { id: row.id, disciplineId: row.discipline_id, text: row.text, completed: row.completed, order: row.sort_order };
+  const numericOrder = Number(row?.sort_order);
+  return {
+    id: row.id,
+    disciplineId: row.discipline_id,
+    text: typeof row?.text === 'string' ? row.text : '',
+    completed: Boolean(row?.completed),
+    order: Number.isFinite(numericOrder) ? numericOrder : 0,
+  };
 }
 
 function mapStudyRecord(row: any): StudyRecord {
@@ -84,116 +101,154 @@ export function useSupabaseSync() {
     if (!user) { setSyncing(false); return; }
     setSyncing(true);
     const uid = user.id;
-
-    const [
-      { data: disciplines },
-      { data: topics },
-      { data: records },
-      { data: revisions },
-      { data: cycles },
-      { data: slots },
-      { data: simulados },
-      { data: simDisciplines },
-      { data: notes },
-      { data: settingsRows },
-    ] = await Promise.all([
-      supabase.from('disciplines').select('*').order('sort_order'),
-      supabase.from('topics').select('*').order('sort_order'),
-      supabase.from('study_records').select('*').order('date', { ascending: false }),
-      supabase.from('revisions').select('*').order('due_date'),
-      supabase.from('study_cycles').select('*').order('created_at'),
-      supabase.from('schedule_slots').select('*'),
-      supabase.from('simulados').select('*').order('date', { ascending: false }),
-      supabase.from('simulado_disciplines').select('*'),
-      supabase.from('daily_notes').select('*').order('date', { ascending: false }),
-      supabase.from('user_settings').select('*').eq('user_id', uid).limit(1),
-    ]);
-
-    // Load cycle blocks and cycle disciplines for each cycle
-    const cycleIds = (cycles || []).map(c => c.id);
-    let cycleBlocks: any[] = [];
-    let cycleDisciplines: any[] = [];
-    if (cycleIds.length > 0) {
-      const [{ data: blocks }, { data: cDiscs }] = await Promise.all([
-        supabase.from('cycle_blocks').select('*').in('cycle_id', cycleIds),
-        supabase.from('cycle_disciplines').select('*').in('cycle_id', cycleIds),
+    try {
+      const [
+        { data: disciplines },
+        { data: topics },
+        { data: records },
+        { data: revisions },
+        { data: cycles },
+        { data: slots },
+        { data: simulados },
+        { data: simDisciplines },
+        { data: notes },
+        { data: settingsRows },
+      ] = await Promise.all([
+        supabase.from('disciplines').select('*').order('sort_order'),
+        supabase.from('topics').select('*').order('sort_order'),
+        supabase.from('study_records').select('*').order('date', { ascending: false }),
+        supabase.from('revisions').select('*').order('due_date'),
+        supabase.from('study_cycles').select('*').order('created_at'),
+        supabase.from('schedule_slots').select('*'),
+        supabase.from('simulados').select('*').order('date', { ascending: false }),
+        supabase.from('simulado_disciplines').select('*'),
+        supabase.from('daily_notes').select('*').order('date', { ascending: false }),
+        supabase.from('user_settings').select('*').eq('user_id', uid).limit(1),
       ]);
-      cycleBlocks = blocks || [];
-      cycleDisciplines = cDiscs || [];
+
+      // Load cycle blocks and cycle disciplines for each cycle
+      const cycleIds = (cycles || []).map((c) => c.id);
+      let cycleBlocks: any[] = [];
+      let cycleDisciplines: any[] = [];
+      if (cycleIds.length > 0) {
+        const [{ data: blocks }, { data: cDiscs }] = await Promise.all([
+          supabase.from('cycle_blocks').select('*').in('cycle_id', cycleIds),
+          supabase.from('cycle_disciplines').select('*').in('cycle_id', cycleIds),
+        ]);
+        cycleBlocks = blocks || [];
+        cycleDisciplines = cDiscs || [];
+      }
+
+      // Map cycles with their blocks and disciplines
+      const mappedCycles: StudyCycle[] = (cycles || []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        weeklyHours: Number(c.weekly_hours),
+        studyDays: Array.isArray(c.study_days) ? c.study_days : [1, 2, 3, 4, 5],
+        createdAt: c.created_at,
+        active: c.active,
+        blocks: cycleBlocks
+          .filter((b) => b.cycle_id === c.id)
+          .sort((a: any, b: any) => a.block_number - b.block_number)
+          .map((b: any): CycleBlock => ({
+            id: b.id,
+            number: b.block_number,
+            disciplineId: b.discipline_id,
+            durationMinutes: b.duration_minutes,
+          })),
+        disciplines: cycleDisciplines
+          .filter((d) => d.cycle_id === c.id)
+          .map((d: any): CycleDiscipline => ({
+            disciplineId: d.discipline_id,
+            importance: d.importance,
+            situation: d.situation,
+            difficulty: d.difficulty,
+          })),
+      }));
+
+      // Map simulados with their disciplines
+      const mappedSimulados: Simulado[] = (simulados || []).map((s) => ({
+        id: s.id,
+        date: s.date,
+        banca: s.banca,
+        metaPercent: Number(s.meta_percent),
+        hasP2: s.has_p2,
+        p1MinPercent: Number(s.p1_min_percent),
+        p2MinPercent: Number(s.p2_min_percent),
+        totalMinPercent: Number(s.total_min_percent),
+        p1Disciplines: s.p1_disciplines || [],
+        p2Disciplines: s.p2_disciplines || [],
+        createdAt: s.created_at,
+        disciplines: (simDisciplines || [])
+          .filter((sd) => sd.simulado_id === s.id)
+          .map((sd: any): SimuladoDiscipline => ({
+            disciplineId: sd.discipline_id,
+            questions: sd.questions,
+            weight: Number(sd.weight),
+            correct: sd.correct,
+            blank: sd.blank,
+            wrong: sd.wrong,
+          })),
+      }));
+
+      // Map settings
+      const s = settingsRows?.[0];
+      if (s) {
+        const parsedPhases = Array.isArray(s.phases)
+          ? s.phases
+            .filter((p: any) => p && typeof p === 'object')
+            .map((p: any) => ({
+              name: typeof p.name === 'string' && p.name.trim() ? p.name.trim() : 'P1',
+              minPercent: Number.isFinite(Number(p.minPercent)) ? Number(p.minPercent) : 60,
+              weight: Number.isFinite(Number(p.weight)) && Number(p.weight) > 0 ? Number(p.weight) : 1,
+            }))
+          : [];
+
+        const phases = parsedPhases.length > 0
+          ? parsedPhases
+          : [{ name: 'P1', minPercent: 60, weight: 1 }];
+
+        const settings: AppSettings = {
+          contest: {
+            name: s.contest_name || '',
+            organ: s.contest_organ || '',
+            examDate: s.exam_date || '',
+            vacancies: s.vacancies || 0,
+            candidateName: s.candidate_name || '',
+            phases: phases as any,
+            totalMinPercent: Number(s.total_min_percent) || 70,
+          },
+          revision: { enabled: s.revision_enabled ?? true, marks: (s.revision_marks || ['24h', '7d', '30d', '60d']) as any },
+          goals: { weeklyHours: Number(s.weekly_hours) || 40, dailyQuestions: s.daily_questions || 50, dailyPages: s.daily_pages || 30 },
+          weeklyHours: Number(s.weekly_hours) || 40,
+          studyDays: Array.isArray(s.study_days) ? s.study_days : [1, 2, 3, 4, 5],
+          onboardingCompleted: s.onboarding_completed ?? false,
+          setupCompleted: s.setup_completed ?? false,
+          moduleHints: (s.module_hints as Record<string, boolean>) || {},
+          notificationsEnabled: s.notifications_enabled ?? false,
+          reminderMinutesBefore: s.reminder_minutes_before ?? 5,
+          revisionReminderHour: (s as any).revision_reminder_hour ?? 7,
+          soundEnabled: true,
+        };
+        store.setState({ settings, streak: s.streak || 0, lastStudyDate: s.last_study_date || null });
+      }
+
+      store.setState({
+        disciplines: (disciplines || []).map(mapDiscipline),
+        topics: (topics || []).map(mapTopic),
+        studyRecords: (records || []).map(mapStudyRecord),
+        revisions: (revisions || []).map(mapRevision),
+        cycles: mappedCycles,
+        scheduleSlots: (slots || []).map(mapScheduleSlot),
+        simulados: mappedSimulados,
+        dailyNotes: (notes || []).map(mapDailyNote),
+      });
+    } catch (error) {
+      console.error('Erro ao sincronizar dados:', error);
+      toast.error('Falha ao carregar dados. Tente atualizar a página.');
+    } finally {
+      setSyncing(false);
     }
-
-    // Map cycles with their blocks and disciplines
-    const mappedCycles: StudyCycle[] = (cycles || []).map(c => ({
-      id: c.id,
-      name: c.name,
-      weeklyHours: Number(c.weekly_hours),
-      studyDays: c.study_days || [1,2,3,4,5],
-      createdAt: c.created_at,
-      active: c.active,
-      blocks: cycleBlocks
-        .filter(b => b.cycle_id === c.id)
-        .sort((a: any, b: any) => a.block_number - b.block_number)
-        .map((b: any): CycleBlock => ({
-          id: b.id, number: b.block_number, disciplineId: b.discipline_id, durationMinutes: b.duration_minutes,
-        })),
-      disciplines: cycleDisciplines
-        .filter(d => d.cycle_id === c.id)
-        .map((d: any): CycleDiscipline => ({
-          disciplineId: d.discipline_id, importance: d.importance, situation: d.situation, difficulty: d.difficulty,
-        })),
-    }));
-
-    // Map simulados with their disciplines
-    const mappedSimulados: Simulado[] = (simulados || []).map(s => ({
-      id: s.id, date: s.date, banca: s.banca, metaPercent: Number(s.meta_percent),
-      hasP2: s.has_p2, p1MinPercent: Number(s.p1_min_percent), p2MinPercent: Number(s.p2_min_percent),
-      totalMinPercent: Number(s.total_min_percent),
-      p1Disciplines: s.p1_disciplines || [], p2Disciplines: s.p2_disciplines || [],
-      createdAt: s.created_at,
-      disciplines: (simDisciplines || [])
-        .filter(sd => sd.simulado_id === s.id)
-        .map((sd: any): SimuladoDiscipline => ({
-          disciplineId: sd.discipline_id, questions: sd.questions, weight: Number(sd.weight),
-          correct: sd.correct, blank: sd.blank, wrong: sd.wrong,
-        })),
-    }));
-
-    // Map settings
-    const s = settingsRows?.[0];
-    if (s) {
-      const phases = Array.isArray(s.phases) ? s.phases.map((p: any) => ({ name: p.name, minPercent: p.minPercent, weight: p.weight ?? 1 })) : [{ name: 'P1', minPercent: 60, weight: 1 }];
-      const settings: AppSettings = {
-        contest: {
-          name: s.contest_name || '', organ: s.contest_organ || '', examDate: s.exam_date || '',
-          vacancies: s.vacancies || 0, candidateName: s.candidate_name || '',
-          phases: phases as any, totalMinPercent: Number(s.total_min_percent) || 70,
-        },
-        revision: { enabled: s.revision_enabled ?? true, marks: (s.revision_marks || ['24h','7d','30d','60d']) as any },
-        goals: { weeklyHours: Number(s.weekly_hours) || 40, dailyQuestions: s.daily_questions || 50, dailyPages: s.daily_pages || 30 },
-        weeklyHours: Number(s.weekly_hours) || 40,
-        studyDays: s.study_days || [1,2,3,4,5],
-        onboardingCompleted: s.onboarding_completed ?? false,
-        setupCompleted: s.setup_completed ?? false,
-        moduleHints: (s.module_hints as Record<string, boolean>) || {},
-        notificationsEnabled: s.notifications_enabled ?? false,
-        reminderMinutesBefore: s.reminder_minutes_before ?? 5,
-        revisionReminderHour: (s as any).revision_reminder_hour ?? 7,
-        soundEnabled: true,
-      };
-      store.setState({ settings, streak: s.streak || 0, lastStudyDate: s.last_study_date || null });
-    }
-
-    store.setState({
-      disciplines: (disciplines || []).map(mapDiscipline),
-      topics: (topics || []).map(mapTopic),
-      studyRecords: (records || []).map(mapStudyRecord),
-      revisions: (revisions || []).map(mapRevision),
-      cycles: mappedCycles,
-      scheduleSlots: (slots || []).map(mapScheduleSlot),
-      simulados: mappedSimulados,
-      dailyNotes: (notes || []).map(mapDailyNote),
-    });
-    setSyncing(false);
   }, [user]);
 
   // Subscribe to realtime changes
