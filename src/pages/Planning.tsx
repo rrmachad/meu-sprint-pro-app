@@ -243,7 +243,7 @@ function GenerateDialog({
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  disciplines: { id: string; name: string; weight: number; category: string; cannotZero?: boolean }[];
+  disciplines: { id: string; name: string; weight: number; category: string; cannotZero?: boolean; prova?: string }[];
   topics: { disciplineId: string; completed: boolean }[];
   studyRecords: { disciplineId: string; durationSeconds: number }[];
   existingCycleDisciplines: CycleDiscipline[];
