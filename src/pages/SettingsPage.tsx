@@ -628,61 +628,21 @@ function DisciplinesTab() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-2">
-              {disciplines.map((d, i) => (
-                <motion.div
-                  key={d.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                  whileHover={{ scale: 1.01, y: -1 }}
-                  className="flex items-center gap-3 rounded-xl glass border-border/30 p-3 hover:border-primary/30 hover:shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)] group"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm truncate group-hover:text-primary transition-colors">{d.name}</span>
-                      <Badge variant="secondary" className={`text-[10px] border ${CATEGORY_COLORS[d.category]}`}>
-                        {CATEGORIES.find((c) => c.value === d.category)?.label}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] border-border/40">
-                        {d.prova}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>Peso: {getProvaWeight(d.prova)}</span>
-                      <span>Questões: {d.defaultQuestions}</span>
-                      <span>Pontos: {d.defaultQuestions * getProvaWeight(d.prova)}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary" onClick={() => openEdit(d)}>
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="glass-strong border-border/30 rounded-xl">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remover disciplina?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja remover "{d.name}"? Todos os tópicos associados também serão removidos. Essa ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="glass border-border/30">Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(d.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Remover
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={disciplines.map((d) => d.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2">
+                  {disciplines.map((d) => (
+                    <SortableDisciplineItem
+                      key={d.id}
+                      discipline={d}
+                      getProvaWeight={getProvaWeight}
+                      onEdit={() => openEdit(d)}
+                      onDelete={() => handleDelete(d.id)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>
