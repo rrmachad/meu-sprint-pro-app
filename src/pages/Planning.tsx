@@ -603,7 +603,37 @@ function GenerateDialog({
             Este ciclo será utilizado nas semanas {weekStart} a {weekEnd} ({weekEnd - weekStart + 1} semana{weekEnd - weekStart !== 0 ? 's' : ''}).
           </p>
 
-          {/* Discipline selection */}
+          {/* Study Phase Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Fase de estudo</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: 'basica' as StudyPhase, label: 'Fase Básica', desc: 'Blocos longos (90-120min). Foco em teoria e imersão profunda.', icon: '📖' },
+                { value: 'intermediaria' as StudyPhase, label: 'Fase Intermediária', desc: 'Blocos médios (60-75min). Equilíbrio entre teoria e prática.', icon: '⚖️' },
+                { value: 'avancada' as StudyPhase, label: 'Fase Avançada', desc: 'Blocos curtos (45-60min). Giros rápidos, revisões e questões.', icon: '⚡' },
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setPhase(opt.value)}
+                  className={`relative flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-all ${
+                    phase === opt.value
+                      ? 'border-primary bg-primary/10 shadow-neon ring-1 ring-primary/30'
+                      : 'border-border/40 bg-muted/20 hover:bg-muted/40 hover:border-border'
+                  }`}
+                >
+                  <span className="text-xl">{opt.icon}</span>
+                  <span className="text-xs font-semibold leading-tight">{opt.label}</span>
+                  <span className="text-[10px] text-muted-foreground leading-tight">{opt.desc}</span>
+                  {phase === opt.value && (
+                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Disciplinas do ciclo</Label>
