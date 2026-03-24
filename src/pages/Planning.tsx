@@ -1186,6 +1186,9 @@ function CycleView({
           {cycle.weekStart && cycle.weekEnd && (
             <span> • Semanas {cycle.weekStart}–{cycle.weekEnd}</span>
           )}
+          {cycle.phase && (
+            <span> • {cycle.phase === 'basica' ? '📖 Básica' : cycle.phase === 'intermediaria' ? '⚖️ Intermediária' : '⚡ Avançada'}</span>
+          )}
         </CardDescription>
         {cycle.selectedDisciplineIds && (
           <p className="text-[10px] text-muted-foreground mt-1">
