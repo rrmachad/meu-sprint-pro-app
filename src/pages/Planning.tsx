@@ -848,12 +848,16 @@ function EditCycleDialog({
   onOpenChange,
   cycle,
   allDisciplines,
+  topics,
+  studyRecords,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   cycle: StudyCycle;
-  allDisciplines: { id: string; name: string; prova?: string }[];
+  allDisciplines: { id: string; name: string; weight: number; category: string; cannotZero?: boolean; prova?: string }[];
+  topics: { disciplineId: string; completed: boolean }[];
+  studyRecords: { disciplineId: string; durationSeconds: number }[];
   onSave: (updates: Partial<StudyCycle>) => void;
 }) {
   const [cycleName, setCycleName] = useState(cycle.name);
@@ -863,6 +867,7 @@ function EditCycleDialog({
     cycle.selectedDisciplineIds || cycle.blocks.map((b) => b.disciplineId).filter((v, i, a) => a.indexOf(v) === i)
   );
   const [phase, setPhase] = useState<StudyPhase>(cycle.phase || 'intermediaria');
+  const originalPhase = cycle.phase || 'intermediaria';
 
   const toggleDisc = (id: string) => {
     setSelectedIds((prev) =>
@@ -879,23 +884,45 @@ function EditCycleDialog({
       toast.error('Selecione pelo menos uma disciplina.');
       return;
     }
-    // Remove blocks of deselected disciplines
-    const filteredBlocks = cycle.blocks
-      .filter((b) => selectedIds.includes(b.disciplineId))
-      .map((b, i) => ({ ...b, number: i + 1 }));
-    const filteredDisciplines = cycle.disciplines.filter((d) => selectedIds.includes(d.disciplineId));
 
-    onSave({
-      name: cycleName,
-      weekStart,
-      weekEnd,
-      phase,
-      selectedDisciplineIds: selectedIds,
-      blocks: filteredBlocks,
-      disciplines: filteredDisciplines,
-    });
+    const phaseChanged = phase !== originalPhase;
+
+    if (phaseChanged) {
+      // Regenerate blocks with the new phase
+      const selectedDiscs = allDisciplines.filter((d) => selectedIds.includes(d.id));
+      const filteredDisciplines = cycle.disciplines.filter((d) => selectedIds.includes(d.disciplineId));
+      const scores = computeScores(selectedDiscs, topics, filteredDisciplines, studyRecords);
+      const newBlocks = generateBlocks(scores, cycle.weeklyHours * 60, cycle.studyDays.length, phase);
+
+      onSave({
+        name: cycleName,
+        weekStart,
+        weekEnd,
+        phase,
+        selectedDisciplineIds: selectedIds,
+        blocks: newBlocks,
+        disciplines: filteredDisciplines,
+      });
+      toast.success('Ciclo regenerado com a nova fase!');
+    } else {
+      // Just filter blocks of deselected disciplines
+      const filteredBlocks = cycle.blocks
+        .filter((b) => selectedIds.includes(b.disciplineId))
+        .map((b, i) => ({ ...b, number: i + 1 }));
+      const filteredDisciplines = cycle.disciplines.filter((d) => selectedIds.includes(d.disciplineId));
+
+      onSave({
+        name: cycleName,
+        weekStart,
+        weekEnd,
+        phase,
+        selectedDisciplineIds: selectedIds,
+        blocks: filteredBlocks,
+        disciplines: filteredDisciplines,
+      });
+      toast.success('Ciclo atualizado!');
+    }
     onOpenChange(false);
-    toast.success('Ciclo atualizado!');
   };
 
   return (
