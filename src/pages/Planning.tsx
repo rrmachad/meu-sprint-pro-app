@@ -814,6 +814,7 @@ function CycleView({
   onActivate,
   onUpdateBlocks,
   onUpdateCycle,
+  onDuplicate,
 }: {
   cycle: StudyCycle;
   disciplines: { id: string; name: string; prova?: string }[];
@@ -822,6 +823,7 @@ function CycleView({
   onActivate: () => void;
   onUpdateBlocks: (blocks: CycleBlock[]) => void;
   onUpdateCycle: (updates: Partial<StudyCycle>) => void;
+  onDuplicate: () => void;
 }) {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
