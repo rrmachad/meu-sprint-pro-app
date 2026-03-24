@@ -1008,8 +1008,8 @@ function CycleView({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const getDisciplineName = (id: string) => disciplines.find((d) => d.id === id)?.name || 'Disciplina';
-
-  // No longer needed: dailyBlocks computation removed (linear cycle model)
+  const currentIdx = cycle.currentBlockIndex || 0;
+  const progressPercent = cycle.blocks.length > 0 ? Math.round((currentIdx / cycle.blocks.length) * 100) : 0;
 
   const totalMinutes = cycle.blocks.reduce((a, b) => a + b.durationMinutes, 0);
 
