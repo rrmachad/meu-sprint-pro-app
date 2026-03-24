@@ -1291,18 +1291,30 @@ function ExportPdfDialog({
           const topic = dTopics[ti];
           if (y > pageHeight - 15) { pdf.addPage(); y = margin; }
 
-          const status = topic.completed ? '✓' : '○';
+          const status = topic.completed ? '[X]' : '[  ]';
+
+          // Clean topic text: remove leading %E, %É, %C3%xx and similar URL-encoded artifacts
+          let cleanText = topic.text
+            .replace(/^(%[A-Fa-f0-9É]{1,2}\s*)+/g, '')
+            .replace(/%[A-Fa-f0-9]{2}/g, (match) => {
+              try { return decodeURIComponent(match); } catch { return match; }
+            })
+            .trim();
+
+          if (!cleanText) cleanText = topic.text.trim();
+
           const prefix = `${status} ${ti + 1}. `;
 
-          pdf.setFont('helvetica', topic.completed ? 'normal' : 'normal');
+          pdf.setFont('helvetica', 'normal');
           if (topic.completed) {
             pdf.setTextColor(120, 120, 120);
           } else {
             pdf.setTextColor(30, 30, 30);
           }
 
-          // Word wrap
-          const lines = pdf.splitTextToSize(prefix + topic.text, contentWidth - 4);
+          // Word wrap with safe margin
+          const maxTextWidth = contentWidth - 10;
+          const lines = pdf.splitTextToSize(prefix + cleanText, maxTextWidth);
           for (const line of lines) {
             if (y > pageHeight - 15) { pdf.addPage(); y = margin; }
             pdf.text(line, margin + 2, y + 3);
