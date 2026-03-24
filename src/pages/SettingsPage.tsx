@@ -518,6 +518,81 @@ function ContestTab() {
   );
 }
 
+// ========== SORTABLE DISCIPLINE ITEM ==========
+function SortableDisciplineItem({ discipline: d, getProvaWeight, onEdit, onDelete }: {
+  discipline: Discipline;
+  getProvaWeight: (prova: string) => number;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: d.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-2 rounded-xl glass border-border/30 p-3 hover:border-primary/30 hover:shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)] group ${isDragging ? 'shadow-lg ring-2 ring-primary/30' : ''}`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none p-1 text-muted-foreground hover:text-primary transition-colors"
+        aria-label="Arrastar para reordenar"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium text-sm truncate group-hover:text-primary transition-colors">{d.name}</span>
+          <Badge variant="secondary" className={`text-[10px] border ${CATEGORY_COLORS[d.category]}`}>
+            {CATEGORIES.find((c) => c.value === d.category)?.label}
+          </Badge>
+          <Badge variant="outline" className="text-[10px] border-border/40">
+            {d.prova}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+          <span>Peso: {getProvaWeight(d.prova)}</span>
+          <span>Questões: {d.defaultQuestions}</span>
+          <span>Pontos: {d.defaultQuestions * getProvaWeight(d.prova)}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary" onClick={onEdit}>
+          <Edit2 className="h-3.5 w-3.5" />
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="glass-strong border-border/30 rounded-xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover disciplina?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja remover "{d.name}"? Todos os tópicos associados também serão removidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="glass border-border/30">Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Remover
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  );
+}
+
 // ==================== DISCIPLINES TAB ====================
 function DisciplinesTab() {
   const settings = useAppStore((s) => s.settings);
