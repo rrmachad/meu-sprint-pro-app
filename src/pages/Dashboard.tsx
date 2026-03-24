@@ -418,7 +418,64 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Sprints do Dia & Sprints da Semana */}
+      {/* Next Block Card */}
+      {activeCycle && nextBlock && nextBlockDisc && (
+        <motion.div variants={itemVariants}>
+          <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+            <CardContent className="p-5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-12 w-12 items-center justify-center rounded-xl gradient-neon shadow-neon shrink-0">
+                    <div className="absolute inset-0 rounded-xl gradient-neon blur-md opacity-40" />
+                    <BookOpen className="h-6 w-6 text-neon-green-foreground relative z-10" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Próximo Bloco</p>
+                    <p className="text-lg font-bold text-foreground">{nextBlockDisc.name}</p>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <span className="text-xs text-muted-foreground font-mono">
+                        Bloco {nextBlockIndex + 1} de {activeCycle.blocks.length}
+                      </span>
+                      <span className="text-xs text-muted-foreground">•</span>
+                      <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {nextBlock.durationMinutes}min
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button
+                    className="gap-2 rounded-xl font-bold flex-1 sm:flex-none"
+                    onClick={() => {
+                      const newIdx = nextBlockIndex + 1;
+                      if (newIdx >= activeCycle.blocks.length) {
+                        updateCycle(activeCycle.id, { currentBlockIndex: 0 });
+                        toast.success('🎉 Ciclo completo! Recomeçando do início.');
+                      } else {
+                        updateCycle(activeCycle.id, { currentBlockIndex: newIdx });
+                        toast.success(`Bloco ${nextBlockIndex + 1} concluído! Próximo: ${disciplines.find(d => d.id === activeCycle.blocks[newIdx]?.disciplineId)?.name || ''}`);
+                      }
+                    }}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Concluir e Avançar
+                  </Button>
+                  <Badge variant="outline" className="text-xs border-primary/30 text-primary shrink-0">
+                    {Math.round((nextBlockIndex / activeCycle.blocks.length) * 100)}%
+                  </Badge>
+                </div>
+              </div>
+              {/* Mini progress bar */}
+              <div className="mt-3">
+                <Progress value={Math.round((nextBlockIndex / activeCycle.blocks.length) * 100)} className="h-1.5" />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+
       {(goals.weeklyHours > 0 || goals.dailyQuestions > 0 || goals.dailyPages > 0) && (
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Daily Sprints */}
