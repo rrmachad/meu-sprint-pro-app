@@ -621,6 +621,7 @@ export default function Dashboard() {
                         className="gap-2 rounded-xl font-bold flex-1 sm:flex-none"
                         variant={timerRemaining === 0 && timerElapsed > 0 ? 'default' : 'secondary'}
                         onClick={() => {
+                          logBlockCompletion();
                           resetTimer();
                           const newIdx = nextBlockIndex + 1;
                           if (newIdx >= activeCycle.blocks.length) {
