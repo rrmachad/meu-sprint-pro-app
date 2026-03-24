@@ -862,6 +862,7 @@ function EditCycleDialog({
   const [selectedIds, setSelectedIds] = useState<string[]>(
     cycle.selectedDisciplineIds || cycle.blocks.map((b) => b.disciplineId).filter((v, i, a) => a.indexOf(v) === i)
   );
+  const [phase, setPhase] = useState<StudyPhase>(cycle.phase || 'intermediaria');
 
   const toggleDisc = (id: string) => {
     setSelectedIds((prev) =>
