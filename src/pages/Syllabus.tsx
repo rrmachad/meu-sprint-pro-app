@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react';
+import { useState, useCallback, useRef, useMemo, Component, ErrorInfo, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor,
@@ -967,15 +967,24 @@ function TopicRow({
 
 // ========== DISCIPLINE ACCORDION ==========
 function DisciplineSection({ discipline, statusFilter = 'all', searchQuery = '' }: { discipline: Discipline; statusFilter?: 'all' | 'pending' | 'completed'; searchQuery?: string }) {
-  const allDisciplineTopics = useAppStore((s) => s.topics.filter((t) => t.disciplineId === discipline.id));
-  const topics = allDisciplineTopics.filter((t) => {
-    if (statusFilter === 'pending' && t.completed) return false;
-    if (statusFilter === 'completed' && !t.completed) return false;
-    if (searchQuery.trim() && !(t.text || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
   const allTopics = useAppStore((s) => s.topics);
-  const { addTopic, updateTopic, removeTopic, setTopics } = useAppStore();
+  const allDisciplineTopics = useMemo(
+    () => allTopics.filter((t) => t.disciplineId === discipline.id),
+    [allTopics, discipline.id]
+  );
+  const topics = useMemo(
+    () => allDisciplineTopics.filter((t) => {
+      if (statusFilter === 'pending' && t.completed) return false;
+      if (statusFilter === 'completed' && !t.completed) return false;
+      if (searchQuery.trim() && !(t.text || '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    }),
+    [allDisciplineTopics, searchQuery, statusFilter]
+  );
+  const addTopic = useAppStore((s) => s.addTopic);
+  const updateTopic = useAppStore((s) => s.updateTopic);
+  const removeTopic = useAppStore((s) => s.removeTopic);
+  const setTopics = useAppStore((s) => s.setTopics);
   const [newTopicText, setNewTopicText] = useState('');
   const [addingTopic, setAddingTopic] = useState(false);
 
@@ -1430,7 +1439,10 @@ export default function Syllabus() {
 function SyllabusContent() {
   const disciplines = useAppStore((s) => s.disciplines);
   const topics = useAppStore((s) => s.topics);
-  const { addTopic, addDiscipline, clearTopicsByDiscipline, clearAllTopics } = useAppStore();
+  const addTopic = useAppStore((s) => s.addTopic);
+  const addDiscipline = useAppStore((s) => s.addDiscipline);
+  const clearTopicsByDiscipline = useAppStore((s) => s.clearTopicsByDiscipline);
+  const clearAllTopics = useAppStore((s) => s.clearAllTopics);
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
