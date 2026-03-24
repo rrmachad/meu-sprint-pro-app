@@ -137,10 +137,17 @@ function computeScores(
   }).filter((d) => d.totalTopics > 0 || d.weight > 0);
 }
 
+const PHASE_BLOCK_RANGES: Record<StudyPhase, { min: number; max: number }> = {
+  basica: { min: 90, max: 120 },
+  intermediaria: { min: 60, max: 75 },
+  avancada: { min: 45, max: 60 },
+};
+
 function generateBlocks(
   scores: DisciplineScore[],
   totalWeeklyMinutes: number,
   daysCount: number,
+  phase: StudyPhase = 'avancada',
 ): CycleBlock[] {
   if (scores.length === 0 || daysCount === 0) return [];
 
