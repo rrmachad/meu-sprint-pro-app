@@ -8,6 +8,7 @@ export type Difficulty = 'muita_facilidade' | 'leve_facilidade' | 'normal' | 'le
 export type ActivityType = 'estudo' | 'revisao' | 'exercicios' | 'leitura';
 export type Turno = 'madrugada' | 'manha' | 'tarde' | 'noite';
 export type RevisionMark = '24h' | '7d' | '30d' | '60d';
+export type StudyPhase = 'basica' | 'intermediaria' | 'avancada';
 
 // ============ CORE MODELS ============
 
@@ -82,6 +83,7 @@ export interface StudyCycle {
   selectedDisciplineIds?: string[]; // disciplines included in this cycle
   weekStart?: number; // starting week number (1-based)
   weekEnd?: number; // ending week number (1-based)
+  phase?: StudyPhase; // study phase for block duration
 }
 
 // ============ SCHEDULE ============

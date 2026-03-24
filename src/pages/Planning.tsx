@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/accordion';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
-import type { CycleBlock, CycleDiscipline, StudyCycle, Importance, UserSituation, Difficulty } from '@/types';
+import type { CycleBlock, CycleDiscipline, StudyCycle, Importance, UserSituation, Difficulty, StudyPhase } from '@/types';
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
@@ -137,10 +137,17 @@ function computeScores(
   }).filter((d) => d.totalTopics > 0 || d.weight > 0);
 }
 
+const PHASE_BLOCK_RANGES: Record<StudyPhase, { min: number; max: number }> = {
+  basica: { min: 90, max: 120 },
+  intermediaria: { min: 60, max: 75 },
+  avancada: { min: 45, max: 60 },
+};
+
 function generateBlocks(
   scores: DisciplineScore[],
   totalWeeklyMinutes: number,
   daysCount: number,
+  phase: StudyPhase = 'avancada',
 ): CycleBlock[] {
   if (scores.length === 0 || daysCount === 0) return [];
 
@@ -178,17 +185,19 @@ function generateBlocks(
     idx++;
   }
 
-  // ── Step 2: Generate blocks (prefer smaller blocks for better weekly spread) ──
+  // ── Step 2: Generate blocks using phase-specific durations ──
+  const { min: phaseMin, max: phaseMax } = PHASE_BLOCK_RANGES[phase];
   interface AllocBlock { disciplineId: string; durationMinutes: number; category: string; score: number }
   const allBlocks: AllocBlock[] = [];
   for (const disc of allocated.sort((a, b) => b.score - a.score)) {
     let remaining = disc.allocatedMinutes;
-    // Calculate ideal block size to maximize number of blocks (more blocks = better spread)
-    const idealNumBlocks = Math.max(2, Math.ceil(remaining / 60));
-    const idealBlockSize = Math.max(30, Math.min(90, Math.ceil(remaining / idealNumBlocks)));
-    while (remaining >= 30) {
-      const duration = Math.min(idealBlockSize, remaining, 90);
-      if (duration < 30) break;
+    // Calculate ideal block count based on phase block size
+    const avgBlockSize = Math.round((phaseMin + phaseMax) / 2);
+    const idealNumBlocks = Math.max(1, Math.round(remaining / avgBlockSize));
+    const idealBlockSize = Math.max(phaseMin, Math.min(phaseMax, Math.ceil(remaining / idealNumBlocks)));
+    while (remaining >= phaseMin) {
+      const duration = Math.min(idealBlockSize, remaining, phaseMax);
+      if (duration < phaseMin) break;
       allBlocks.push({
         disciplineId: disc.disciplineId,
         durationMinutes: duration,
@@ -197,10 +206,10 @@ function generateBlocks(
       });
       remaining -= duration;
     }
-    // If leftover < 30, distribute to last block
+    // If leftover < phaseMin, distribute to last block of same discipline
     if (remaining > 0 && allBlocks.length > 0) {
-      const lastBlock = allBlocks[allBlocks.length - 1];
-      if (lastBlock.disciplineId === disc.disciplineId && lastBlock.durationMinutes + remaining <= 90) {
+      const lastBlock = [...allBlocks].reverse().find((b) => b.disciplineId === disc.disciplineId);
+      if (lastBlock && lastBlock.durationMinutes + remaining <= phaseMax + 15) {
         lastBlock.durationMinutes += remaining;
       }
     }
@@ -404,6 +413,7 @@ function GenerateDialog({
   const [showConfig, setShowConfig] = useState(false);
   const [weekStart, setWeekStart] = useState(maxWeekEnd + 1);
   const [weekEnd, setWeekEnd] = useState(maxWeekEnd + 4);
+  const [phase, setPhase] = useState<StudyPhase>('intermediaria');
 
   // Selected disciplines for this cycle
   const [selectedDiscIds, setSelectedDiscIds] = useState<string[]>(() =>
@@ -471,7 +481,7 @@ function GenerateDialog({
       return;
     }
 
-    const blocks = generateBlocks(scores, weeklyHours * 60, studyDays.length);
+    const blocks = generateBlocks(scores, weeklyHours * 60, studyDays.length, phase);
 
     const cycle: StudyCycle = {
       id: crypto.randomUUID(),
@@ -485,6 +495,7 @@ function GenerateDialog({
       selectedDisciplineIds: selectedDiscIds,
       weekStart,
       weekEnd,
+      phase,
     };
 
     onGenerate(cycle);
@@ -592,7 +603,37 @@ function GenerateDialog({
             Este ciclo será utilizado nas semanas {weekStart} a {weekEnd} ({weekEnd - weekStart + 1} semana{weekEnd - weekStart !== 0 ? 's' : ''}).
           </p>
 
-          {/* Discipline selection */}
+          {/* Study Phase Selection */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Fase de estudo</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: 'basica' as StudyPhase, label: 'Fase Básica', desc: 'Blocos longos (90-120min). Foco em teoria e imersão profunda.', icon: '📖' },
+                { value: 'intermediaria' as StudyPhase, label: 'Fase Intermediária', desc: 'Blocos médios (60-75min). Equilíbrio entre teoria e prática.', icon: '⚖️' },
+                { value: 'avancada' as StudyPhase, label: 'Fase Avançada', desc: 'Blocos curtos (45-60min). Giros rápidos, revisões e questões.', icon: '⚡' },
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setPhase(opt.value)}
+                  className={`relative flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-all ${
+                    phase === opt.value
+                      ? 'border-primary bg-primary/10 shadow-neon ring-1 ring-primary/30'
+                      : 'border-border/40 bg-muted/20 hover:bg-muted/40 hover:border-border'
+                  }`}
+                >
+                  <span className="text-xl">{opt.icon}</span>
+                  <span className="text-xs font-semibold leading-tight">{opt.label}</span>
+                  <span className="text-[10px] text-muted-foreground leading-tight">{opt.desc}</span>
+                  {phase === opt.value && (
+                    <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Disciplinas do ciclo</Label>
@@ -1144,6 +1185,9 @@ function CycleView({
           {cycle.weeklyHours}h/semana • {cycle.studyDays.map((d) => DAY_NAMES[d]).join(', ')} • {cycle.blocks.length} blocos • {Math.floor(totalMinutes / 60)}h{String(totalMinutes % 60).padStart(2, '0')}min total
           {cycle.weekStart && cycle.weekEnd && (
             <span> • Semanas {cycle.weekStart}–{cycle.weekEnd}</span>
+          )}
+          {cycle.phase && (
+            <span> • {cycle.phase === 'basica' ? '📖 Básica' : cycle.phase === 'intermediaria' ? '⚖️ Intermediária' : '⚡ Avançada'}</span>
           )}
         </CardDescription>
         {cycle.selectedDisciplineIds && (
