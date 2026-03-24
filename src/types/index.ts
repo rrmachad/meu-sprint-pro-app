@@ -83,6 +83,7 @@ export interface StudyCycle {
   selectedDisciplineIds?: string[]; // disciplines included in this cycle
   weekStart?: number; // starting week number (1-based)
   weekEnd?: number; // ending week number (1-based)
+  phase?: StudyPhase; // study phase for block duration
 }
 
 // ============ SCHEDULE ============
