@@ -2,7 +2,7 @@ import { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity, Crown } from 'lucide-react';
+import { BookOpen, Clock, Target, TrendingUp, CheckCircle2, BarChart3, FileText, Flame, Bell, AlertTriangle, CalendarCheck, Sparkles, Trophy, Timer, Crosshair, Activity, Crown, Zap } from 'lucide-react';
 import { useCountUp } from '@/hooks/useCountUp';
 import { SetupBanner } from '@/components/SetupBanner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
