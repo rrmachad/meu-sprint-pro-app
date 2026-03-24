@@ -1178,51 +1178,27 @@ function CycleView({
 
         <Separator />
 
-        <Accordion type="multiple" className="space-y-1">
-          {dailyBlocks.map((dayBlocks, dayIdx) => {
-            const sortedStudyDays = [...cycle.studyDays].sort((a, b) => ((a === 0 ? 7 : a) - (b === 0 ? 7 : b)));
-            const dayName = sortedStudyDays[dayIdx] !== undefined
-              ? DAY_FULL[sortedStudyDays[dayIdx]]
-              : `Dia ${dayIdx + 1}`;
-            const dayMinutes = dayBlocks.reduce((a, b) => a + b.durationMinutes, 0);
-
-            return (
-              <AccordionItem key={dayIdx} value={`day-${dayIdx}`} className="border border-border/30 rounded-xl px-3 glass">
-                <AccordionTrigger className="py-2 text-sm hover:no-underline">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                    <span className="font-medium">{dayName}</span>
-                    <Badge variant="outline" className="text-[10px] rounded-full border-border/40">
-                      {dayBlocks.length} blocos • {Math.floor(dayMinutes / 60)}h{String(dayMinutes % 60).padStart(2, '0')}min
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-3">
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={dayBlocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-                      <div className="space-y-1.5">
-                        {dayBlocks.map((block, bi) => (
-                          <SortableBlock
-                            key={block.id}
-                            block={block}
-                            index={bi}
-                            isEditing={editingBlockId === block.id}
-                            disciplines={disciplines}
-                            getDisciplineName={getDisciplineName}
-                            onEdit={() => setEditingBlockId(block.id)}
-                            onStopEdit={() => setEditingBlockId(null)}
-                            onUpdate={(updates) => updateBlock(block.id, updates)}
-                            onRemove={() => removeBlock(block.id)}
-                          />
-                        ))}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
+        {/* Linear numbered block list */}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={cycle.blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-1">
+              {cycle.blocks.map((block, i) => (
+                <SortableBlock
+                  key={block.id}
+                  block={block}
+                  index={i}
+                  isEditing={editingBlockId === block.id}
+                  disciplines={disciplines}
+                  getDisciplineName={getDisciplineName}
+                  onEdit={() => setEditingBlockId(block.id)}
+                  onStopEdit={() => setEditingBlockId(null)}
+                  onUpdate={(updates) => updateBlock(block.id, updates)}
+                  onRemove={() => removeBlock(block.id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs rounded-xl border-border/40 hover:border-primary/40" onClick={addBlock}>
           <Plus className="h-3.5 w-3.5" />
