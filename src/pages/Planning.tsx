@@ -657,6 +657,154 @@ function GenerateDialog({
   );
 }
 
+// ========== EDIT CYCLE DIALOG ==========
+function EditCycleDialog({
+  open,
+  onOpenChange,
+  cycle,
+  allDisciplines,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  cycle: StudyCycle;
+  allDisciplines: { id: string; name: string; prova?: string }[];
+  onSave: (updates: Partial<StudyCycle>) => void;
+}) {
+  const [cycleName, setCycleName] = useState(cycle.name);
+  const [weekStart, setWeekStart] = useState(cycle.weekStart || 1);
+  const [weekEnd, setWeekEnd] = useState(cycle.weekEnd || 4);
+  const [selectedIds, setSelectedIds] = useState<string[]>(
+    cycle.selectedDisciplineIds || cycle.blocks.map((b) => b.disciplineId).filter((v, i, a) => a.indexOf(v) === i)
+  );
+
+  const toggleDisc = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSave = () => {
+    if (weekStart > weekEnd) {
+      toast.error('A semana inicial deve ser menor ou igual à semana final.');
+      return;
+    }
+    if (selectedIds.length === 0) {
+      toast.error('Selecione pelo menos uma disciplina.');
+      return;
+    }
+    // Remove blocks of deselected disciplines
+    const filteredBlocks = cycle.blocks
+      .filter((b) => selectedIds.includes(b.disciplineId))
+      .map((b, i) => ({ ...b, number: i + 1 }));
+    const filteredDisciplines = cycle.disciplines.filter((d) => selectedIds.includes(d.disciplineId));
+
+    onSave({
+      name: cycleName,
+      weekStart,
+      weekEnd,
+      selectedDisciplineIds: selectedIds,
+      blocks: filteredBlocks,
+      disciplines: filteredDisciplines,
+    });
+    onOpenChange(false);
+    toast.success('Ciclo atualizado!');
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto glass border-border/30">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit2 className="h-4 w-4 text-primary" />
+            Editar Ciclo
+          </DialogTitle>
+          <DialogDescription>Altere nome, semanas e disciplinas do ciclo.</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Name */}
+          <div className="space-y-1">
+            <Label className="text-sm font-medium">Nome do ciclo</Label>
+            <input
+              type="text"
+              value={cycleName}
+              onChange={(e) => setCycleName(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          {/* Week range */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Semana inicial</Label>
+              <input
+                type="number"
+                min={1}
+                max={52}
+                value={weekStart}
+                onChange={(e) => setWeekStart(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Semana final</Label>
+              <input
+                type="number"
+                min={1}
+                max={52}
+                value={weekEnd}
+                onChange={(e) => setWeekEnd(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full h-9 px-3 rounded-lg border border-border/40 bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Semanas {weekStart} a {weekEnd} ({weekEnd - weekStart + 1} semana{weekEnd - weekStart !== 0 ? 's' : ''})
+          </p>
+
+          {/* Discipline selection */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Disciplinas</Label>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedIds(allDisciplines.map((d) => d.id))}>Todas</Button>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedIds([])}>Nenhuma</Button>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border/30 glass p-3 max-h-[200px] overflow-y-auto space-y-1">
+              {allDisciplines.map((d) => (
+                <label
+                  key={d.id}
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-accent/40 cursor-pointer transition-colors"
+                >
+                  <Checkbox
+                    checked={selectedIds.includes(d.id)}
+                    onCheckedChange={() => toggleDisc(d.id)}
+                  />
+                  <span className="text-sm flex-1 truncate">{d.name}</span>
+                  <Badge variant="outline" className="text-[10px] border-border/40">{d.prova || '—'}</Badge>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {selectedIds.length} de {allDisciplines.length} disciplinas selecionadas
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">Cancelar</Button>
+          <Button onClick={handleSave} className="gap-2 rounded-xl bg-primary text-primary-foreground font-bold">
+            <Check className="h-4 w-4" />
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ========== CYCLE VIEW ==========
 function CycleView({
   cycle,
@@ -665,15 +813,18 @@ function CycleView({
   onDelete,
   onActivate,
   onUpdateBlocks,
+  onUpdateCycle,
 }: {
   cycle: StudyCycle;
-  disciplines: { id: string; name: string }[];
+  disciplines: { id: string; name: string; prova?: string }[];
   topics: { disciplineId: string; completed: boolean }[];
   onDelete: () => void;
   onActivate: () => void;
   onUpdateBlocks: (blocks: CycleBlock[]) => void;
+  onUpdateCycle: (updates: Partial<StudyCycle>) => void;
 }) {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const getDisciplineName = (id: string) => disciplines.find((d) => d.id === id)?.name || 'Disciplina';
 
