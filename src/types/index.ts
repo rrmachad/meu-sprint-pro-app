@@ -84,6 +84,7 @@ export interface StudyCycle {
   weekStart?: number; // starting week number (1-based)
   weekEnd?: number; // ending week number (1-based)
   phase?: StudyPhase; // study phase for block duration
+  currentBlockIndex?: number; // tracks user progress through the linear sequence (0-based)
 }
 
 // ============ SCHEDULE ============
