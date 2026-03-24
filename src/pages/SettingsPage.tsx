@@ -2,9 +2,18 @@ import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Settings, Building2, BookOpen, RotateCcw, Target,
-  Download, Upload, Plus, Trash2, Edit2,
+  Download, Upload, Plus, Trash2, Edit2, GripVertical,
   HelpCircle, AlertTriangle, Bell, Shield, Zap, Play, User, Camera, Lock,
 } from 'lucide-react';
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove, SortableContext, sortableKeyboardCoordinates,
+  useSortable, verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
