@@ -11,7 +11,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   CalendarDays, Sparkles, Clock, BookOpen, AlertTriangle,
   RotateCcw, Check, ChevronDown, ChevronRight, Trash2, Settings2,
-  Edit2, Plus, GripVertical, Download,
+  Edit2, Plus, GripVertical, Download, Copy,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -814,6 +814,7 @@ function CycleView({
   onActivate,
   onUpdateBlocks,
   onUpdateCycle,
+  onDuplicate,
 }: {
   cycle: StudyCycle;
   disciplines: { id: string; name: string; prova?: string }[];
@@ -822,6 +823,7 @@ function CycleView({
   onActivate: () => void;
   onUpdateBlocks: (blocks: CycleBlock[]) => void;
   onUpdateCycle: (updates: Partial<StudyCycle>) => void;
+  onDuplicate: () => void;
 }) {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -982,6 +984,9 @@ function CycleView({
             )}
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-primary" onClick={() => setEditDialogOpen(true)} title="Editar ciclo">
               <Edit2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-primary" onClick={onDuplicate} title="Duplicar ciclo">
+              <Copy className="h-3.5 w-3.5" />
             </Button>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-primary" onClick={exportToPdf} title="Exportar PDF">
               <Download className="h-3.5 w-3.5" />
@@ -1331,6 +1336,23 @@ export default function Planning() {
     toast.success('Ciclo removido.');
   };
 
+  const handleDuplicate = (cycle: StudyCycle) => {
+    const maxWeekEnd = Math.max(...cycles.map((c) => c.weekEnd || 0), 0);
+    const weekSpan = (cycle.weekEnd || 1) - (cycle.weekStart || 1) + 1;
+    const newCycle: StudyCycle = {
+      ...cycle,
+      id: crypto.randomUUID(),
+      name: `${cycle.name} (cópia)`,
+      active: false,
+      createdAt: new Date().toISOString(),
+      weekStart: maxWeekEnd + 1,
+      weekEnd: maxWeekEnd + weekSpan,
+      blocks: cycle.blocks.map((b) => ({ ...b, id: crypto.randomUUID() })),
+    };
+    addCycle(newCycle);
+    toast.success(`Ciclo "${newCycle.name}" duplicado!`);
+  };
+
   const hasDisciplinesWithTopics = disciplines.some((d) =>
     topics.some((t) => t.disciplineId === d.id)
   );
@@ -1403,6 +1425,7 @@ export default function Planning() {
                 onActivate={() => setActiveCycle(cycle.id)}
                 onUpdateBlocks={(blocks) => updateCycle(cycle.id, { blocks })}
                 onUpdateCycle={(updates) => updateCycle(cycle.id, updates)}
+                onDuplicate={() => handleDuplicate(cycle)}
               />
             ))}
         </div>
