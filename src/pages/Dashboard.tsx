@@ -60,7 +60,7 @@ function StatCard({ stat }: StatCardProps) {
 
   return (
     <motion.div ref={ref} variants={itemVariants}>
-      <Card className={`glass border-border/30 bg-gradient-to-br ${stat.gradient} ${stat.glowClass} transition-all duration-300`}>
+      <Card className={`bg-slate-800/60 backdrop-blur-md border border-slate-700/50 bg-gradient-to-br ${stat.gradient} transition-all duration-300 hover:border-slate-600/60`}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -78,12 +78,13 @@ function StatCard({ stat }: StatCardProps) {
               )}
             </div>
             <motion.div
-              className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.iconBg} shadow-soft`}
+              className={`relative flex h-11 w-11 items-center justify-center rounded-xl ${stat.iconBg} shadow-soft`}
               initial={{ rotate: -20, scale: 0 }}
               animate={isInView ? { rotate: 0, scale: 1 } : {}}
               transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.15 }}
             >
-              <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+              <div className={`absolute inset-0 rounded-xl ${stat.iconBg} blur-md opacity-40`} />
+              <stat.icon className={`h-5 w-5 ${stat.iconColor} relative z-10`} />
             </motion.div>
           </div>
         </CardContent>
@@ -91,6 +92,7 @@ function StatCard({ stat }: StatCardProps) {
     </motion.div>
   );
 }
+
 function AnimatedSprintRow({ icon: Icon, iconColor, label, current, goal, formatCurrent, formatGoal, barClass, percent }: {
   icon: React.ComponentType<{ className?: string }>;
   iconColor: string;
@@ -130,6 +132,34 @@ function AnimatedSprintRow({ icon: Icon, iconColor, label, current, goal, format
   );
 }
 
+function getMasteryLabel(percent: number): { label: string; color: string; bgColor: string } {
+  if (percent >= 70) return { label: 'Avançada', color: 'text-emerald-400', bgColor: 'bg-emerald-500/15 border-emerald-500/25' };
+  if (percent >= 30) return { label: 'Intermediária', color: 'text-amber-400', bgColor: 'bg-amber-500/15 border-amber-500/25' };
+  return { label: 'Fase Básica', color: 'text-blue-400', bgColor: 'bg-blue-500/15 border-blue-500/25' };
+}
+
+function getDisciplineBadge(percent: number): { label: string; className: string } {
+  if (percent >= 70) return { label: 'Avançada', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' };
+  if (percent >= 30) return { label: 'Intermediária', className: 'bg-amber-500/15 text-amber-400 border-amber-500/25' };
+  return { label: 'Básica', className: 'bg-blue-500/15 text-blue-400 border-blue-500/25' };
+}
+
+// Custom donut label renderer
+function MasteryDonutLabel({ viewBox, globalPercent }: { viewBox?: any; globalPercent: number }) {
+  const { cx, cy } = viewBox || {};
+  const mastery = getMasteryLabel(globalPercent);
+  return (
+    <g>
+      <text x={cx} y={cy - 8} textAnchor="middle" dominantBaseline="middle" className="fill-foreground" style={{ fontSize: 32, fontWeight: 800 }}>
+        {globalPercent}%
+      </text>
+      <text x={cx} y={cy + 18} textAnchor="middle" dominantBaseline="middle" className={mastery.color} style={{ fontSize: 11, fontWeight: 600 }}>
+        {mastery.label}
+      </text>
+    </g>
+  );
+}
+
 export default function Dashboard() {
   const studyRecords = useAppStore((s) => s.studyRecords);
   const disciplines = useAppStore((s) => s.disciplines);
@@ -142,8 +172,6 @@ export default function Dashboard() {
   const { isFree } = useSubscriptionLimits();
   const navigate = useNavigate();
   const { session } = useAuth();
-
-  // Bootstrap admin removed — admin already exists
 
   const today = new Date().toISOString().split('T')[0];
   const todayRecords = studyRecords.filter((r) => r.date === today);
@@ -165,7 +193,7 @@ export default function Dashboard() {
         const total = dTopics.length;
         const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
         return {
-          name: d.name.length > 20 ? d.name.substring(0, 20) + '…' : d.name,
+          name: d.name.length > 25 ? d.name.substring(0, 25) + '…' : d.name,
           fullName: d.name,
           completed,
           pending: total - completed,
@@ -209,7 +237,6 @@ export default function Dashboard() {
     ];
   }, [topics]);
 
-  // Weekly performance line chart data
   const weeklyPerformanceData = useMemo(() => {
     const now = new Date();
     const dayOfWeek = now.getDay();
@@ -230,7 +257,6 @@ export default function Dashboard() {
     });
   }, [studyRecords]);
 
-  // Weekly goals cumulative data
   const weeklyGoalsData = useMemo(() => {
     const now = new Date();
     const dayOfWeek = now.getDay();
@@ -238,7 +264,6 @@ export default function Dashboard() {
     const monday = new Date(now);
     monday.setDate(now.getDate() - mondayOffset);
     monday.setHours(0, 0, 0, 0);
-    const mondayStr = monday.toISOString().split('T')[0];
 
     const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
     let cumHours = 0, cumQuestions = 0, cumPages = 0;
@@ -262,7 +287,6 @@ export default function Dashboard() {
   const weeklyPagesGoal = goals.dailyPages * 7;
   const weeklyPagesPercent = weeklyPagesGoal > 0 ? Math.min(100, Math.round((weeklyTotals.paginas / weeklyPagesGoal) * 100)) : 0;
 
-  // Completion notifications
   const notifiedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     const checks = [
@@ -352,14 +376,13 @@ export default function Dashboard() {
     },
   ];
 
+  const mastery = getMasteryLabel(globalPercent);
+
   return (
     <motion.div variants={containerVariants} initial="initial" animate="animate" className="space-y-6 max-w-7xl mx-auto">
 
-      {/* Setup completion banner */}
       <SetupBanner />
 
-
-      {/* Banner upgrade para plano gratuito */}
       {isFree && (
         <motion.div variants={itemVariants}>
           <Card className="border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10">
@@ -392,11 +415,12 @@ export default function Dashboard() {
       {(goals.weeklyHours > 0 || goals.dailyQuestions > 0 || goals.dailyPages > 0) && (
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Daily Sprints */}
-          <Card className="glass border-border/30">
+          <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-neon">
-                  <Target className="h-3.5 w-3.5 text-neon-green-foreground" />
+                <div className="relative flex h-7 w-7 items-center justify-center rounded-lg gradient-neon">
+                  <div className="absolute inset-0 rounded-lg gradient-neon blur-md opacity-40" />
+                  <Target className="h-3.5 w-3.5 text-neon-green-foreground relative z-10" />
                 </div>
                 Sprints do Dia
               </CardTitle>
@@ -445,12 +469,13 @@ export default function Dashboard() {
           </Card>
 
           {/* Weekly Sprints */}
-          <Card className="glass border-border/30">
+          <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sporty-orange/10">
-                    <Trophy className="h-3.5 w-3.5 text-sporty-orange" />
+                  <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-sporty-orange/10">
+                    <div className="absolute inset-0 rounded-lg bg-sporty-orange/10 blur-md opacity-40" />
+                    <Trophy className="h-3.5 w-3.5 text-sporty-orange relative z-10" />
                   </div>
                   Sprints da Semana
                 </CardTitle>
@@ -496,11 +521,12 @@ export default function Dashboard() {
 
       {/* Performance Line Chart */}
       <motion.div variants={itemVariants}>
-        <Card className="glass border-border/30">
+        <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg gradient-neon">
-                <Activity className="h-3.5 w-3.5 text-neon-green-foreground" />
+              <div className="relative flex h-7 w-7 items-center justify-center rounded-lg gradient-neon">
+                <div className="absolute inset-0 rounded-lg gradient-neon blur-md opacity-40" />
+                <Activity className="h-3.5 w-3.5 text-neon-green-foreground relative z-10" />
               </div>
               Performance Semanal
             </CardTitle>
@@ -547,12 +573,13 @@ export default function Dashboard() {
       {/* Revision Notifications */}
       {pendingRevisions.length > 0 && (
         <motion.div variants={itemVariants}>
-          <Card className={`glass border-border/30 ${overdueCount > 0 ? 'border-destructive/30' : ''}`}>
+          <Card className={`bg-slate-800/60 backdrop-blur-md border border-slate-700/50 ${overdueCount > 0 ? 'border-destructive/30' : ''}`}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-electric-blue/10">
-                    <Bell className="h-3.5 w-3.5 text-electric-blue" />
+                  <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-electric-blue/10">
+                    <div className="absolute inset-0 rounded-lg bg-electric-blue/10 blur-md opacity-40" />
+                    <Bell className="h-3.5 w-3.5 text-electric-blue relative z-10" />
                   </div>
                   Lembretes de Revisão
                 </CardTitle>
@@ -630,26 +657,28 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Charts Row */}
+      {/* Charts Row: Horizontal Bar + Mastery Gauge + Study Hours */}
       {(disciplineProgress.length > 0 || studyHoursData.length > 0) && (
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Horizontal Bar Chart - Fixed layout */}
           {disciplineProgress.length > 0 && (
-            <Card className="glass border-border/30">
+            <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-electric-blue/10">
-                    <BarChart3 className="h-3.5 w-3.5 text-electric-blue" />
+                  <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-electric-blue/10">
+                    <div className="absolute inset-0 rounded-lg bg-electric-blue/10 blur-md opacity-40" />
+                    <BarChart3 className="h-3.5 w-3.5 text-electric-blue relative z-10" />
                   </div>
                   Progresso por Disciplina
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={Math.max(200, disciplineProgress.length * 36)}>
-                  <BarChart data={disciplineProgress} layout="vertical" margin={{ left: 0, right: 20, top: 5, bottom: 5 }}>
-                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} axisLine={false} tickLine={false} />
+              <CardContent className="overflow-x-auto">
+                <ResponsiveContainer width="100%" height={Math.max(220, disciplineProgress.length * 38)}>
+                  <BarChart data={disciplineProgress} layout="vertical" margin={{ left: 10, right: 30, top: 5, bottom: 5 }}>
+                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} unit="%" />
+                    <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value}%`, 'Progresso']} />
-                    <Bar dataKey="percent" radius={[0, 6, 6, 0]} maxBarSize={20}>
+                    <Bar dataKey="percent" radius={[0, 8, 8, 0]} maxBarSize={22}>
                       {disciplineProgress.map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
@@ -661,48 +690,64 @@ export default function Dashboard() {
           )}
 
           <div className="space-y-4">
+            {/* Mastery Gauge (upgraded donut) */}
             {pieData.length > 0 && (
-              <Card className="glass border-border/30">
+              <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-neon-green/10">
-                      <Target className="h-3.5 w-3.5 text-neon-green" />
+                    <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-neon-green/10">
+                      <div className="absolute inset-0 rounded-lg bg-neon-green/10 blur-md opacity-40" />
+                      <Target className="h-3.5 w-3.5 text-neon-green relative z-10" />
                     </div>
-                    Progresso Geral
+                    Nível de Maturidade
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height={200}>
+                <CardContent className="flex flex-col items-center justify-center pb-6">
+                  <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
+                      <defs>
+                        <linearGradient id="masteryGradient" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="hsl(199 89% 48%)" />
+                          <stop offset="100%" stopColor="hsl(160 60% 50%)" />
+                        </linearGradient>
+                      </defs>
                       <Pie
                         data={pieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={55}
-                        outerRadius={80}
+                        innerRadius={62}
+                        outerRadius={90}
                         dataKey="value"
-                        strokeWidth={2}
+                        strokeWidth={3}
                         stroke="hsl(var(--card))"
+                        startAngle={90}
+                        endAngle={-270}
                       >
-                        <Cell fill="hsl(var(--neon-green))" />
-                        <Cell fill="hsl(var(--muted))" />
+                        <Cell fill="url(#masteryGradient)" />
+                        <Cell fill="hsl(var(--muted) / 0.4)" />
+                        <Label content={<MasteryDonutLabel globalPercent={globalPercent} />} position="center" />
                       </Pie>
-                      <Legend
-                        formatter={(value) => <span style={{ color: 'hsl(var(--foreground))', fontSize: 12 }}>{value}</span>}
-                      />
                       <Tooltip contentStyle={tooltipStyle} />
                     </PieChart>
                   </ResponsiveContainer>
+                  <div className="flex items-center gap-4 -mt-2">
+                    <Badge variant="outline" className={`text-xs rounded-full px-3 py-1 border ${mastery.bgColor} ${mastery.color} font-semibold`}>
+                      {mastery.label}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground font-mono">{completedTopics}/{totalTopics} tópicos</span>
+                  </div>
                 </CardContent>
               </Card>
             )}
 
+            {/* Study Hours Chart */}
             {studyHoursData.length > 0 && (
-              <Card className="glass border-border/30">
+              <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sporty-orange/10">
-                      <Clock className="h-3.5 w-3.5 text-sporty-orange" />
+                    <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-sporty-orange/10">
+                      <div className="absolute inset-0 rounded-lg bg-sporty-orange/10 blur-md opacity-40" />
+                      <Clock className="h-3.5 w-3.5 text-sporty-orange relative z-10" />
                     </div>
                     Horas de Estudo (30 dias)
                   </CardTitle>
@@ -723,36 +768,53 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Discipline Progress List */}
+      {/* High-Performance Tracking Table */}
       {disciplineProgress.length > 0 && (
         <motion.div variants={itemVariants}>
-          <Card className="glass border-border/30">
+          <Card className="bg-slate-800/60 backdrop-blur-md border border-slate-700/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-wider">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-chart-5/10">
-                  <BookOpen className="h-3.5 w-3.5 text-chart-5" />
+                <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-chart-5/10">
+                  <div className="absolute inset-0 rounded-lg bg-chart-5/10 blur-md opacity-40" />
+                  <BookOpen className="h-3.5 w-3.5 text-chart-5 relative z-10" />
                 </div>
                 Detalhamento por Disciplina
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {disciplineProgress.map((d, i) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-foreground font-medium truncate max-w-[60%]">{d.fullName}</span>
-                    <span className="text-muted-foreground text-xs font-mono">{d.completed}/{d.total} ({d.percent}%)</span>
+            <CardContent className="space-y-1.5">
+              {disciplineProgress.map((d, i) => {
+                const badge = getDisciplineBadge(d.percent);
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-xl bg-slate-800/30 hover:bg-slate-800/80 transition-colors p-3 group"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-sm text-foreground font-medium truncate">{d.fullName}</span>
+                        <Badge variant="outline" className={`text-[9px] rounded-full px-2 py-0 border shrink-0 ${badge.className}`}>
+                          {badge.label}
+                        </Badge>
+                      </div>
+                      <div className="h-2.5 rounded-full bg-secondary/60 overflow-hidden">
+                        <motion.div
+                          className="h-full rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${d.percent}%` }}
+                          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: i * 0.05 }}
+                          style={{
+                            background: `linear-gradient(90deg, ${COLORS[i % COLORS.length]}, ${COLORS[(i + 1) % COLORS.length]})`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 min-w-[80px]">
+                      <p className="text-sm font-bold tabular-nums text-foreground">{d.percent}%</p>
+                      <p className="text-[10px] text-muted-foreground font-mono">{d.completed}/{d.total}</p>
+                    </div>
                   </div>
-                  <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${d.percent}%`,
-                        background: `linear-gradient(90deg, ${COLORS[i % COLORS.length]}, ${COLORS[(i + 1) % COLORS.length]})`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </motion.div>
@@ -760,7 +822,7 @@ export default function Dashboard() {
 
       {studyRecords.length === 0 && topics.length === 0 && (
         <motion.div variants={itemVariants}>
-          <Card className="glass border-dashed border-border/30">
+          <Card className="bg-slate-800/60 backdrop-blur-md border-dashed border border-slate-700/50">
             <CardContent className="flex flex-col items-center justify-center py-20 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl gradient-neon shadow-neon mb-6">
                 <Sparkles className="h-8 w-8 text-neon-green-foreground" />
