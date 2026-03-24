@@ -1055,6 +1055,7 @@ function CycleView({
   cycle,
   disciplines,
   topics,
+  studyRecords,
   onDelete,
   onActivate,
   onUpdateBlocks,
