@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/accordion';
 import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
-import type { CycleBlock, CycleDiscipline, StudyCycle, Importance, UserSituation, Difficulty } from '@/types';
+import type { CycleBlock, CycleDiscipline, StudyCycle, Importance, UserSituation, Difficulty, StudyPhase } from '@/types';
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
