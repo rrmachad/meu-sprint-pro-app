@@ -120,6 +120,9 @@ export default function Indicators() {
   const topics = useAppStore((s) => s.topics);
   const simulados = useAppStore((s) => s.simulados);
   const goals = useAppStore((s) => s.settings.goals);
+  const totalTopics = topics.length;
+  const completedTopics = topics.filter((t) => t.completed).length;
+  const globalProgress = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
   const { updateStudyRecord, removeStudyRecord } = useAppStore();
   const [period, setPeriod] = useState<PeriodFilter>('all');
   const chartsRef = useRef<HTMLDivElement>(null);
@@ -221,14 +224,21 @@ export default function Indicators() {
     const thisWeekEnd = endOfWeek(today, { weekStartsOn: 1 });
     const lastWeekStart = subDays(thisWeekStart, 7);
     const lastWeekEnd = subDays(thisWeekStart, 1);
-    const thisWeekHours = studyRecords
-      .filter((r) => { const d = parseISO(r.date); return isWithinInterval(d, { start: thisWeekStart, end: thisWeekEnd }); })
-      .reduce((a, r) => a + r.durationSeconds / 3600, 0);
+    const thisWeekRecords = studyRecords.filter((r) => { const d = parseISO(r.date); return isWithinInterval(d, { start: thisWeekStart, end: thisWeekEnd }); });
+    const thisWeekHours = thisWeekRecords.reduce((a, r) => a + r.durationSeconds / 3600, 0);
     const lastWeekHours = studyRecords
       .filter((r) => { const d = parseISO(r.date); return isWithinInterval(d, { start: lastWeekStart, end: lastWeekEnd }); })
       .reduce((a, r) => a + r.durationSeconds / 3600, 0);
+    const thisWeekQuestions = thisWeekRecords.reduce((a, r) => a + r.correctAnswers + r.wrongAnswers + r.blankAnswers, 0);
+    const thisWeekPages = thisWeekRecords.reduce((a, r) => a + r.pagesRead, 0);
     const change = lastWeekHours > 0 ? ((thisWeekHours - lastWeekHours) / lastWeekHours) * 100 : 0;
-    return { thisWeek: Math.round(thisWeekHours * 10) / 10, lastWeek: Math.round(lastWeekHours * 10) / 10, change: Math.round(change) };
+    return {
+      thisWeek: Math.round(thisWeekHours * 10) / 10,
+      lastWeek: Math.round(lastWeekHours * 10) / 10,
+      change: Math.round(change),
+      questions: thisWeekQuestions,
+      pages: thisWeekPages,
+    };
   }, [studyRecords]);
 
   // ─── Activity type distribution ───
@@ -1019,15 +1029,58 @@ export default function Indicators() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-semibold">Horas ({weeklyComparison.thisWeek}h / {goals.weeklyHours}h)</span>
-                    <span className="font-mono text-muted-foreground">{Math.min(100, Math.round((weeklyComparison.thisWeek / goals.weeklyHours) * 100))}%</span>
+                {goals.weeklyHours > 0 && (
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-semibold">Horas ({weeklyComparison.thisWeek}h / {goals.weeklyHours}h)</span>
+                      <span className="font-mono text-muted-foreground">{Math.min(100, Math.round((weeklyComparison.thisWeek / goals.weeklyHours) * 100))}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-full rounded-full gradient-neon transition-all duration-500" style={{ width: `${Math.min(100, (weeklyComparison.thisWeek / goals.weeklyHours) * 100)}%` }} />
+                    </div>
                   </div>
-                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                    <div className="h-full rounded-full gradient-neon transition-all duration-500" style={{ width: `${Math.min(100, (weeklyComparison.thisWeek / goals.weeklyHours) * 100)}%` }} />
+                )}
+                {goals.dailyQuestions > 0 && (() => {
+                  const weeklyQGoal = goals.dailyQuestions * 7;
+                  const qPct = Math.min(100, Math.round((weeklyComparison.questions / weeklyQGoal) * 100));
+                  return (
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-semibold">Questões ({weeklyComparison.questions} / {weeklyQGoal})</span>
+                        <span className="font-mono text-muted-foreground">{qPct}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                        <div className="h-full rounded-full gradient-orange transition-all duration-500" style={{ width: `${qPct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })()}
+                {goals.dailyPages > 0 && (() => {
+                  const weeklyPGoal = goals.dailyPages * 7;
+                  const pPct = Math.min(100, Math.round((weeklyComparison.pages / weeklyPGoal) * 100));
+                  return (
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-semibold">Páginas ({weeklyComparison.pages} / {weeklyPGoal})</span>
+                        <span className="font-mono text-muted-foreground">{pPct}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                        <div className="h-full rounded-full gradient-blue transition-all duration-500" style={{ width: `${pPct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })()}
+                {totalTopics > 0 && (
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-semibold">Edital ({completedTopics}/{totalTopics} tópicos)</span>
+                      <span className="font-mono text-muted-foreground">{globalProgress}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-full rounded-full bg-chart-4 transition-all duration-500" style={{ width: `${globalProgress}%` }} />
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
